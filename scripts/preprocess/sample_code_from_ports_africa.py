@@ -17,15 +17,18 @@ def main(config):
     port_edges = gpd.read_file(os.path.join(incoming_data_path,"ports","africa_ports.gpkg"),layer="edges")
 
     # Get the maximum number of the port edges ID because we want to create new edges in the sequence
-    max_edge_id = max([int(re.findall(r'\d+',v)) for v in port_edges["edge_id"].values.tolist()])
+    max_edge_id = max([int(re.findall(r'\d+',v)[0]) for v in port_edges["edge_id"].values.tolist()])
 
     # Read the results of the non-interesected points
-    non_intersected = gpd.read_file("non_intersected_points.gpkg")
+    non_intersected = gpd.read_file(os.path.join(incoming_data_path,
+                                    "ports","merged ports dataset (inner)",
+                                    "non_intersected_points.gpkg"))
     # This should have point geometry, not points with buffer geometry
     non_intersected["geometry"]  = non_intersected.geometry.centroid
     # Also it should be just 1 point at one location, so probably 
     # Group by FeatureUID
-    non_intersected = non_intersected.groupby('FeatureUID').first().reset_index() 
+    non_intersected = non_intersected.groupby('FeatureUID').first().reset_index()
+    non_intersected = non_intersected.set_crs(epsg=3395) 
     # Also probabble have to project this to EPSG = 4326 because the other data is in that system
     non_intersected = non_intersected.to_crs(epsg=4326)
 
@@ -53,7 +56,7 @@ def main(config):
                     pd.concat([port_edges,nearest_nodes],
                     axis=0,ignore_index=True),
                     geometry="geometry",crs="EPSG:4326")
-    port_edges.to_file("africa_ports_modified.gpkg",layer="edges",driver="GPKG")
+    port_edges.to_file(os.path.join(incoming_data_path,"ports","africa_ports_modified.gpkg"),layer="edges",driver="GPKG")
 
     # Also make the new nodes layer
     # I have only chosen to add the ID and geometry from the non_intersected, but you can choose to add other columns if needed
@@ -62,7 +65,7 @@ def main(config):
                     pd.concat([port_nodes,non_intersected[["node_id","geometry"]]],
                     axis=0,ignore_index=True),
                     geometry="geometry",crs="EPSG:4326")
-    port_nodes.to_file("africa_ports_modified.gpkg",layer="nodes",driver="GPKG")
+    port_nodes.to_file(os.path.join(incoming_data_path,"ports","africa_ports_modified.gpkg"),layer="nodes",driver="GPKG")
 
 
 
