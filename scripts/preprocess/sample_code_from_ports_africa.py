@@ -13,8 +13,8 @@ def main(config):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     # Read the ports nodes and edges data
-    port_nodes = gpd.read_file("africa_ports.gpkg",layer="nodes")
-    port_edges = gpd.read_file("africa_ports.gpkg",layer="edges")
+    port_nodes = gpd.read_file(os.path.join(incoming_data_path,"ports","africa_ports.gpkg"),layer="nodes")
+    port_edges = gpd.read_file(os.path.join(incoming_data_path,"ports","africa_ports.gpkg"),layer="edges")
 
     # Get the maximum number of the port edges ID because we want to create new edges in the sequence
     max_edge_id = max([int(re.findall(r'\d+',v)) for v in port_edges["edge_id"].values.tolist()])
