@@ -13,6 +13,19 @@ import fiona
 from shapely.geometry import shape, mapping
 from scipy.spatial import cKDTree
 
+
+def convert_json_geopandas(df,epsg=4326):
+    layer_dict = []    
+    for key, value in df.items():
+        if key == "features":
+            for feature in value:
+                if any(feature["geometry"]["coordinates"]):
+                    d1 = {"geometry":shape(feature["geometry"])}
+                    d1.update(feature["properties"])
+                    layer_dict.append(d1)
+
+    return gpd.GeoDataFrame(pd.DataFrame(layer_dict),geometry="geometry", crs=f"EPSG:{epsg}")
+
 def components(edges,nodes,node_id_col):
     G = networkx.Graph()
     G.add_nodes_from(
