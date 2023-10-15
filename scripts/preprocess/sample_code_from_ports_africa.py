@@ -20,24 +20,39 @@ def main(config):
     max_edge_id = max([int(re.findall(r'\d+',v)[0]) for v in port_edges["edge_id"].values.tolist()])
 
     # Read the results of the non-interesected points
-    non_intersected = gpd.read_file(os.path.join(incoming_data_path,
-                                    "ports","merged ports dataset (inner)",
-                                    "non_intersected_points.gpkg"))
+    non_intersected = gpd.read_file(os.path.join(processed_data_path,
+                                    "port",
+                                    "non_intersected_from_merged.gpkg"))
+    print(non_intersected.crs)
+    non_intersected = non_intersected.reset_index(drop=True)
+    print("Duplicate indices in port_nodes:", port_nodes.index.duplicated().sum())
+    print("Duplicate indices in non_intersected:", non_intersected.index.duplicated().sum())
+    port_nodes_reset = port_nodes.reset_index(drop=True)
+    non_intersected_reset = non_intersected.reset_index(drop=True)
+    combined_df = pd.concat([port_nodes_reset, non_intersected_reset[["node_id", "geometry"]]], axis=0, ignore_index=True)
+    # 检查哪些'node_id'是重复的
+    duplicated_node_ids = combined_df[combined_df.duplicated(subset='node_id', keep=False)]
+    print(duplicated_node_ids)
+
+
+
     # This should have point geometry, not points with buffer geometry
-    non_intersected["geometry"]  = non_intersected.geometry.centroid
+    #non_intersected["geometry"]  = non_intersected.geometry.centroid
     # Also it should be just 1 point at one location, so probably 
     # Group by FeatureUID
     non_intersected = non_intersected.groupby('FeatureUID').first().reset_index()
-    non_intersected = non_intersected.set_crs(epsg=3395) 
+    #non_intersected = non_intersected.set_crs(epsg=3395) 
     # Also probabble have to project this to EPSG = 4326 because the other data is in that system
-    non_intersected = non_intersected.to_crs(epsg=4326)
+    # non_intersected = non_intersected.to_crs(epsg=4326)
+    print(non_intersected)
+
 
     # Extract nodes for the port networkthat are not ports
     pn = port_nodes[port_nodes["infra"] != "port"]
-
-    # Find nearest node in pn to every point in non_intersected
-    nearest_nodes = ckdnearest(non_intersected,pn)
-
+    print(pn)
+    # Find nearest node in pn to every point in non_intersectedcd
+    nearest_nodes = ckdnearest(non_intersected[['FeatureUID','geometry']],pn[['node_id','geometry']])
+    print(nearest_nodes)
     from_node_id = 'FeatureUID' # ID column in non_intersected
     to_node_id = 'node_id' # ID column in non_intersected
     # Create lines between nearest nodes
@@ -61,9 +76,9 @@ def main(config):
     # Also make the new nodes layer
     # I have only chosen to add the ID and geometry from the non_intersected, but you can choose to add other columns if needed
     non_intersected.rename(columns={'FeatureUID':"node_id"},inplace=True)
+
     port_nodes = gpd.GeoDataFrame(
-                    pd.concat([port_nodes,non_intersected[["node_id","geometry"]]],
-                    axis=0,ignore_index=True),
+                    pd.concat([port_nodes_reset, non_intersected_reset[["node_id", "geometry"]]], axis=0),
                     geometry="geometry",crs="EPSG:4326")
     port_nodes.to_file(os.path.join(incoming_data_path,"ports","africa_ports_modified.gpkg"),layer="nodes",driver="GPKG")
 

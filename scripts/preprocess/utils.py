@@ -10,7 +10,7 @@ import pandas as pd
 import igraph as ig
 import geopandas as gpd
 import fiona
-from shapely.geometry import shape, mapping
+from shapely.geometry import shape, mapping, LineString
 from scipy.spatial import cKDTree
 
 
@@ -45,9 +45,8 @@ def components(edges,nodes,node_id_col):
 
 def add_lines(x,from_nodes_df,to_nodes_df,from_nodes_id,to_nodes_id):
     from_point = from_nodes_df[from_nodes_df[from_nodes_id] == x[from_nodes_id]]
-    to_point = to_nodes_df[to_nodes_df[to_nodes_id] == x[to_nodes_id]]
-
-    return LineString(from_point.geometry.values[0],to_point.geometry.values[0])
+    to_point = to_nodes_df[to_nodes_df[to_nodes_id].isin([x[to_nodes_id]])] 
+    return LineString([from_point.geometry.values[0],to_point.geometry.values[0]])
 
 def ckdnearest(gdA, gdB):
     """Taken from https://gis.stackexchange.com/questions/222315/finding-nearest-point-in-other-geodataframe-using-geopandas
