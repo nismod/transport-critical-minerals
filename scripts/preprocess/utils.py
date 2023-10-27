@@ -95,9 +95,10 @@ def extract_gdf_values_containing_nodes(x, input_gdf, column_name):
         return input_gdf.loc[polygon_index,column_name]
 
 def load_config():
-    """Read config.json
-    """
-    config_path = os.path.join(os.path.dirname(__file__),'..', '..', 'config.json')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    config_path = os.path.join(script_dir, 'config.json')
+
     with open(config_path, 'r') as config_fh:
         config = json.load(config_fh)
     return config

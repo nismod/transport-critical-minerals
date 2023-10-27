@@ -21,7 +21,6 @@ def main(config):
 
     # Read the results of the non-interesected points
     non_intersected = gpd.read_file(os.path.join(processed_data_path,
-                                    "port",
                                     "non_intersected_from_merged.gpkg"))
     print(non_intersected.crs)
     non_intersected = non_intersected.reset_index(drop=True)
@@ -30,7 +29,7 @@ def main(config):
     port_nodes_reset = port_nodes.reset_index(drop=True)
     non_intersected_reset = non_intersected.reset_index(drop=True)
     combined_df = pd.concat([port_nodes_reset, non_intersected_reset[["node_id", "geometry"]]], axis=0, ignore_index=True)
-    # 检查哪些'node_id'是重复的
+    # Check the duplicated'node_id'
     duplicated_node_ids = combined_df[combined_df.duplicated(subset='node_id', keep=False)]
     print(duplicated_node_ids)
 
@@ -71,7 +70,7 @@ def main(config):
                     pd.concat([port_edges,nearest_nodes],
                     axis=0,ignore_index=True),
                     geometry="geometry",crs="EPSG:4326")
-    port_edges.to_file(os.path.join(incoming_data_path,"ports","africa_ports_modified.gpkg"),layer="edges",driver="GPKG")
+    port_edges.to_file(os.path.join(processed_data_path,"africa_ports_modified.gpkg"),layer="edges",driver="GPKG")
 
     # Also make the new nodes layer
     # I have only chosen to add the ID and geometry from the non_intersected, but you can choose to add other columns if needed
@@ -80,7 +79,7 @@ def main(config):
     port_nodes = gpd.GeoDataFrame(
                     pd.concat([port_nodes_reset, non_intersected_reset[["node_id", "geometry"]]], axis=0),
                     geometry="geometry",crs="EPSG:4326")
-    port_nodes.to_file(os.path.join(incoming_data_path,"ports","africa_ports_modified.gpkg"),layer="nodes",driver="GPKG")
+    port_nodes.to_file(os.path.join(processed_data_path,"africa_ports_modified.gpkg"),layer="nodes",driver="GPKG")
 
 
 
