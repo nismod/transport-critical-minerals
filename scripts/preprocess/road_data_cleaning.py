@@ -20,7 +20,7 @@ def main(config):
                             "africa_roads",
                             "edges_with_topology.geoparquet"))
     
-    pyogrio.write_dataframe(gdf, os.path.join(incoming_data_path,
+    pyogrio.write_dataframe(road_edges, os.path.join(incoming_data_path,
                             	"africa_roads",
                             	"edges_with_topology.gkpg"))
 
