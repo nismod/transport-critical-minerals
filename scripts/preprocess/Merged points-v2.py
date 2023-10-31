@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# (1) Merge three datasets; (2)Add ISO3 (4) extraxt non_intersected
+# (1) Merge three datasets; (2)Add ISO3 (3) extraxt non_intersected
 import os
 import geopandas as gpd
 import pandas as pd
@@ -91,6 +91,9 @@ def main(config):
 
     # Points that not included into df_africa_ports_proj
     non_intersected_from_merged = merged_all.loc[~merged_all.index.isin(df_africa_ports_proj.index)]
+    # Delete the airport and inland port
+    non_intersected_from_merged = non_intersected_from_merged[non_intersected_from_merged['FeatureUID'] != 'LTT02']
+    non_intersected_from_merged = non_intersected_from_merged[non_intersected_from_merged['FeatureUID'] != 'KMI01']
     
     # Save gpkg and csv files
     non_intersected_gpkg_path = os.path.join(processed_data_path, "non_intersected_from_merged.gpkg")
