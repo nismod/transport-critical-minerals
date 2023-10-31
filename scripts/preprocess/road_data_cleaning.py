@@ -22,7 +22,7 @@ def main(config):
     
     pyogrio.write_dataframe(road_edges, os.path.join(incoming_data_path,
                             	"africa_roads",
-                            	"edges_with_topology.gkpg"))
+                            	"edges_with_topology.gpkg"))
 
 
 if __name__ == '__main__':
