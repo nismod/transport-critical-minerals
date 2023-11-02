@@ -28,6 +28,18 @@ def main(config):
                     "egypt-latest-free.shp",
                     "suez_canal.gpkg"),driver="GPKG")
 
+    network = create_network_from_nodes_and_edges(None,suez_canal,"water")
+    gpd.GeoDataFrame(network.edges,geometry="geometry",crs=waterways.crs).to_file(os.path.join(
+                    incoming_data_path,
+                    "egypt-latest-free.shp",
+                    "suez_canal_network.gpkg"),layer="edges",driver="GPKG")
+    gpd.GeoDataFrame(network.nodes,geometry="geometry",crs=waterways.crs).to_file(os.path.join(
+                    incoming_data_path,
+                    "egypt-latest-free.shp",
+                    "suez_canal_network.gpkg"),layer="nodes",driver="GPKG")
+
+
+
 if __name__ == '__main__':
     CONFIG = load_config()
     main(CONFIG)
