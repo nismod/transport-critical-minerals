@@ -15,11 +15,13 @@ def main(config):
                     incoming_data_path,
                     "egypt-latest-free.shp",
                     "gis_osm_waterways_free_1.shp"))
+    print (waterways)
     suez_ids = pd.read_csv(os.path.join(
                             incoming_data_path,
                                 "egypt-latest-free.shp",
                                 "suez_canal_ids.csv"))
     suez_ids = suez_ids["osm_id"].values.tolist()
+    print (suez_ids)
     suez_canal = waterways[waterways["osm_id"].isin(suez_ids)]
     print (suez_canal)
     # Write the Suez Canal routes to a GPKG
