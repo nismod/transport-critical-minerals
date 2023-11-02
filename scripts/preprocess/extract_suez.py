@@ -21,6 +21,7 @@ def main(config):
                                 "suez_canal_ids.csv"))
     suez_ids = suez_ids["osm_id"].values.tolist()
     suez_canal = waterways[waterways["osm_id"].isin(suez_ids)]
+    print (suez_canal)
     # Write the Suez Canal routes to a GPKG
     suez_canal.to_file(os.path.join(
                     incoming_data_path,
