@@ -15,6 +15,7 @@ def main(config):
                     incoming_data_path,
                     "egypt-latest-free.shp",
                     "gis_osm_waterways_free_1.shp"))
+    waterways["osm_id"] = waterways["osm_id"].astype(int)
     print (waterways["osm_id"].values.tolist())
     suez_ids = pd.read_csv(os.path.join(
                             incoming_data_path,
