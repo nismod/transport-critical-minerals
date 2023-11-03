@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+# coding: utf-8
+# Code to extract the suez canal navigation route 
+import os
+import pandas as pd
+import geopandas as gpd
+from utils import *
+from tqdm import tqdm
+tqdm.pandas()
+
+def main(config):
+    incoming_data_path = config['paths']['incoming_data']
+    # Read the OSM data and the suez canal IDs
+    waterways = gpd.read_file(os.path.join(
+                    incoming_data_path,
+                    "egypt-latest-free.shp",
+                    "gis_osm_waterways_free_1.shp"))
+    waterways["osm_id"] = waterways["osm_id"].astype(int)
+    suez_ids = pd.read_csv(os.path.join(
+                            incoming_data_path,
+                                "egypt-latest-free.shp",
+                                "suez_canal_ids.csv"))
+    suez_ids = suez_ids["osm_id"].values.tolist()
+    suez_canal = waterways[waterways["osm_id"].isin(suez_ids)]
+    # Write the Suez Canal routes to a GPKG
+    gpd.GeoDataFrame(suez_canal,geometry="geometry",crs=waterways.crs).to_file(os.path.join(
+                    incoming_data_path,
+                    "egypt-latest-free.shp",
+                    "suez_canal.gpkg"),driver="GPKG")
+
+    network = create_network_from_nodes_and_edges(None,suez_canal,"water")
+    gpd.GeoDataFrame(network.edges,geometry="geometry",crs=waterways.crs).to_file(os.path.join(
+                    incoming_data_path,
+                    "egypt-latest-free.shp",
+                    "suez_canal_network.gpkg"),layer="edges",driver="GPKG")
+    gpd.GeoDataFrame(network.nodes,geometry="geometry",crs=waterways.crs).to_file(os.path.join(
+                    incoming_data_path,
+                    "egypt-latest-free.shp",
+                    "suez_canal_network.gpkg"),layer="nodes",driver="GPKG")
+
+
+
+if __name__ == '__main__':
+    CONFIG = load_config()
+    main(CONFIG)
