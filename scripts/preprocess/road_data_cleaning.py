@@ -19,6 +19,10 @@ def main(config):
     road_edges = gpd.read_parquet(os.path.join(incoming_data_path,
                             "africa_roads",
                             "edges_with_topology.geoparquet"))
+
+    # Find the count of different road classes
+    counts = road_edges["tag_highway"].values_counts()
+    print (counts)
     
     pyogrio.write_dataframe(road_edges, os.path.join(incoming_data_path,
                             	"africa_roads",

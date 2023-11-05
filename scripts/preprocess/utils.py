@@ -8,6 +8,7 @@ import snkit
 import numpy as np
 import pandas as pd
 import igraph as ig
+import networkx
 import geopandas as gpd
 import fiona
 from shapely.geometry import shape, mapping, LineString
@@ -163,7 +164,7 @@ def create_network_from_nodes_and_edges(nodes,edges,node_edge_prefix,snap_distan
     return network
 
 def network_od_path_estimations(graph,
-    source, target, cost_criteria):
+    source, target, cost_criteria,path_id_column):
     """Estimate the paths, distances, times, and costs for given OD pair
 
     Parameters
@@ -207,7 +208,7 @@ def network_od_path_estimations(graph,
         path_gcost = 0
         if path:
             for n in path:
-                edge_path.append(graph.es[n]['edge_id'])
+                edge_path.append(graph.es[n][path_id_column])
                 path_gcost += graph.es[n][cost_criteria]
 
         edge_path_list.append(edge_path)
