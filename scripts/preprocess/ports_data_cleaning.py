@@ -81,7 +81,6 @@ def main(config):
                     df_corridor["Infrastructure_development_type"] == "Port"
                     ) & ~(df_corridor["Project_code"].isin(["LTT0002","KMI0001","DLC0002"]))]
     
-    # different_matches = []
     mapping, new_ports_corridor = match_ports(
                             df_corridor.to_crs(epsg=epsg_meters),
                             df_global_ports.to_crs(epsg=epsg_meters),
@@ -216,7 +215,6 @@ def main(config):
     port_edges["id"] = port_edges.progress_apply(lambda x:f"maritimeroute_{x.id}",axis=1)
     port_edges.to_file(os.path.join(processed_data_path,
                             "infrastructure",
-                            "maritime",
                             "global_maritime_network.gpkg"),layer="edges",driver="GPKG")
 
     # Also make the new nodes layer
@@ -226,7 +224,6 @@ def main(config):
                     geometry="geometry",crs="EPSG:4326")
     port_nodes.to_file(os.path.join(processed_data_path,
                             "infrastructure",
-                            "maritime",
                             "global_maritime_network.gpkg"),layer="nodes",driver="GPKG")
 
     # Get the ports for Africa
@@ -253,12 +250,10 @@ def main(config):
     africa_nodes.to_file(os.path.join(
                             processed_data_path,
                             "infrastructure",
-                            "maritime",
                             "africa_maritime_network.gpkg"),
                         layer="nodes",driver="GPKG")
     africa_edges.to_file(os.path.join(processed_data_path,
                             "infrastructure",
-                            "maritime",
                             "africa_maritime_network.gpkg"),
                         layer="edges",driver="GPKG")
 
