@@ -13,8 +13,42 @@ import geopandas as gpd
 import fiona
 from shapely.geometry import shape, mapping, LineString
 from scipy.spatial import cKDTree
+from tqdm import tqdm
+tqdm.pandas()
 
 
+def link_nodes_to_nearest_edge(network, condition=None, tolerance=1e-9):
+    """Link nodes to all edges within some distance"""
+    new_node_geoms = []
+    new_edge_geoms = []
+    for node in tqdm(
+        network.nodes.itertuples(index=False), desc="link", total=len(network.nodes)
+    ):
+        # for each node, find edges within
+        edge = snkit.network.nearest_edge(node.geometry, network.edges)
+        if condition is not None and not condition(node, edge):
+            continue
+        # add nodes at points-nearest
+        point = snkit.network.nearest_point_on_line(node.geometry, edge.geometry)
+        if point != node.geometry:
+            new_node_geoms.append(point)
+            # add edges linking
+            line = LineString([node.geometry, point])
+            new_edge_geoms.append(line)
+
+    new_nodes = snkit.network.matching_gdf_from_geoms(network.nodes, new_node_geoms)
+    all_nodes = snkit.network.concat_dedup([network.nodes, new_nodes])
+
+    new_edges = snkit.network.matching_gdf_from_geoms(network.edges, new_edge_geoms)
+    all_edges = snkit.network.concat_dedup([network.edges, new_edges])
+
+    # split edges as necessary after new node creation
+    unsplit = snkit.network.Network(nodes=all_nodes, edges=all_edges)
+
+    # this step is typically the majority of processing time
+    split = snkit.network.split_edges_at_nodes(unsplit,tolerance=tolerance)
+
+    return split
 def convert_json_geopandas(df,epsg=4326):
     layer_dict = []    
     for key, value in df.items():
@@ -121,11 +155,14 @@ def create_network_from_nodes_and_edges(nodes,edges,node_edge_prefix,snap_distan
     print("* Done with network creation")
 
     network = snkit.network.split_multilinestrings(network)
+    network = snkit.network.round_geometries(network, precision=5)
     print("* Done with splitting multilines")
 
     if nodes is not None:
         if snap_distance is not None:
-            network = snkit.network.link_nodes_to_edges_within(network, snap_distance, tolerance=1e-09)
+            # network = snkit.network.link_nodes_to_edges_within(network, snap_distance, tolerance=1e-10)
+            network = link_nodes_to_nearest_edge(network, tolerance=1e-9)
+            # network = snkit.network.round_geometries(network, precision=5)
             print ('* Done with joining nodes to edges')
         else:
             network = snkit.network.snap_nodes(network)
@@ -142,7 +179,7 @@ def create_network_from_nodes_and_edges(nodes,edges,node_edge_prefix,snap_distan
     network.nodes = snkit.network.drop_duplicate_geometries(network.nodes)
     print ('* Done with dropping same geometries')
 
-    network = snkit.network.split_edges_at_nodes(network,tolerance=1e-9)
+    network = snkit.network.split_edges_at_nodes(network,tolerance=1e-20)
     print ('* Done with splitting edges at nodes')
     
     network = snkit.network.add_ids(network, 
