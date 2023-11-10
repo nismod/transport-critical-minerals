@@ -138,7 +138,8 @@ def load_config():
         config = json.load(config_fh)
     return config
 
-def create_network_from_nodes_and_edges(nodes,edges,node_edge_prefix,snap_distance=None,by=None):
+def create_network_from_nodes_and_edges(nodes,edges,node_edge_prefix,
+                        snap_distance=None,geometry_precision=False,by=None):
     edges.columns = map(str.lower, edges.columns)
     if "id" in edges.columns.values.tolist():
         edges.rename(columns={"id": "e_id"}, inplace=True)
@@ -155,14 +156,15 @@ def create_network_from_nodes_and_edges(nodes,edges,node_edge_prefix,snap_distan
     print("* Done with network creation")
 
     network = snkit.network.split_multilinestrings(network)
-    network = snkit.network.round_geometries(network, precision=5)
     print("* Done with splitting multilines")
+    if geometry_precision is True:
+        network = snkit.network.round_geometries(network, precision=5)
+        print("* Done with rounding off geometries")
 
     if nodes is not None:
         if snap_distance is not None:
             # network = snkit.network.link_nodes_to_edges_within(network, snap_distance, tolerance=1e-10)
             network = link_nodes_to_nearest_edge(network, tolerance=1e-9)
-            # network = snkit.network.round_geometries(network, precision=5)
             print ('* Done with joining nodes to edges')
         else:
             network = snkit.network.snap_nodes(network)

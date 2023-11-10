@@ -8,7 +8,7 @@ import pandas as pd
 import geopandas as gpd
 import igraph as ig
 from shapely.geometry import LineString
-from utils import *
+from updated_utils import *
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -72,7 +72,9 @@ def main(config):
                         df_south_sudan[["geometry"]]],axis=0,ignore_index=True),
                         geometry="geometry",crs="EPSG:4326")
     network = create_network_from_nodes_and_edges(df_ports.to_crs(epsg=epsg_meters),
-                        df_routes.to_crs(epsg=epsg_meters),"iww",snap_distance=6000)
+                        df_routes.to_crs(epsg=epsg_meters),"iww",
+                                snap_distance=6000,
+                                geometry_precision=True)
     edges = network.edges.set_crs(epsg=epsg_meters)
     nodes = network.nodes.set_crs(epsg=epsg_meters)
     edges, nodes = components(edges,nodes,"node_id")
