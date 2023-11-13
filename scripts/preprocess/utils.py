@@ -16,7 +16,6 @@ from scipy.spatial import cKDTree
 from tqdm import tqdm
 tqdm.pandas()
 
-
 def link_nodes_to_nearest_edge(network, condition=None, tolerance=1e-9):
     """Link nodes to all edges within some distance"""
     new_node_geoms = []
@@ -255,3 +254,21 @@ def network_od_path_estimations(graph,
 
     
     return edge_path_list, path_gcost_list
+
+def create_igraph_from_dataframe(graph_dataframe, directed=False, simple=False):
+    graph = ig.Graph.TupleList(
+        graph_dataframe.itertuples(index=False),
+        edge_attrs=list(graph_dataframe.columns)[2:],
+        directed=directed
+    )
+    if simple:
+        graph.simplify()
+
+    es, vs, simple = graph.es, graph.vs, graph.is_simple()
+    d = "directed" if directed else "undirected"
+    s = "simple" if simple else "multi"
+    print(
+        "Created {}, {} {}: {} edges, {} nodes.".format(
+            s, d, "igraph", len(es), len(vs)))
+
+    return graph
