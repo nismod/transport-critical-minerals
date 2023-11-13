@@ -17,7 +17,7 @@ def main(config):
     
     epsg_meters = 3395 # To convert geometries to measure distances in meters
     mine_id_column = "mine_id"
-    road_id_column = "edge_id"
+    road_id_column = "id"
     # Read the mining data from the global extract
     mines = gpd.read_file(os.path.join(incoming_data_path,
                             "mines_spatial_locations",
