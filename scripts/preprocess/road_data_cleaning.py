@@ -45,7 +45,7 @@ def main(config):
         print (mine_intersects)
         mine_intersects = mine_intersects[~mine_intersects[road_id_column].isna()]
         print (mine_intersects)
-        print (f"* Done with country - {mc}")
+        print (f"* Done with country - {m_c}")
 
 
 
