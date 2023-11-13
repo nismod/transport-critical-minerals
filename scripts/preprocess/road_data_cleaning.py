@@ -31,21 +31,32 @@ def main(config):
                             "edges_with_topology.geoparquet"))
     road_edges = road_edges.to_crs(epsg=epsg_meters)
 
-    # We assume all the mines intersect the networks of the countries they are within
-    # Seems like only a few mines are border mines, so our assumption is fine
-    for m_c in mine_countries:
-        country_roads = road_edges[(
-                    road_edges["from_iso_a3"] == m_c
-                    ) & (road_edges["to_iso_a3"] == m_c)]
-        country_mines = mines[mines["shapeGroup_primary_admin0"] == m_c]
-        # intersect mines with roads first to find which mines have roads on them
-        mine_intersects = gpd.sjoin(country_mines[[mine_id_column,"geometry"]],
-                            country_roads[[road_id_column,"geometry"]],how="left", 
-                            predicate='intersects').reset_index()
-        print (mine_intersects)
-        mine_intersects = mine_intersects[~mine_intersects[road_id_column].isna()]
-        print (mine_intersects)
-        print (f"* Done with country - {m_c}")
+    # test madagascar
+    mdg_roads = road_edges[(
+                    road_edges["from_iso_a3"] == "MDG"
+                    ) & (road_edges["to_iso_a3"] == "MDG")]
+    mdg_roads.to_file(os.path.join(incoming_data_path,
+                            "africa_roads",
+                            "mdg_roads.gpkg"),layer="edges",driver="GPKG")
+
+    # # We assume all the mines intersect the networks of the countries they are within
+    # # Seems like only a few mines are border mines, so our assumption is fine
+    # nearest_roads = []
+    # for m_c in mine_countries:
+    #     country_roads = road_edges[(
+    #                 road_edges["from_iso_a3"] == m_c
+    #                 ) & (road_edges["to_iso_a3"] == m_c)]
+    #     country_mines = mines[mines["shapeGroup_primary_admin0"] == m_c]
+    #     # intersect mines with roads first to find which mines have roads on them
+    #     mine_intersects = gpd.sjoin_nearest(country_mines[[mine_id_column,"geometry"]],
+    #                         country_roads[[road_id_column,"geometry"]],how="left", 
+    #                         predicate='intersects',distance_col="nearest_distance_m").reset_index()
+    #     print (mine_intersects)
+    #     nearest_roads.append(mine_intersects[[mine_id_column,road_id_column,"nearest_distance_m"]])
+    #     print (f"* Done with country - {m_c}")
+
+    # nearest_roads = pd.concat(nearest_roads,axis=0,ignore_index=True)
+
 
 
 
