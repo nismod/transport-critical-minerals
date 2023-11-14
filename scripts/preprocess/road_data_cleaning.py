@@ -80,7 +80,10 @@ def main(config):
     #                 geometry="geometry",
     #                 crs=f"EPSG:{epsg_meters}")
     nearest_roads = nearest_roads.to_crs(epsg=4326)
-    nearest_roads.to_file(os.path.join(incoming_data_path,
+    gpd.GeoDataFrame(nearest_roads,
+    				geometry="geometry",
+                    crs="EPSG:4326").to_file(os.path.join(
+                    		incoming_data_path,
                             "africa_roads",
                             "africa_main_roads.gpkg"),
                         layer="edges",driver="GPKG")
