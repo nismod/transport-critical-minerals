@@ -34,6 +34,9 @@ def main(config):
                             "africa_roads",
                             "edges_with_topology.geoparquet"))
     road_edges = road_edges.to_crs(epsg=epsg_meters) 
+    main_roads = road_edges[
+                        road_edges[road_type_column].isin(main_road_types)
+                        ][road_id_column].values.tolist() 
 
     # We assume all the mines intersect the networks of the countries they are within
     # Seems like only a few mines are border mines, so our assumption is fine
@@ -55,25 +58,27 @@ def main(config):
         del intersected_roads_df, mining_roads
 
         # We just need access to one road in the main roud network, since the rest are connected
-        source = country_roads[country_roads[road_type_column].isin(main_road_types)].from_id.values[0]
-        main_roads = country_roads[
-                        country_roads[road_type_column].isin(main_road_types)
-                        ][road_id_column].values.tolist() 
+        source = country_roads[country_roads[road_type_column].isin(main_road_types)].from_id.values[0] 
         
         graph = create_igraph_from_dataframe(
                 country_roads[["from_id","to_id",road_id_column,"length_m"]])
         n_r, _ = network_od_path_estimations(graph,source, targets,"length_m",road_id_column)
-        connected_roads = list(set([item for sublist in n_r + [main_roads] + [selected_edges] for item in sublist]))
+        connected_roads = list(set([item for sublist in n_r + [selected_edges] for item in sublist]))
         
-        nearest_roads.append(country_roads[country_roads[road_id_column].isin(connected_roads)])
+        # nearest_roads.append(country_roads[country_roads[road_id_column].isin(connected_roads)])
+        nearest_roads += connected_roads
 
         print (f"* Done with country - {m_c}")
 
     # print (nearest_roads)
-    nearest_roads = gpd.GeoDataFrame(
-                    pd.concat(nearest_roads,axis=0,ignore_index=True),
-                    geometry="geometry",
-                    crs=f"EPSG:{epsg_meters}")
+    nearest_roads = list(set(connected_roads + main_roads))
+    nearest_roads = road_edges[
+                        road_edges[road_id_column].isin(nearest_roads)
+                        ]
+    # gpd.GeoDataFrame(
+    #                 pd.concat(nearest_roads,axis=0,ignore_index=True),
+    #                 geometry="geometry",
+    #                 crs=f"EPSG:{epsg_meters}")
     nearest_roads = nearest_roads.to_crs(epsg=4326)
     nearest_roads.to_file(os.path.join(incoming_data_path,
                             "africa_roads",
