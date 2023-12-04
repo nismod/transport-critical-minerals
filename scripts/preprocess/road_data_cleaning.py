@@ -180,11 +180,11 @@ def main(config):
                     del loc_intersects
      
             
-                n_r, _ = network_od_path_estimations(A[0],source, targets,"length_m",road_id_column)
-                connected_roads = list(set([item for sublist in n_r for item in sublist]))
+                    n_r, _ = network_od_path_estimations(A[0],source, targets,"length_m",road_id_column)
+                    connected_roads = list(set([item for sublist in n_r for item in sublist]))
                 
-                # nearest_roads.append(country_roads[country_roads[road_id_column].isin(connected_roads)])
-                nearest_roads += connected_roads
+                    # nearest_roads.append(country_roads[country_roads[road_id_column].isin(connected_roads)])
+                    nearest_roads += connected_roads
 
         print (f"* Done with country - {m_c}")
 
