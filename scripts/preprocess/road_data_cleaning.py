@@ -123,7 +123,6 @@ def main(config):
     countries = []
     for location in location_attributes:
         location_df = gpd.read_file(location['data_path'],layer=location['layer_name'])
-        print (location_df)
         if location['type'] in ('maritime ports','inland ports','railways'):
             location_df = location_df[
                                 location_df[
@@ -133,12 +132,10 @@ def main(config):
         elif location['type'] == "mine":
             location_df = location_df[location_df["continent"] == "Africa"]
         location_df = location_df.to_crs(epsg=epsg_meters)
-        print (location_df)
         location['gdf'] = location_df
         countries += list(set(location_df[location['iso_column']].values.tolist()))
     countries = list(set(countries))
 
-    print (countries)
     nearest_roads = []
     for m_c in countries:
         country_roads = road_edges[(
@@ -166,7 +163,7 @@ def main(config):
                     if l['geometry_type'] == "Polygon":
                         # intersect mines with roads first to find which mines have roads on them
                         loc_intersects = gpd.sjoin_nearest(location_df[[id_col,"geometry"]],
-                                            country_roads[[road_id_column,"geometry"]],
+                                            country_roads[[road_id_column,road_type_column,"geometry"]],
                                             how="left").reset_index()
                          # get the intersected roads which are not the main roads
                         intersected_roads_df = loc_intersects[~loc_intersects[road_type_column].isin(main_road_types)]
