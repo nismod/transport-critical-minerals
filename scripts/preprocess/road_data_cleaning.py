@@ -165,12 +165,14 @@ def main(config):
                         loc_intersects = gpd.sjoin_nearest(location_df[[id_col,"geometry"]],
                                             country_roads[[road_id_column,road_type_column,"geometry"]],
                                             how="left").reset_index()
-                         # get the intersected roads which are not the main roads
-                        intersected_roads_df = loc_intersects[~loc_intersects[road_type_column].isin(main_road_types)]
-                        selected_edges = list(set(intersected_roads_df[road_id_column].values.tolist()))
+                        # get the intersected roads which are not the main roads
+                        # intersected_roads_df = loc_intersects[~loc_intersects[road_type_column].isin(main_road_types)]
+                        # selected_edges = list(set(intersected_roads_df[road_id_column].values.tolist()))
+                        selected_edges = list(set(loc_intersects[road_id_column].values.tolist()))
                         mining_roads = country_roads[country_roads[road_id_column].isin(selected_edges)]
                         targets = list(set(mining_roads.from_id.values.tolist() + mining_roads.to_id.values.tolist()))
-                        del intersected_roads_df, selected_edges, mining_roads
+
+                        del selected_edges, mining_roads
                     else:
                         loc_intersects = ckdnearest(location_df[[id_col,"geometry"]],
                                                 country_nodes[[node_id_column,"geometry"]])
@@ -179,7 +181,7 @@ def main(config):
      
             
                 n_r, _ = network_od_path_estimations(A[0],source, targets,"length_m",road_id_column)
-                connected_roads = list(set([item for sublist in n_r + [selected_edges] for item in sublist]))
+                connected_roads = list(set([item for sublist in n_r for item in sublist]))
                 
                 # nearest_roads.append(country_roads[country_roads[road_id_column].isin(connected_roads)])
                 nearest_roads += connected_roads
