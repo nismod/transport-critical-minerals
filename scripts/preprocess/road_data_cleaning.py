@@ -77,7 +77,7 @@ def main(config):
                                                     ),
                                 'layer_name':'nodes',
                                 'node_type_column':'infra',
-                                'node_type':['IWW ports'],
+                                'node_type':['IWW port'],
                                 'id_column':'node_id',
                                 'iso_column': "iso3",
                                 'geometry_type':'Point'
@@ -99,27 +99,6 @@ def main(config):
 
 
                         ]
-    mines = gpd.read_file(os.path.join(incoming_data_path,
-                            "mines_spatial_locations",
-                            "all_mines_adm.gpkg"))
-    mines = mines[mines["continent"] == "Africa"]
-    mines = mines.to_crs(epsg=epsg_meters)
-    mine_countries = list(set(mines["shapeGroup_primary_admin0"].values.tolist()))
-
-    processing_sites_active = gpd.read_file(
-                            os.path.join(
-                                processed_data_path,
-                                "Minerals",
-                                "africa_mineral_processing_sites_active.gpkg"
-                                )
-                            )
-    processing_sites_inactive = gpd.read_file(
-                            os.path.join(
-                                processed_data_path,
-                                "Minerals",
-                                "africa_mineral_processing_sites_inactive.gpkg"
-                                )
-                            )
 
     # Read the road edges data for Africa
     road_id_column = "id"
@@ -144,67 +123,69 @@ def main(config):
     countries = []
     for location in location_attributes:
         location_df = gpd.read_file(location['data_path'],layer=location['layer_name'])
+        print (location_df)
         if location['type'] in ('maritime ports','inland ports','railways'):
             location_df = location_df[
                                 location_df[
                                     location['node_type_column']
                                     ].isin(location['node_type'])
                                 ]
-        elif location['type'] == "mines":
+        elif location['type'] == "mine":
             location_df = location_df[location_df["continent"] == "Africa"]
         location_df = location_df.to_crs(epsg=epsg_meters)
+        print (location_df)
         location['gdf'] = location_df
         countries += list(set(location_df[location['iso_column']].values.tolist()))
     countries = list(set(countries))
 
+    print (countries)
     nearest_roads = []
     for m_c in countries:
         country_roads = road_edges[(
                     road_edges["from_iso_a3"] == m_c
                     ) & (road_edges["to_iso_a3"] == m_c)]
-        print (country_roads)
-        graph = create_igraph_from_dataframe(
-                country_roads[["from_id","to_id",road_id_column,"length_m"]])
-        A = sorted(graph.clusters().subgraphs(),key=lambda l:len(l.es[road_id_column]),reverse=True)
-        print (len(A))
-        connected_edges = A[0].es[road_id_column]
-        country_roads = country_roads[country_roads[road_id_column].isin(connected_edges)]
-        connected_nodes = list(set(country_roads.from_id.values.tolist() + country_roads.to_id.values.tolist()))
-        country_nodes = road_nodes[road_nodes[node_id_column].isin(connected_nodes)]
-        del connected_edges, connected_nodes, graph
-        """Proximity to different kinds of locations of interest
-        """
-        # We just need access to one road in the main roud network, since the rest are connected
-        source = country_roads[country_roads[road_type_column].isin(main_road_types)].from_id.values[0]
-        for l in location_attributes:
-            id_col = l['id_column']
-            iso_col = l['iso_column']
-            location_df = l['gdf'][[id_col,iso_col,'geometry']]
-            location_df = location_df[location_df[iso_col] == m_c]
-            if len(location_df.index) > 0:
-                if l['geometry_type'] == "Polygon":
-                    # intersect mines with roads first to find which mines have roads on them
-                    loc_intersects = gpd.sjoin_nearest(location_df[[id_col,"geometry"]],
-                                        country_roads[[road_id_column,"geometry"]],
-                                        how="left").reset_index()
-                     # get the intersected roads which are not the main roads
-                    intersected_roads_df = loc_intersects[~loc_intersects[road_type_column].isin(main_road_types)]
-                    selected_edges = list(set(intersected_roads_df[road_id_column].values.tolist()))
-                    mining_roads = country_roads[country_roads[road_id_column].isin(selected_edges)]
-                    targets = list(set(mining_roads.from_id.values.tolist() + mining_roads.to_id.values.tolist()))
-                    del intersected_roads_df, selected_edges, mining_roads
-                else:
-                    loc_intersects = ckdnearest(location_df[[id_col,"geometry"]],
-                                            country_nodes[[node_id_column,"geometry"]])
-                    targets = list(set(loc_intersects[node_id_column].tolist()))
-                del loc_intersects
- 
-        
-            n_r, _ = network_od_path_estimations(A[0],source, targets,"length_m",road_id_column)
-            connected_roads = list(set([item for sublist in n_r + [selected_edges] for item in sublist]))
+        if len(country_roads.index) > 0:
+            graph = create_igraph_from_dataframe(
+                    country_roads[["from_id","to_id",road_id_column,"length_m"]])
+            A = sorted(graph.clusters().subgraphs(),key=lambda l:len(l.es[road_id_column]),reverse=True)
+            connected_edges = A[0].es[road_id_column]
+            country_roads = country_roads[country_roads[road_id_column].isin(connected_edges)]
+            connected_nodes = list(set(country_roads.from_id.values.tolist() + country_roads.to_id.values.tolist()))
+            country_nodes = road_nodes[road_nodes[node_id_column].isin(connected_nodes)]
+            del connected_edges, connected_nodes, graph
+            """Proximity to different kinds of locations of interest
+            """
+            # We just need access to one road in the main roud network, since the rest are connected
+            source = country_roads[country_roads[road_type_column].isin(main_road_types)].from_id.values[0]
+            for l in location_attributes:
+                id_col = l['id_column']
+                iso_col = l['iso_column']
+                location_df = l['gdf'][[id_col,iso_col,'geometry']]
+                location_df = location_df[location_df[iso_col] == m_c]
+                if len(location_df.index) > 0:
+                    if l['geometry_type'] == "Polygon":
+                        # intersect mines with roads first to find which mines have roads on them
+                        loc_intersects = gpd.sjoin_nearest(location_df[[id_col,"geometry"]],
+                                            country_roads[[road_id_column,"geometry"]],
+                                            how="left").reset_index()
+                         # get the intersected roads which are not the main roads
+                        intersected_roads_df = loc_intersects[~loc_intersects[road_type_column].isin(main_road_types)]
+                        selected_edges = list(set(intersected_roads_df[road_id_column].values.tolist()))
+                        mining_roads = country_roads[country_roads[road_id_column].isin(selected_edges)]
+                        targets = list(set(mining_roads.from_id.values.tolist() + mining_roads.to_id.values.tolist()))
+                        del intersected_roads_df, selected_edges, mining_roads
+                    else:
+                        loc_intersects = ckdnearest(location_df[[id_col,"geometry"]],
+                                                country_nodes[[node_id_column,"geometry"]])
+                        targets = list(set(loc_intersects[node_id_column].tolist()))
+                    del loc_intersects
+     
             
-            # nearest_roads.append(country_roads[country_roads[road_id_column].isin(connected_roads)])
-            nearest_roads += connected_roads
+                n_r, _ = network_od_path_estimations(A[0],source, targets,"length_m",road_id_column)
+                connected_roads = list(set([item for sublist in n_r + [selected_edges] for item in sublist]))
+                
+                # nearest_roads.append(country_roads[country_roads[road_id_column].isin(connected_roads)])
+                nearest_roads += connected_roads
 
         print (f"* Done with country - {m_c}")
 
