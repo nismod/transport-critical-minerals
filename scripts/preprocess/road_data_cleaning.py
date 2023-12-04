@@ -144,7 +144,7 @@ def main(config):
     countries = []
     for location in location_attributes:
         location_df = gpd.read_file(location['data_path'],layer=location['layer_name'])
-        if location['type'] is in ('maritime ports','inland ports','railways'):
+        if location['type'] in ('maritime ports','inland ports','railways'):
             location_df = location_df[
                                 location_df[
                                     location['node_type_column']
