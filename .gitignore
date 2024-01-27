@@ -10,7 +10,7 @@ processed_data/*
 # Editor config
 .vscode
 config.json
-.csv
+*.csv
 
 # Filesystem
 *DS_Store
