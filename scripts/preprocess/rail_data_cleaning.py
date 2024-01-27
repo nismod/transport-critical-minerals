@@ -438,7 +438,7 @@ def main(config):
             if del_col in nodes.columns.values.tolist():
                 nodes.drop(del_col,axis=1,inplace=True)
         
-        nodes.rename(columns={"oid":"id"},inplace=True)
+        nodes.rename(columns={"oid":"id","type":"infra"},inplace=True)
 
         edges = gpd.GeoDataFrame(edges,geometry="geometry",crs=rail_edges.crs)
         if "length" in edges.columns.values.tolist():
@@ -448,18 +448,18 @@ def main(config):
         edges = edges.to_crs(epsg=df_crs)
 
         edges = pd.merge(edges,nodes[["id","iso3"]],how="left",left_on=["source"],right_on=["id"])
-        edges.rename(columns={"iso3":"from_iso"},inplace=True)
+        edges.rename(columns={"iso3":"from_iso_a3"},inplace=True)
         edges.drop("id",axis=1,inplace=True)
 
         edges = pd.merge(edges,nodes[["id","iso3"]],how="left",left_on=["target"],right_on=["id"])
-        edges.rename(columns={"iso3":"to_iso"},inplace=True)
+        edges.rename(columns={"iso3":"to_iso_a3"},inplace=True)
         edges.drop("id",axis=1,inplace=True)
 
         nodes["id"] = nodes.progress_apply(lambda x:f"railn_{x.id}",axis=1)
         edges["oid"] = edges.progress_apply(lambda x:f"raile_{x.oid}",axis=1)
         edges["source"] = edges.progress_apply(lambda x:f"railn_{x.source}",axis=1)
         edges["target"] = edges.progress_apply(lambda x:f"railn_{x.target}",axis=1)
-        edges.rename(columns={"oid":"id","source":"from_id","target":"to_id"},inplace=True)
+        edges.rename(columns={"oid":"id","source":"from_id","target":"to_id","type":"infra"},inplace=True)
 
         gpd.GeoDataFrame(nodes,
                 geometry="geometry",

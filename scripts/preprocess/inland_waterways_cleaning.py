@@ -12,6 +12,31 @@ from updated_utils import *
 from tqdm import tqdm
 tqdm.pandas()
 
+def add_iso_code(df,df_id_column,incoming_data_path,epsg=4326):
+    # Insert countries' ISO CODE
+    africa_boundaries = gpd.read_file(os.path.join(
+                            incoming_data_path,
+                            "Africa_GIS Supporting Data",
+                            "a. Africa_GIS Shapefiles",
+                            "AFR_Political_ADM0_Boundaries.shp",
+                            "AFR_Political_ADM0_Boundaries.shp"))
+    africa_boundaries.rename(columns={"DsgAttr03":"iso3","Country":"country"},inplace=True)
+    africa_boundaries = africa_boundaries.to_crs(epsg=epsg)
+    # Spatial join
+    for c in ['iso3','country']:
+        if c in df.columns.values.tolist():
+            df.drop(c,axis=1,inplace=True)
+    m = gpd.sjoin(df, 
+                    africa_boundaries[['geometry', 'iso3','country']], 
+                    how="left", predicate='within').reset_index()
+    m = m[~m["iso3"].isna()]        
+    un = df[~df[df_id_column].isin(m[df_id_column].values.tolist())]
+    un = gpd.sjoin_nearest(un,
+                            africa_boundaries[['geometry', 'iso3','country']], 
+                            how="left").reset_index()
+    m = pd.concat([m,un],axis=0,ignore_index=True)
+    return m
+
 def main(config):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
@@ -77,7 +102,11 @@ def main(config):
                                 geometry_precision=True)
     edges = network.edges.set_crs(epsg=epsg_meters)
     nodes = network.nodes.set_crs(epsg=epsg_meters)
-    edges, nodes = components(edges,nodes,"node_id")
+    edges, nodes = components(edges,nodes,
+                                node_id_column="node_id",
+                                edge_id_column="edge_id",
+                                from_node_column="from_node",
+                                to_node_column="to_node")
 
     # Get the specific routes that connect IWW ports in Congo basin
     # Reject other routes
@@ -99,6 +128,42 @@ def main(config):
     
     all_nodes = list(set(africa_edges["from_node"].values.tolist() + africa_edges["to_node"].values.tolist()))
     africa_nodes = nodes[nodes["node_id"].isin(all_nodes)]
+
+    africa_nodes["infra"] = np.where(africa_nodes["infra"] == "IWW port",
+                                    africa_nodes["infra"],
+                                    "IWW route")
+    missing_isos = africa_nodes[africa_nodes["iso3"].isna()]
+    print (missing_isos)
+    missing_isos = add_iso_code(missing_isos,"node_id",incoming_data_path,epsg=epsg_meters)
+    for del_col in ["index","index_right","lat","lon"]:
+        if del_col in missing_isos.columns.values.tolist():
+            missing_isos.drop(del_col,axis=1,inplace=True) 
+    iso_nodes = africa_nodes[~africa_nodes["iso3"].isna()]
+    print (iso_nodes)
+    print (missing_isos)
+
+    africa_nodes = pd.concat([iso_nodes,missing_isos],axis=0,ignore_index=True)
+    africa_nodes.drop(["lat","lon"],axis=1,inplace=True)
+    africa_nodes = gpd.GeoDataFrame(africa_nodes[["node_id","name","country",
+                            "iso3","infra","component","geometry"]],
+                            geometry="geometry",crs=f"EPSG:{epsg_meters}")
+    print (africa_nodes)
+    print (africa_edges)
+
+    africa_edges = pd.merge(africa_edges,
+                        africa_nodes[["node_id","iso3","infra"]],
+                        how="left",left_on=["from_node"],right_on=["node_id"])
+    africa_edges.rename(columns={"iso3":"from_iso_a3","infra":"from_infra"},inplace=True)
+    africa_edges.drop("node_id",axis=1,inplace=True)
+    africa_edges = pd.merge(africa_edges,
+                        africa_nodes[["node_id","iso3","infra"]],
+                        how="left",left_on=["to_node"],right_on=["node_id"])
+    africa_edges.rename(columns={"iso3":"to_iso_a3","infra":"to_infra"},inplace=True)
+    africa_edges.drop("node_id",axis=1,inplace=True)
+    africa_edges["length_m"] = africa_edges.geometry.length
+    africa_edges.rename(columns={"edge_id":"id","from_node":"from_id","to_node":"to_id"},inplace=True)
+    africa_nodes.rename(columns={"node_id":"id"},inplace=True)
+    print (africa_edges)
 
     africa_edges = africa_edges.to_crs(epsg=4326)
     africa_nodes = africa_nodes.to_crs(epsg=4326)

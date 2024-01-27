@@ -60,20 +60,23 @@ def convert_json_geopandas(df,epsg=4326):
 
     return gpd.GeoDataFrame(pd.DataFrame(layer_dict),geometry="geometry", crs=f"EPSG:{epsg}")
 
-def components(edges,nodes,node_id_col):
+def components(edges,nodes,
+                node_id_column="id",edge_id_column="id",
+                from_node_column="from_id",to_node_column="to_id"):
     G = networkx.Graph()
     G.add_nodes_from(
-        (getattr(n, node_id_col), {"geometry": n.geometry}) for n in nodes.itertuples()
+        (getattr(n, node_id_column), {"geometry": n.geometry}) for n in nodes.itertuples()
     )
     G.add_edges_from(
-        (e.from_node, e.to_node, {"edge_id": e.edge_id, "geometry": e.geometry})
+        (getattr(e,from_node_column), getattr(e,to_node_column), 
+            {edge_id_column: getattr(e,edge_id_column), "geometry": e.geometry})
         for e in edges.itertuples()
     )
     components = networkx.connected_components(G)
     for num, c in enumerate(components):
         print(f"Component {num} has {len(c)} nodes")
-        edges.loc[(edges.from_node.isin(c) | edges.to_node.isin(c)), "component"] = num
-        nodes.loc[nodes[node_id_col].isin(c), "component"] = num
+        edges.loc[(edges[from_node_column].isin(c) | edges[to_node_column].isin(c)), "component"] = num
+        nodes.loc[nodes[node_id_column].isin(c), "component"] = num
 
     return edges, nodes
 
