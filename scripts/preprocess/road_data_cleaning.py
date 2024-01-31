@@ -31,6 +31,16 @@ def main(config):
                                 'geometry_type':'Polygon'
                             },
                             {
+                                'type':'mine_s_p',
+                                'data_path':os.path.join(processed_data_path,
+                                                        "Minerals",
+                                                        "s_and_p_mines_global_all.gpkg"),
+                                'layer_name':None,
+                                'id_column':'property_ID',
+                                'iso_column': "ISO_A3",
+                                'geometry_type':'Polygon'
+                            },
+                            {
                                 'type':'active processing site',
                                 'data_path':os.path.join(
                                                     processed_data_path,
@@ -131,6 +141,8 @@ def main(config):
                                 ]
         elif location['type'] == "mine":
             location_df = location_df[location_df["continent"] == "Africa"]
+        elif location['type'] == "mine_s_p":
+            location_df = location_df[location_df["CONTINENT"] == "Africa"]
         location_df = location_df.to_crs(epsg=epsg_meters)
         location['gdf'] = location_df
         countries += list(set(location_df[location['iso_column']].values.tolist()))
@@ -198,16 +210,42 @@ def main(config):
     nearest_nodes = road_nodes[road_nodes[node_id_column].isin(connected_nodes)]
     nearest_nodes.rename(columns={road_id_column:"id"},inplace=True)
     nearest_nodes = nearest_nodes.to_crs(epsg=4326)
-    gpd.GeoDataFrame(nearest_nodes,
+
+    edges = nearest_roads[[
+            'from_id','to_id','id','osm_way_id','from_iso_a3','to_iso_a3',
+            'tag_highway', 'tag_surface','tag_bridge','tag_maxspeed','tag_lanes',
+            'bridge','paved','material','lanes','width_m','length_m','asset_type','geometry']]
+    """Find the network components
+    """
+    edges, nearest_nodes = components(edges,nearest_nodes,node_id_column="id")
+    
+    """Assign border roads
+    """
+    edges["border_road"] = np.where(edges["from_iso_a3"] == edges["to_iso_a3"],0,1)
+
+    nearest_nodes = gpd.GeoDataFrame(nearest_nodes,
                     geometry="geometry",
-                    crs="EPSG:4326").to_file(os.path.join(
+                    crs="EPSG:4326")
+
+    edges = gpd.GeoDataFrame(edges,
+                    geometry="geometry",
+                    crs="EPSG:4326")
+
+    nearest_nodes.to_parquet(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "africa_roads_nodes.geoparquet"))
+    edges.to_parquet(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "africa_roads_edges.geoparquet"))
+
+    nearest_roads.to_file(os.path.join(
                             incoming_data_path,
                             "africa_roads",
                             "africa_main_roads.gpkg"),
                         layer="nodes",driver="GPKG")
-    gpd.GeoDataFrame(nearest_roads,
-                    geometry="geometry",
-                    crs="EPSG:4326").to_file(os.path.join(
+    edges.to_file(os.path.join(
                             incoming_data_path,
                             "africa_roads",
                             "africa_main_roads.gpkg"),
