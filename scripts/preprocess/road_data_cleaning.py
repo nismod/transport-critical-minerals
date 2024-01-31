@@ -208,7 +208,7 @@ def main(config):
     nearest_roads = nearest_roads.to_crs(epsg=4326)
     connected_nodes = list(set(nearest_roads.from_id.values.tolist() + nearest_roads.to_id.values.tolist()))
     nearest_nodes = road_nodes[road_nodes[node_id_column].isin(connected_nodes)]
-    nearest_nodes.rename(columns={road_id_column:"id"},inplace=True)
+    nearest_nodes.rename(columns={node_id_column:"id"},inplace=True)
     nearest_nodes = nearest_nodes.to_crs(epsg=4326)
 
     edges = nearest_roads[[
