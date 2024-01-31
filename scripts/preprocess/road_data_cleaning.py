@@ -149,7 +149,7 @@ def main(config):
     countries = list(set(countries))
 
     nearest_roads = []
-    for m_c in countries:
+    for m_c in countries[0]:
         country_roads = road_edges[(
                     road_edges["from_iso_a3"] == m_c
                     ) & (road_edges["to_iso_a3"] == m_c)]
