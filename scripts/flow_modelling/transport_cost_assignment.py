@@ -329,7 +329,8 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
             edges['capacity'] = default_capacity
             if port_to_land_capacity is not None:
                 for idx,(port,capacity) in enumerate(port_to_land_capacity):
-                    edges.loc[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land")),"capacity"] = capacity
+                    cap_factor = 0.5*len(edges[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land"))].index)
+                    edges.loc[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land")),"capacity"] = 1.0*capacity/cap_factor
 
         edges = transport_cost_assignment_function(edges,mode)
         multi_modal_df.append(edges[["from_id","to_id","id","capacity","gcost_usd_tons"]])
@@ -341,7 +342,7 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
 
     return multi_modal_df
 
-def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea","road","IWW"]):
+def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea","road","IWW"],layer_type="edges"):
     config = load_config()
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
@@ -353,28 +354,39 @@ def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea
                                     processed_data_path,
                                     "infrastructure",
                                     "africa_iww_network.gpkg"
-                                        ), layer="edges"
+                                        ), layer=layer_type
                             )
         elif mode == "rail":
             edges = gpd.read_file(os.path.join(
                             processed_data_path,
                             "infrastructure",
                             "africa_railways_network.gpkg"
-                                ), layer="edges"
+                                ), layer=layer_type
                     )
         elif mode == "road":
-            edges = gpd.read_parquet(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_roads_edges.geoparquet"))
+            if layer_type == "edges":
+                edges = gpd.read_parquet(os.path.join(
+                                processed_data_path,
+                                "infrastructure",
+                                "africa_roads_edges.geoparquet"))
+            else:
+                edges = gpd.read_parquet(os.path.join(
+                                processed_data_path,
+                                "infrastructure",
+                                "africa_roads_nodes.geoparquet"))
+                edges.rename(columns={"road_id":merge_column},inplace=True)
+                edges["infra"] = "road"
         elif mode == "sea":
             edges = gpd.read_file(
                     os.path.join(processed_data_path,
                         "infrastructure",
                         "global_maritime_network.gpkg"
-                    ),layer="edges")
+                    ),layer=layer_type)
         edges["mode"] = mode
-        edges = edges[[merge_column,"mode","geometry"]]
+        if layer_type == "edges":
+            edges = edges[[merge_column,"from_id","to_id","mode","geometry"]]
+        else:
+            edges = edges[[merge_column,"iso3","infra","mode","geometry"]]
         flow_edges.append(
             edges[
                 edges[merge_column].isin(flows_dataframe[merge_column].values.tolist())
@@ -388,6 +400,19 @@ def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea
                         how="left",on=[merge_column]
                         ),
                     geometry="geometry",crs="EPSG:4326")
+
+def add_node_degree_to_flows(nodes_flows_dataframe,mineral_class):
+    config = load_config()
+    output_data_path = config['paths']['results']
+    edge_flows_df = gpd.read_file(os.path.join(output_data_path,
+                                    "flow_mapping",
+                                    f"{mineral_class}_flows.gpkg"),
+                                    layer="edges")
+
+    degree_df = edge_flows_df[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
+    nodes_flows_dataframe = pd.merge(nodes_flows_dataframe,degree_df,how="left",on=["id"])
+
+    return gpd.GeoDataFrame(nodes_flows_dataframe,geometry="geometry",crs="EPSG:4326")
 
 
 def connect_mines_to_transport(mines_df,mine_id_col,rail_status="open",distance_threshold=50,default_capacity=1e10):
