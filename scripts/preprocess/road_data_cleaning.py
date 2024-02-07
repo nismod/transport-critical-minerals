@@ -152,7 +152,7 @@ def main(config):
                                 ]
         elif location['type'] == "mine":
             location_df = location_df[location_df["continent"] == "Africa"]
-        elif location['type'] == "mine_s_p":
+        elif location['type'] in ("mine_s_p","population"):
             location_df = location_df[location_df["CONTINENT"] == "Africa"]
         location_df = location_df.to_crs(epsg=epsg_meters)
         location['gdf'] = location_df
