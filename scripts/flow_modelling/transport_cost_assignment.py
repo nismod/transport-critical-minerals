@@ -374,7 +374,7 @@ def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea
                                 processed_data_path,
                                 "infrastructure",
                                 "africa_roads_nodes.geoparquet"))
-                edges.rename(columns={"road_id":merge_column},inplace=True)
+                edges.rename(columns={"road_id":merge_column,"iso_a3":"iso3"},inplace=True)
                 edges["infra"] = "road"
         elif mode == "sea":
             edges = gpd.read_file(

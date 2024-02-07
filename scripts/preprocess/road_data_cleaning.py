@@ -41,6 +41,17 @@ def main(config):
                                 'geometry_type':'Polygon'
                             },
                             {
+                                'type':'population',
+                                'data_path':os.path.join(processed_data_path,
+                                                        "admin_boudaries",
+                                                        "un_urban_population",
+                                                        "un_pop_df.gpkg"),
+                                'layer_name':None,
+                                'id_column':'city_id',
+                                'iso_column': "ISO_A3",
+                                'geometry_type':'Point'
+                            },
+                            {
                                 'type':'active processing site',
                                 'data_path':os.path.join(
                                                     processed_data_path,
@@ -156,7 +167,7 @@ def main(config):
         if len(country_roads.index) > 0:
             graph = create_igraph_from_dataframe(
                     country_roads[["from_id","to_id",road_id_column,"length_m"]])
-            A = sorted(graph.clusters().subgraphs(),key=lambda l:len(l.es[road_id_column]),reverse=True)
+            A = sorted(graph.conected_components().subgraphs(),key=lambda l:len(l.es[road_id_column]),reverse=True)
             connected_edges = A[0].es[road_id_column]
             country_roads = country_roads[country_roads[road_id_column].isin(connected_edges)]
             connected_nodes = list(set(country_roads.from_id.values.tolist() + country_roads.to_id.values.tolist()))

@@ -26,7 +26,8 @@ def main(config):
         os.mkdir(results_folder)
 
     mine_id_col = "mine_cluster_mini"
-    cargo_type = "Dry bulk"
+    # cargo_type = "Dry bulk"
+    cargo_type = "General cargo"
     trade_groupby_columns = ["export_country_code", 
                             "import_country_code", 
                             "export_continent","export_landlocked",
@@ -42,7 +43,7 @@ def main(config):
     """
     # Mine locations in Africa with the copper tonages
     mines_df = gpd.read_file(os.path.join(processed_data_path,
-                                    "Minerals",
+                                    "minerals",
                                     "copper_mines_tons.gpkg"))
     mines_df[mine_id_col] = mines_df.progress_apply(lambda x:f"mine_{x[mine_id_col]}",axis=1)
     # Select only tonnages > 0
@@ -96,8 +97,9 @@ def main(config):
     baci_codes_types = pd.read_csv(os.path.join(processed_data_path,
                             "baci",
                             "commodity_codes_refined_unrefined.csv"))
-    set_port_capacity = [("port137",0.27*1e6)] # Amount of copper restricted for Biera port
-
+    # Amount of copper restricted for Biera and to disallow transhipment via Nacala ports
+    # set_port_capacity = [("port137",0.27*1e6),("port784",0.0)]
+    set_port_capacity = [("port137",0.27*1e6),("port784",0.0)]
     """Create the reference commodity level OD first
     """
     combined_trade_df = []
@@ -242,32 +244,32 @@ def main(config):
         #                                     trade_ton_column,"gcost_usd_tons",
         #                                     "id",origin_id,
         #                                     destination_id)
-        mine_routes = pd.read_parquet(
-                    os.path.join(results_folder,f"{mineral_class}.parquet"))
+        # mine_routes = pd.read_parquet(
+        #             os.path.join(results_folder,f"{mineral_class}.parquet"))
         if len(mine_routes) > 0:
-            # mine_routes = pd.concat(mine_routes,axis=0,ignore_index=True)
-            # c_t_df.rename(columns={trade_ton_column:"initial_tonnage"},inplace=True)
-            # mine_routes = pd.merge(mine_routes,
-            #                 c_t_df[[origin_id,destination_id,"initial_tonnage"]],
-            #                 how="left",on=[origin_id,destination_id])
-            # mine_routes[trade_usd_column] = mine_routes[
-            #                                             trade_usd_column]*mine_routes[
-            #                                             trade_ton_column]/mine_routes["initial_tonnage"]
-            # mine_routes.drop("initial_tonnage",axis=1,inplace=True)
-            # # mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned.csv",index=False)
-            # del c_t_df
+            mine_routes = pd.concat(mine_routes,axis=0,ignore_index=True)
+            c_t_df.rename(columns={trade_ton_column:"initial_tonnage"},inplace=True)
+            mine_routes = pd.merge(mine_routes,
+                            c_t_df[[origin_id,destination_id,"initial_tonnage"]],
+                            how="left",on=[origin_id,destination_id])
+            mine_routes[trade_usd_column] = mine_routes[
+                                                        trade_usd_column]*mine_routes[
+                                                        trade_ton_column]/mine_routes["initial_tonnage"]
+            mine_routes.drop("initial_tonnage",axis=1,inplace=True)
+            # mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned.csv",index=False)
+            del c_t_df
 
-            # # print (mine_routes[[origin_id,destination_id,trade_ton_column,"gcost_usd_tons"]])
-            # if "geometry" in mine_routes.columns.values.tolist():
-            #     mine_routes.drop("geometry",axis=1,inplace=True)
-            # # mine_routes = add_node_paths(mine_routes,network_graph,"id","edge_path")
-            # # mine_routes.to_csv("test.csv")
-            # mine_routes = convert_port_routes(mine_routes,"edge_path","node_path")
-            # mine_routes[[origin_id,destination_id] + od_columns + [
-            #                         "edge_path","node_path","full_edge_path",
-            #                         "full_node_path","gcost_usd_tons"]].to_parquet(
-            #         os.path.join(results_folder,f"{mineral_class}.parquet"),
-            #         index=False)
+            # print (mine_routes[[origin_id,destination_id,trade_ton_column,"gcost_usd_tons"]])
+            if "geometry" in mine_routes.columns.values.tolist():
+                mine_routes.drop("geometry",axis=1,inplace=True)
+            # mine_routes = add_node_paths(mine_routes,network_graph,"id","edge_path")
+            # mine_routes.to_csv("test.csv")
+            mine_routes = convert_port_routes(mine_routes,"edge_path","node_path")
+            mine_routes[[origin_id,destination_id] + od_columns + [
+                                    "edge_path","node_path","full_edge_path",
+                                    "full_node_path","gcost_usd_tons"]].to_parquet(
+                    os.path.join(results_folder,f"{mineral_class}.parquet"),
+                    index=False)
 
             for flow_column in [trade_ton_column,trade_usd_column]:
                 for refined_type in ["unrefined","refined"]:

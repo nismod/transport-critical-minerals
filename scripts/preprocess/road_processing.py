@@ -38,34 +38,71 @@ def main(config):
     #                         "africa_main_roads_edges.geoparquet"))
 
     nodes = gpd.read_parquet(os.path.join(
-                            incoming_data_path,
-                            "africa_roads",
-                            "africa_main_roads_nodes.geoparquet"))
-    edges = gpd.read_parquet(os.path.join(
-                            incoming_data_path,
-                            "africa_roads",
-                            "africa_main_roads_edges.geoparquet"))
-
-    edges = edges[[
-            'from_id','to_id','id','osm_way_id','from_iso_a3','to_iso_a3',
-            'tag_highway', 'tag_surface','tag_bridge','tag_maxspeed','tag_lanes',
-            'bridge','paved','material','lanes','width_m','length_m','asset_type','geometry']]
-    """Find the network components
-    """
-    edges, nodes = components(edges,nodes,node_id_column="road_id")
-    
-    """Assign border roads
-    """
-    edges["border_road"] = np.where(edges["from_iso_a3"] == edges["to_iso_a3"],0,1)
-
-    nodes.to_parquet(os.path.join(
                             processed_data_path,
                             "infrastructure",
                             "africa_roads_nodes.geoparquet"))
-    edges.to_parquet(os.path.join(
+    edges = gpd.read_parquet(os.path.join(
                             processed_data_path,
                             "infrastructure",
                             "africa_roads_edges.geoparquet"))
+    print (nodes)
+    print (edges)
+
+    nodes = nodes[nodes["iso_a3"] == "ZMB"]
+    edges = edges[(edges["from_iso_a3"] == "ZMB") | (edges["to_iso_a3"] == "ZMB")]
+    
+    print (nodes)
+    print (edges)
+
+    nodes.to_file(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "zambia_roads.gpkg"),layer="nodes",driver="GPKG")
+    edges.to_file(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "zambia_roads.gpkg"),layer="edges",driver="GPKG")
+
+    nodes = gpd.read_file(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "africa_railways_network.gpkg"),layer="nodes")
+    edges = gpd.read_file(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "africa_railways_network.gpkg"),layer="edges")
+    nodes = nodes[nodes["iso3"] == "ZMB"]
+    edges = edges[(edges["from_iso_a3"] == "ZMB") | (edges["to_iso_a3"] == "ZMB")]
+
+    nodes.to_file(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "zambia_railways.gpkg"),layer="nodes",driver="GPKG")
+    edges.to_file(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "zambia_railways.gpkg"),layer="edges",driver="GPKG")
+
+    # edges = edges[[
+    #         'from_id','to_id','id','osm_way_id','from_iso_a3','to_iso_a3',
+    #         'tag_highway', 'tag_surface','tag_bridge','tag_maxspeed','tag_lanes',
+    #         'bridge','paved','material','lanes','width_m','length_m','asset_type','geometry']]
+    # """Find the network components
+    # """
+    # edges, nodes = components(edges,nodes,node_id_column="road_id")
+    
+    # """Assign border roads
+    # """
+    # edges["border_road"] = np.where(edges["from_iso_a3"] == edges["to_iso_a3"],0,1)
+
+    # nodes.to_parquet(os.path.join(
+    #                         processed_data_path,
+    #                         "infrastructure",
+    #                         "africa_roads_nodes.geoparquet"))
+    # edges.to_parquet(os.path.join(
+    #                         processed_data_path,
+    #                         "infrastructure",
+    #                         "africa_roads_edges.geoparquet"))
 
     # nodes.to_file(os.path.join(
     #                         incoming_data_path,
