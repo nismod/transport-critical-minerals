@@ -1,23 +1,16 @@
-# TZA - Dar es Salaam
-# NAM - Waalis Bay
-# ZAF - Durban
-# AGO - Lobito
-# MOZ - Biera 
-
 #!/usr/bin/env python
 # coding: utf-8
-import sys
 import os
-import re
-import json
 import pandas as pd
-import igraph as ig
 import geopandas as gpd
 from shapely.geometry import LineString
 from utils import *
-from transport_cost_assignment import *
 from tqdm import tqdm
 tqdm.pandas()
+
+config = load_config()
+incoming_data_path = config['paths']['incoming_data']
+processed_data_path = config['paths']['data']
 
 def create_edges_from_nearest_node_joins(from_df,to_df,
                     from_id_column,to_id_column,
@@ -45,80 +38,82 @@ def create_edges_from_nearest_node_joins(from_df,to_df,
     
     return from_to_df
 
+def get_mode_dataframe(mode,rail_status=["open"],rail_to_road_connection=False):
+    if mode == "sea":
+        nodes =  gpd.read_file(os.path.join(
+                                processed_data_path,
+                                "infrastructure",
+                                "africa_maritime_network.gpkg"
+                                    ), layer="nodes"
+                                )  
+        nodes = nodes[nodes["infra"] == "port"]
+    elif mode == "IWW":
+        nodes = gpd.read_file(os.path.join(
+                                processed_data_path,
+                                "infrastructure",
+                                "africa_iww_network.gpkg"
+                                    ), layer="nodes"
+                                ) 
+        nodes = nodes[nodes["infra"] == "IWW port"]
+    elif mode == "rail":
+        rail_edges = gpd.read_file(os.path.join(
+                                processed_data_path,
+                                "infrastructure",
+                                "africa_railways_network.gpkg"
+                                    ), layer="edges"
+                        )
+        rail_edges = rail_edges[rail_edges["status"].isin(rail_status)]
+        rail_node_ids = list(set(rail_edges["from_id"].values.tolist() + rail_edges["to_id"].values.tolist()))
+        nodes = gpd.read_file(os.path.join(
+                                processed_data_path,
+                                "infrastructure",
+                                "africa_railways_network.gpkg"
+                                    ), layer="nodes"
+                        )
+        nodes = nodes[(nodes["id"].isin(rail_node_ids)) & (nodes["infra"].isin(['stop','station']))]
 
+        degree_df = rail_edges[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
+        nodes = pd.merge(nodes,degree_df,how="left",on=["id"])
 
+        if rail_to_road_connection is True:
+            freight_facility_types = ["port","port (dry)",
+                                        "port (inland)",
+                                        "port (river)",
+                                        "road-rail transfer",
+                                        "container terminal",
+                                        "freight terminal",
+                                        "freight marshalling yard",
+                                        "mining",
+                                        "refinery"]
+            nodes = nodes[
+                                            (
+                                                nodes["facility"].isin(freight_facility_types)
+                                            ) | (
+                                                nodes["degree"] == 1
+                                            )
+                                        ]
+    elif mode == "road": 
+        nodes = gpd.read_parquet(os.path.join(
+                                processed_data_path,
+                                "infrastructure",
+                                "africa_roads_nodes.geoparquet"))
+        nodes.rename(columns={"iso_a3":"iso3"},inplace=True)
 
-def main(config):
-    incoming_data_path = config['paths']['incoming_data']
-    processed_data_path = config['paths']['data']
-    
+    return nodes
+
+def main():
     epsg_meters = 3395 # To convert geometries to measure distances in meters
-
-
-    maritime_nodes =  gpd.read_file(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_maritime_network.gpkg"
-                                ), layer="nodes"
-                            )  
-    maritime_nodes = maritime_nodes[maritime_nodes["infra"] == "port"]
-
-    iww_nodes = gpd.read_file(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_iww_network.gpkg"
-                                ), layer="nodes"
-                            ) 
-    iww_nodes = iww_nodes[iww_nodes["infra"] == "IWW port"]
-
-    rail_edges = gpd.read_file(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_railways_network.gpkg"
-                                ), layer="edges"
-                    )
-    rail_edges = rail_edges[rail_edges["status"] == "open"]
-    rail_node_ids = list(set(rail_edges["from_id"].values.tolist() + rail_edges["to_id"].values.tolist()))
-    rail_nodes = gpd.read_file(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_railways_network.gpkg"
-                                ), layer="nodes"
-                    )
-    rail_nodes = rail_nodes[(rail_nodes["id"].isin(rail_node_ids)) & (rail_nodes["infra"].isin(['stop','station']))]
-
-    degree_df = rail_edges[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
-    rail_nodes = pd.merge(rail_nodes,degree_df,how="left",on=["id"])
-    rail_nodes.to_csv("test.csv")
-
-    freight_facility_types = ["port","port (dry)",
-                                "port (inland)",
-                                "port (river)",
-                                "road-rail transfer",
-                                "container terminal",
-                                "freight terminal",
-                                "freight marshalling yard",
-                                "mining",
-                                "refinery"]
-    rail_to_road_df = rail_nodes[
-                                    (
-                                        rail_nodes["facility"].isin(freight_facility_types)
-                                    ) | (
-                                        rail_nodes["degree"] == 1
-                                    )
-                                ] 
-    road_nodes = gpd.read_parquet(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_roads_nodes.geoparquet"))
-
-    from_infras = [maritime_nodes,maritime_nodes,iww_nodes,iww_nodes,rail_to_road_df]
     from_modes = ["sea","sea","IWW","IWW","rail"]
-    to_infras = [rail_nodes,road_nodes,rail_nodes,road_nodes,road_nodes]
     to_modes = ["rail","road","rail","road","road"]
 
     multi_df = []
-    for idx,(f_df,t_df,f_m,t_m) in enumerate(zip(from_infras,to_infras,from_modes,to_modes)):
+    for idx,(f_m,t_m) in enumerate(zip(from_modes,to_modes)):
+        if f_m == "rail" and t_m == "road":
+            f_df = get_mode_dataframe(f_m,rail_to_road_connection=True)
+        else:
+            f_df = get_mode_dataframe(f_m)
+
+        t_df = get_mode_dataframe(t_m)
         f_t_df = create_edges_from_nearest_node_joins(
                             f_df.to_crs(epsg=epsg_meters),
                             t_df.to_crs(epsg=epsg_meters),
@@ -129,12 +124,12 @@ def main(config):
             multi_df.append(f_t_df)
             c_t_df = f_t_df[["from_id","to_id","from_infra",
                         "to_infra","from_iso_a3","to_iso_a3",
-                        "link_type","geometry"]].copy()
+                        "link_type","length_m","geometry"]].copy()
             c_t_df.columns = ["to_id","from_id",
                         "to_infra","from_infra",
                         "to_iso_a3",
                         "from_iso_a3",
-                        "link_type","geometry"]
+                        "link_type","length_m","geometry"]
             multi_df.append(c_t_df)
 
     multi_df = gpd.GeoDataFrame(
@@ -143,7 +138,6 @@ def main(config):
     multi_df = multi_df.to_crs(epsg=4326)
     multi_df["id"] = multi_df.index.values.tolist()
     multi_df["id"] = multi_df.progress_apply(lambda x:f"intermodale_{x.id}",axis=1)
-    print (multi_df)
     multi_df.to_file(os.path.join(
                             processed_data_path,
                             "infrastructure",
@@ -153,11 +147,5 @@ def main(config):
                             driver="GPKG"
                             )
 
-
-
-
-
-
 if __name__ == '__main__':
-    CONFIG = load_config()
-    main(CONFIG)
+    main()

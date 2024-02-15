@@ -51,15 +51,6 @@ def main(config):
     # Select only tonnages > 0
     mines_df = mines_df[mines_df["mine_output_approx_copper"] > 0]
 
-    # Population locations for urban cities
-    pop_id_col = "city_id"
-    un_pop_df = gpd.read_file(os.path.join(processed_data_path,
-                                    "admin_boundaries",
-                                    "un_urban_population",
-                                    "un_pop_df.gpkg"))
-    un_pop_df = un_pop_df[un_pop_df["CONTINENT"] == "Africa"]
-    un_pop_df = un_pop_df[[pop_id_col,"geometry"]]
-
     # Get the global port network data for Dry Bulk transport
     # We assume CCG critical minerals are transported as Dry Bulk Cargo (General Cargo maybe)
     port_df = pd.read_csv(os.path.join(
@@ -126,23 +117,12 @@ def main(config):
             export_port_ids = list(zip(export_ports_africa["id"].values.tolist(),
                             export_ports_africa[
                                 f"{cargo_type.lower().replace(' ','_')}_annual_vessel_capacity_tons"]))
-            # network_graph = create_mines_to_port_network(mines_df,mine_id_col,
-            #             modes=["sea","intermodal","road","rail"],
-            #             intermodal_ports=export_ports_africa["id"].values.tolist(),
-            #             cargo_type=f"{cargo_type.lower().replace(' ','_')}",
-            #             port_to_land_capacity=export_port_ids
-            #             )
-            network_graph = create_mines_and_cities_to_port_network(
-                                    mines_df,mine_id_col,
-                                    un_pop_df,pop_id_col,
-                                    modes=["sea","intermodal","road","rail"],
-                                    intermodal_ports=export_ports_africa["id"].values.tolist(),
-                                    cargo_type=f"{cargo_type.lower().replace(' ','_')}",
-                                    port_to_land_capacity=export_port_ids
-                                    )
-            # network_graph.to_parquet(os.path.join(results_folder,
-            #             f"global_network_{year}.parquet"),
-            #             index=False)
+            network_graph = create_mines_to_port_network(mines_df,mine_id_col,
+                        modes=["sea","intermodal","road","rail"],
+                        intermodal_ports=export_ports_africa["id"].values.tolist(),
+                        cargo_type=f"{cargo_type.lower().replace(' ','_')}",
+                        port_to_land_capacity=export_port_ids
+                        )
 
             network_graph[trade_ton_column] = 0
             mine_routes, unassinged_routes = od_flow_allocation_capacity_constrained(
@@ -150,16 +130,6 @@ def main(config):
                                                 trade_ton_column,"gcost_usd_tons",
                                                 "id",origin_id,
                                                 destination_id)
-            if len(unassinged_routes) > 0:
-                unassinged_routes = pd.concat(unassinged_routes,axis=0,ignore_index=True)
-                if "geometry" in unassinged_routes.columns.values.tolist():
-                    unassinged_routes.drop("geometry",axis=1,inplace=True)
-                unassinged_routes.to_csv(
-                        os.path.join(results_folder,
-                        f"{mineral_class}_unassigned_flow_paths_{year}.csv"),
-                        index=False)
-            del unassinged_routes
-
             # mine_routes = pd.read_parquet(
             #             os.path.join(results_folder,f"{mineral_class}.parquet"))
             if len(mine_routes) > 0:
@@ -180,18 +150,10 @@ def main(config):
                     mine_routes.drop("geometry",axis=1,inplace=True)
                 # mine_routes = add_node_paths(mine_routes,network_graph,"id","edge_path")
                 # mine_routes.to_csv("test.csv")
-                # mine_routes = get_land_and_sea_costs(mine_routes,
-                #                                         network_graph.drop_duplicates(subset=["id"],keep="first"),
-                #                                     "edge_path","node_path")
-                # mine_routes.to_parquet("test.parquet",index=False)
                 mine_routes = convert_port_routes(mine_routes,"edge_path","node_path")
                 mine_routes[[origin_id,destination_id] + od_columns + [
-                                        "edge_path",
-                                        "node_path",
-                                        "full_edge_path",
-                                        "full_node_path",
-                                        "gcost_usd_tons_path",
-                                        "gcost_usd_tons"]].to_parquet(
+                                        "edge_path","node_path","full_edge_path",
+                                        "full_node_path","gcost_usd_tons"]].to_parquet(
                         os.path.join(results_folder,f"{mineral_class}_flow_paths_{year}.parquet"),
                         index=False)
 
@@ -243,9 +205,18 @@ def main(config):
                 if path_type == "nodes":
                     flows_df = add_node_degree_to_flows(flows_df,mineral_class)
 
+                print (flows_df)
+                
                 flows_df.to_file(os.path.join(results_folder,
                                         f"{mineral_class}_flows_{year}.gpkg"),
                                         layer=path_type,driver="GPKG")
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':

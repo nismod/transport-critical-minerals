@@ -10,6 +10,9 @@ from utils import *
 from tqdm import tqdm
 tqdm.pandas()
 epsg_meters = 3395
+config = load_config()
+incoming_data_path = config['paths']['incoming_data']
+processed_data_path = config['paths']['data']
 
 def assign_road_speeds(x):
     if float(x.tag_maxspeed) > 0:
@@ -22,11 +25,7 @@ def assign_road_speeds(x):
         return min(x["Urban_min"],x["Rural_min"]),min(x["Urban_max"],x["Rural_max"])
 
 
-def transport_cost_assignment_function(network_edges,transport_mode):
-    config = load_config()
-    incoming_data_path = config['paths']['incoming_data']
-    processed_data_path = config['paths']['data']
-    
+def transport_cost_assignment_function(network_edges,transport_mode):    
     costs_df = pd.read_csv(
                         os.path.join(
                             processed_data_path,
@@ -69,9 +68,6 @@ def transport_cost_assignment_function(network_edges,transport_mode):
                             "sea_cost_tonne_h_shipper",
                             "IWW_cost_tonne_h_shipper"],axis=1,inplace=True)   
     network_edges[f"{transport_mode}_cost_tonne_h_shipper"] = network_edges[f"{transport_mode}_cost_tonne_h_shipper"].fillna(0)
-    # network_edges[f"{transport_mode}_cost_tonne_h_shipper"] = network_edges[f"{transport_mode}_cost_tonne_h_shipper"].mean()
-    # if transport_mode != "sea":
-    #     network_edges[f"{transport_mode}_cost_tonne_h_shipper"] = network_edges[f"{transport_mode}_cost_tonne_h_shipper"].mean()
     network_edges.drop("iso3",axis=1,inplace=True)
     if transport_mode in ("road","rail"):
         inter_country_costs_df = pd.read_csv(
@@ -255,12 +251,8 @@ def transport_cost_assignment_function(network_edges,transport_mode):
     return network_edges
 
 def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
-                            rail_status="open",intermodal_ports="all",cargo_type="general_cargo",
-                            default_capacity=1e10,port_to_land_capacity=None):
-    config = load_config()
-    incoming_data_path = config['paths']['incoming_data']
-    processed_data_path = config['paths']['data']
-    
+                            rail_status=["open"],intermodal_ports="all",cargo_type="general_cargo",
+                            default_capacity=1e10,port_to_land_capacity=None):    
     multi_modal_df = []
     for mode in modes:
         if mode == "IWW":
@@ -278,7 +270,7 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
                             "africa_railways_network.gpkg"
                                 ), layer="edges"
                     )
-            edges = edges[edges["status"] == rail_status]
+            edges = edges[edges["status"].isin(rail_status)]
             edges['capacity'] = default_capacity
         elif mode == "road":
             edges = gpd.read_parquet(os.path.join(
@@ -331,22 +323,18 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
                 for idx,(port,capacity) in enumerate(port_to_land_capacity):
                     cap_factor = 0.5*len(edges[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land"))].index)
                     edges.loc[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land")),"capacity"] = 1.0*capacity/cap_factor
-
+        edges["mode"] = mode
         edges = transport_cost_assignment_function(edges,mode)
-        multi_modal_df.append(edges[["from_id","to_id","id","capacity","gcost_usd_tons"]])
+        multi_modal_df.append(edges[["from_id","to_id","id","mode","capacity","gcost_usd_tons"]])
         if mode in ("road","rail"):
-            add_edges = edges[["from_id","to_id","id","capacity","gcost_usd_tons"]].copy()
-            add_edges.columns = ["to_id","from_id","id","capacity","gcost_usd_tons"]
+            add_edges = edges[["from_id","to_id","id","mode","capacity","gcost_usd_tons"]].copy()
+            add_edges.columns = ["to_id","from_id","id","mode","capacity","gcost_usd_tons"]
             multi_modal_df.append(add_edges)
 
 
     return multi_modal_df
 
-def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea","road","IWW"],layer_type="edges"):
-    config = load_config()
-    incoming_data_path = config['paths']['incoming_data']
-    processed_data_path = config['paths']['data']
-    
+def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea","road","IWW"],layer_type="edges"):    
     flow_edges = []
     for mode in modes:
         if mode == "IWW":
@@ -402,8 +390,6 @@ def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea
                     geometry="geometry",crs="EPSG:4326")
 
 def add_node_degree_to_flows(nodes_flows_dataframe,mineral_class):
-    config = load_config()
-    output_data_path = config['paths']['results']
     edge_flows_df = gpd.read_file(os.path.join(output_data_path,
                                     "flow_mapping",
                                     f"{mineral_class}_flows.gpkg"),
@@ -415,12 +401,72 @@ def add_node_degree_to_flows(nodes_flows_dataframe,mineral_class):
     return gpd.GeoDataFrame(nodes_flows_dataframe,geometry="geometry",crs="EPSG:4326")
 
 
-def connect_mines_to_transport(mines_df,mine_id_col,rail_status="open",distance_threshold=50,default_capacity=1e10):
-    config = load_config()
-    incoming_data_path = config['paths']['incoming_data']
-    processed_data_path = config['paths']['data']
+# def connect_mines_to_transport(mines_df,mine_id_col,rail_status="open",distance_threshold=50,default_capacity=1e10):
+#     config = load_config()
+#     incoming_data_path = config['paths']['incoming_data']
+#     processed_data_path = config['paths']['data']
 
-    mine_transport_df = []
+#     mine_transport_df = []
+#     for mode in ["rail","road"]:
+#         if mode == "rail":
+#             edges = gpd.read_file(os.path.join(
+#                                     processed_data_path,
+#                                     "infrastructure",
+#                                     "africa_railways_network.gpkg"
+#                                         ), layer="edges"
+#                             )
+#             edges = edges[edges["status"] == rail_status]
+#             node_ids = list(set(edges["from_id"].values.tolist() + edges["to_id"].values.tolist()))
+#             nodes = gpd.read_file(os.path.join(
+#                                     processed_data_path,
+#                                     "infrastructure",
+#                                     "africa_railways_network.gpkg"
+#                                         ), layer="nodes"
+#                             )
+#             nodes = nodes[(nodes["id"].isin(node_ids)) & (nodes["infra"].isin(['stop','station']))]
+#         else:
+#             nodes = gpd.read_parquet(os.path.join(
+#                             processed_data_path,
+#                             "infrastructure",
+#                             "africa_roads_nodes.geoparquet"))
+#             nodes.rename(columns={"road_id":"id"},inplace=True)
+
+
+#         """Find mines attached to rail and roads
+#         """
+#         mine_node_intersects = gpd.sjoin_nearest(mines_df[[mine_id_col,"geometry"]].to_crs(epsg=epsg_meters),
+#                                 nodes[["id","geometry"]].to_crs(epsg=epsg_meters),
+#                                 how="left",distance_col="distance").reset_index()
+#         if mode == "rail":
+#             mine_node_intersects = mine_node_intersects[mine_node_intersects["distance"] <= distance_threshold]
+        
+#         mine_node_intersects = mine_node_intersects.drop_duplicates(subset=[mine_id_col],keep="first")
+#         mine_node_intersects = mine_node_intersects[[mine_id_col,"id"]]
+#         mine_node_intersects.columns = ["from_id","to_id"]
+#         mine_transport_df.append(mine_node_intersects)
+#         mine_dup = mine_node_intersects.copy()
+#         mine_dup.columns = ["to_id","from_id"]
+#         mine_transport_df.append(mine_dup)
+    
+#     if len(mine_transport_df) > 0:
+#         mine_transport_df = pd.concat(mine_transport_df,axis=0,ignore_index=True)
+#         mine_transport_df["id"] = mine_transport_df.index.values.tolist()
+#         mine_transport_df["id"] = mine_transport_df.progress_apply(lambda x:f"minetransporte{x.id}",axis=1)
+#         mine_transport_df["capacity"] = default_capacity
+#         mine_transport_df["gcost_usd_tons"] = 0
+#         mine_transport_df["mode"] = "mine"
+
+
+#         return [mine_transport_df]
+    # else:
+    #     return mine_transport_df
+
+def connect_points_to_transport(points_df,points_id_col,
+                            points_type,
+                            rail_status=["open"],
+                            distance_threshold=50,
+                            default_capacity=1e10):
+    points_transport_df = []
     for mode in ["rail","road"]:
         if mode == "rail":
             edges = gpd.read_file(os.path.join(
@@ -429,7 +475,7 @@ def connect_mines_to_transport(mines_df,mine_id_col,rail_status="open",distance_
                                     "africa_railways_network.gpkg"
                                         ), layer="edges"
                             )
-            edges = edges[edges["status"] == "open"]
+            edges = edges[edges["status"].isin(rail_status)]
             node_ids = list(set(edges["from_id"].values.tolist() + edges["to_id"].values.tolist()))
             nodes = gpd.read_file(os.path.join(
                                     processed_data_path,
@@ -448,44 +494,51 @@ def connect_mines_to_transport(mines_df,mine_id_col,rail_status="open",distance_
 
         """Find mines attached to rail and roads
         """
-        mine_node_intersects = gpd.sjoin_nearest(mines_df[[mine_id_col,"geometry"]].to_crs(epsg=epsg_meters),
+        points_node_intersects = gpd.sjoin_nearest(points_df[[points_id_col,"geometry"]].to_crs(epsg=epsg_meters),
                                 nodes[["id","geometry"]].to_crs(epsg=epsg_meters),
                                 how="left",distance_col="distance").reset_index()
         if mode == "rail":
-            mine_node_intersects = mine_node_intersects[mine_node_intersects["distance"] <= distance_threshold]
+            points_node_intersects = points_node_intersects[points_node_intersects["distance"] <= distance_threshold]
         
-        mine_node_intersects = mine_node_intersects.drop_duplicates(subset=[mine_id_col],keep="first")
-        mine_node_intersects = mine_node_intersects[[mine_id_col,"id"]]
-        mine_node_intersects.columns = ["from_id","to_id"]
-        mine_transport_df.append(mine_node_intersects)
-        mine_dup = mine_node_intersects.copy()
-        mine_dup.columns = ["to_id","from_id"]
-        mine_transport_df.append(mine_dup)
+        points_node_intersects = points_node_intersects.drop_duplicates(subset=[points_id_col],keep="first")
+        points_node_intersects = points_node_intersects[[points_id_col,"id"]]
+        points_node_intersects.columns = ["from_id","to_id"]
+        points_transport_df.append(points_node_intersects)
+        points_dup = points_node_intersects.copy()
+        points_dup.columns = ["to_id","from_id"]
+        points_transport_df.append(points_dup)
     
-    if len(mine_transport_df) > 0:
-        mine_transport_df = pd.concat(mine_transport_df,axis=0,ignore_index=True)
-        mine_transport_df["id"] = mine_transport_df.index.values.tolist()
-        mine_transport_df["id"] = mine_transport_df.progress_apply(lambda x:f"minetransporte{x.id}",axis=1)
-        mine_transport_df["capacity"] = default_capacity
-        mine_transport_df["gcost_usd_tons"] = 0
+    if len(points_transport_df) > 0:
+        points_transport_df = pd.concat(points_transport_df,axis=0,ignore_index=True)
+        points_transport_df["id"] = points_transport_df.index.values.tolist()
+        points_transport_df["id"] = points_transport_df.progress_apply(
+                                                lambda x:f"{points_type}transporte{x.id}",
+                                                axis=1)
+        points_transport_df["capacity"] = default_capacity
+        points_transport_df["gcost_usd_tons"] = 0
+        points_transport_df["mode"] = points_type
 
 
-        return [mine_transport_df]
+        return [points_transport_df]
     else:
-        return mine_transport_df
+        return points_transport_df
 
 def create_mines_to_port_network(mines_df,mine_id_col,
                     modes=["IWW","rail","road","sea","intermodal"],
-                    rail_status="open",distance_threshold=50,
-                    network_columns=["from_id","to_id","id","capacity","gcost_usd_tons"],
+                    rail_status=["open"],distance_threshold=50,
+                    network_columns=["from_id","to_id","id","mode","capacity","gcost_usd_tons"],
                     intermodal_ports="all",cargo_type="general_cargo",port_to_land_capacity=None):
     multi_modal_df = multimodal_network_assembly(modes=modes,
                     rail_status=rail_status,
                     intermodal_ports=intermodal_ports,
                     cargo_type=cargo_type,port_to_land_capacity=port_to_land_capacity)
-    mine_transport_df  = connect_mines_to_transport(mines_df,mine_id_col,
-                                    rail_status=rail_status,
-                                    distance_threshold=distance_threshold)
+    # mine_transport_df = connect_mines_to_transport(mines_df,mine_id_col,
+    #                                 rail_status=rail_status,
+    #                                 distance_threshold=distance_threshold)
+    mine_transport_df = connect_points_to_transport(mines_df,mine_id_col,
+                            "mine",
+                            rail_status=rail_status,
+                            distance_threshold=distance_threshold)
 
     network_df = pd.concat(mine_transport_df+multi_modal_df,axis=0,ignore_index=True)
     # gpd.GeoDataFrame(network_df,
@@ -494,7 +547,127 @@ def create_mines_to_port_network(mines_df,mine_id_col,
     #         "infrastructure",
     #         "mines_to_port_complete_network.gpkg"),driver="GPKG")
     # return create_igraph_from_dataframe(network_df[network_columns],directed=True)
+    return network_df[network_columns]
+
+def create_mines_and_cities_to_port_network(mines_df,mine_id_col,
+                    cities_df,city_id_col,
+                    modes=["IWW","rail","road","sea","intermodal"],
+                    rail_status=["open"],distance_threshold=50,
+                    network_columns=["from_id","to_id","id","mode","capacity","gcost_usd_tons"],
+                    intermodal_ports="all",cargo_type="general_cargo",port_to_land_capacity=None):
+    multi_modal_df = multimodal_network_assembly(modes=modes,
+                    rail_status=rail_status,
+                    intermodal_ports=intermodal_ports,
+                    cargo_type=cargo_type,port_to_land_capacity=port_to_land_capacity)
+    # mine_transport_df = connect_mines_to_transport(mines_df,mine_id_col,
+    #                                 rail_status=rail_status,
+    #                                 distance_threshold=distance_threshold)
+    mine_transport_df = connect_points_to_transport(mines_df,mine_id_col,
+                            "mine",
+                            rail_status=rail_status,
+                            distance_threshold=distance_threshold)
+    city_transport_df = connect_points_to_transport(cities_df,city_id_col,
+                            "city",
+                            rail_status=rail_status,
+                            distance_threshold=distance_threshold)
+
+    network_df = pd.concat(mine_transport_df+multi_modal_df+city_transport_df,axis=0,ignore_index=True)
+    # gpd.GeoDataFrame(network_df,
+    #     geometry="geometry",crs="EPSG_4326").to_file(
+    #     os.path.join(processed_data_path,
+    #         "infrastructure",
+    #         "mines_to_port_complete_network.gpkg"),driver="GPKG")
+    # return create_igraph_from_dataframe(network_df[network_columns],directed=True)
     return network_df[network_columns]  
+
+def separate_land_and_sea_routes(edges,nodes,network_dataframe,
+                            land_modes=["road","rail","IWW","intermodal"]):
+    if len(edges) > 0:
+        land_edges = []
+        land_nodes = []
+        sea_edges = []
+        sea_nodes = []
+        for e in range(len(edges)):
+            edge = edges[e]
+            for lm in land_modes:
+                if lm in edge:
+                    land_edges.append(edge)
+                    if e == 0:
+                        land_nodes += [nodes[e],nodes[e+1]]
+                    else:
+                        land_nodes += [nodes[e+1]]
+                    break
+                elif "maritime" in edge:
+                    sea_edges.append(edge)
+                    if e == 0:
+                        sea_nodes += [nodes[e],nodes[e+1]]
+                    else:
+                        sea_nodes += [nodes[e+1]]
+                    break
+
+        land_costs = network_dataframe[network_dataframe["id"].isin(land_edges)]["gcost_usd_tons"].sum()
+        sea_costs = network_dataframe[network_dataframe["id"].isin(sea_edges)]["gcost_usd_tons"].sum()
+
+        return land_edges, land_nodes, sea_edges, sea_nodes, land_costs, sea_costs
+    else:
+        return edges, nodes, edges, nodes,0,0
+
+def get_land_and_sea_routes_costs(route_dataframe,network_dataframe,
+                                    edge_path_column,node_path_column):
+    route_dataframe["land_sea_paths_costs"] = route_dataframe.progress_apply(
+                            lambda x:separate_land_and_sea_routes(x[edge_path_column],
+                                        x[node_path_column],
+                                        network_dataframe),
+                            axis=1)
+
+    route_dataframe[
+            [f"land_{edge_path_column}",
+            f"land_{node_path_column}",
+            f"sea_{edge_path_column}",
+            f"sea_{node_path_column}",
+            "land_gcost_usd_tons",
+            f"sea_gcost_usd_tons"]
+            ] = route_dataframe["land_sea_paths_costs"].apply(pd.Series)
+    route_dataframe.drop("land_sea_paths_costs",axis=1,inplace=True)
+    return route_dataframe
+
+def separate_land_and_sea_costs(edges,network_dataframe,
+                            land_modes=["road","rail","IWW","intermodal"]):
+    if len(edges) > 0:
+        land_costs_df = network_dataframe[
+                                        (
+                                            network_dataframe["id"].isin(edges)
+                                        ) & (
+                                            network_dataframe["mode"].isin(land_modes)
+                                        )]
+        land_costs_df = land_costs_df.drop_duplicates(subset=["id"],keep="first")
+
+        sea_costs_df = network_dataframe[
+                                        (
+                                            network_dataframe["id"].isin(edges)
+                                        ) & (
+                                            network_dataframe["mode"] == "sea"
+                                        )]
+        sea_costs_df = sea_costs_df.drop_duplicates(subset=["id"],keep="first")
+
+        return land_costs_df["gcost_usd_tons"].sum(), sea_costs_df["gcost_usd_tons"].sum()
+    else:
+        return 0,0
+
+def get_land_and_sea_costs(route_dataframe,network_dataframe,
+                                    edge_path_column,node_path_column):
+    route_dataframe["land_sea_costs"] = route_dataframe.progress_apply(
+                            lambda x:separate_land_and_sea_costs(x[edge_path_column],
+                                        network_dataframe),
+                            axis=1)
+
+    route_dataframe[
+            [
+            "land_gcost_usd_tons",
+            "sea_gcost_usd_tons"]
+            ] = route_dataframe["land_sea_costs"].apply(pd.Series)
+    route_dataframe.drop("land_sea_costs",axis=1,inplace=True)
+    return route_dataframe
 
 def add_port_path(edges,nodes,G):
     # print ("edges:",edges)
@@ -509,7 +682,7 @@ def add_port_path(edges,nodes,G):
                 source = source.split("_")[0]
                 target = target.split("_")[0]
                 if source != target:
-                    route,points,_ = network_od_node_edge_path_estimations(G,
+                    route,points,_,_ = network_od_node_edge_path_estimations(G,
                                     source, target,"distance","id")
                     new_edges += route[0]
                     new_nodes += points[0]
@@ -518,15 +691,10 @@ def add_port_path(edges,nodes,G):
                 new_nodes += [target] 
 
         return new_edges,new_nodes
-
     else:
         return edges, nodes
 
 def convert_port_routes(route_dataframe,edge_path_column,node_path_column):
-    config = load_config()
-    incoming_data_path = config['paths']['incoming_data']
-    processed_data_path = config['paths']['data']
-
     global_port_network = gpd.read_file(
                     os.path.join(processed_data_path,
                         "infrastructure",

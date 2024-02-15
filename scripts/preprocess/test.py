@@ -28,30 +28,37 @@ def add_attributes(dataframe,columns_attributes):
 def main(config):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
+    output_data_path = config['paths']['results']
+
+    # results_folder = os.path.join(output_data_path,"flow_mapping")
     
+    # global_df = pd.read_parquet(
+    #                     os.path.join(results_folder,
+    #                     "global_network_2021.parquet"))
+    # print (global_df)
     
-    """change the format of Karla's conversion dataset
-    """
-    df = pd.read_csv("process_summary.csv")
-    print (df)
+    # """change the format of Karla's conversion dataset
+    # """
+    # df = pd.read_csv("process_summary.csv")
+    # print (df)
 
-    index_columns = ["Reference mineral","Activity name",
-                        "Reference product","Unit","Type","Processes","Stage number"]
-    pivot_columns = ["Input/output?","Value","Exchanges"]
+    # index_columns = ["Reference mineral","Activity name",
+    #                     "Reference product","Unit","Type","Processes","Stage number"]
+    # pivot_columns = ["Input/output?","Value","Exchanges"]
 
-    t_df = df[df["Type"] == "Materials"]
-    input_output = t_df[index_columns].drop_duplicates(subset=index_columns,keep="first")
+    # t_df = df[df["Type"] == "Materials"]
+    # input_output = t_df[index_columns].drop_duplicates(subset=index_columns,keep="first")
 
-    inpt = t_df[t_df["Input/output?"] == "Input"] 
-    opt = t_df[t_df["Input/output?"] == "Output"] 
+    # inpt = t_df[t_df["Input/output?"] == "Input"] 
+    # opt = t_df[t_df["Input/output?"] == "Output"] 
 
-    inpt.rename(columns={"Input/output?":"input","Value":"input_kg","Exchanges":"input_exchanges"},inplace=True)
-    opt.rename(columns={"Input/output?":"output","Value":"output_kg","Exchanges":"output_exchanges"},inplace=True)
+    # inpt.rename(columns={"Input/output?":"input","Value":"input_kg","Exchanges":"input_exchanges"},inplace=True)
+    # opt.rename(columns={"Input/output?":"output","Value":"output_kg","Exchanges":"output_exchanges"},inplace=True)
 
-    input_output = pd.merge(input_output,inpt,how="left",on=index_columns)
-    input_output = pd.merge(input_output,opt,how="left",on=index_columns)
-    print (input_output)
-    input_output.to_csv("process_summary_materials.csv",index=False)
+    # input_output = pd.merge(input_output,inpt,how="left",on=index_columns)
+    # input_output = pd.merge(input_output,opt,how="left",on=index_columns)
+    # print (input_output)
+    # input_output.to_csv("process_summary_materials.csv",index=False)
     
     # epsg_meters = 3395 # To convert geometries to measure distances in meters
     # distance_threshold = 1000 # Join point within 50cm of each other
@@ -64,16 +71,16 @@ def main(config):
     #                         "africa_roads_edges.geoparquet"))
     # print (road_edges.columns.values.tolist())
 
-    # road_nodes = gpd.read_parquet(os.path.join(
-    #                         processed_data_path,
-    #                         "infrastructure",
-    #                         "africa_roads_nodes.geoparquet"))
-    # road_nodes.rename(columns={"road_id":"id","iso_a3":"iso3"},inplace=True)
+    road_nodes = gpd.read_parquet(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "africa_roads_nodes.geoparquet"))
+    road_nodes.rename(columns={"road_id":"id","iso_a3":"iso3"},inplace=True)
     # road_nodes.to_parquet(os.path.join(
     #                         processed_data_path,
     #                         "infrastructure",
     #                         "africa_roads_nodes.geoparquet"))
-    # print (road_nodes.columns.values.tolist())
+    print (road_nodes.columns.values.tolist())
 
 
     # condition = False

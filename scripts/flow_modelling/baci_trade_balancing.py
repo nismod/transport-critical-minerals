@@ -10,9 +10,9 @@ from collections import defaultdict
 from utils import *
 from tqdm import tqdm
 
-sa_copper_refining = [("Cupric",-26.210465466416426, 28.081329454232627),
-                    ("African Pegmatite",-26.563559654313774, 28.013720446371085),
-                    ("Axis House",-34.03933861128403, 18.349777281481728)]
+# sa_copper_refining = [("Cupric",-26.210465466416426, 28.081329454232627),
+#                     ("African Pegmatite",-26.563559654313774, 28.013720446371085),
+#                     ("Axis House",-34.03933861128403, 18.349777281481728)]
 def modify_from_string_to_float(x,column_name):
     value = str(x[column_name]).strip()
     if value != "NA":
@@ -201,14 +201,6 @@ def main(config):
                         ].to_csv(os.path.join(processed_data_path,
                                             "baci",
                                             f"baci_ccg_country_level_trade_{year}.csv"),index=False)
-
-    
-
-    
-
-        
-
-
 
 if __name__ == '__main__':
     CONFIG = load_config()

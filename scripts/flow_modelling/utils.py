@@ -360,17 +360,21 @@ def network_od_node_edge_path_estimations(graph,
     edge_path_list = []
     node_path_list = []
     path_gcost_list = []
+    total_path_gcost_list = []
     # for p in range(len(paths)):
     for path in edge_paths:
         edge_path = []
-        path_gcost = 0
+        path_gcost = []
+        total_gcost = 0
         if path:
             for n in path:
                 edge_path.append(graph.es[n][path_id_column])
-                path_gcost += graph.es[n][cost_criteria]
+                path_gcost.append(graph.es[n][cost_criteria])
+            total_gcost = sum(path_gcost)
 
         edge_path_list.append(edge_path)
         path_gcost_list.append(path_gcost)
+        total_path_gcost_list.append(total_gcost)
     for path in node_paths:
         node_path = []
         if path:
@@ -378,7 +382,7 @@ def network_od_node_edge_path_estimations(graph,
                 node_path.append(graph.vs[n]["name"])
         node_path_list.append(node_path)
     
-    return edge_path_list,node_path_list,path_gcost_list    
+    return edge_path_list,node_path_list,path_gcost_list,total_path_gcost_list    
 
 def network_od_node_edge_paths_assembly(points_dataframe, graph,
                                 cost_criteria,path_id_column,
@@ -414,20 +418,21 @@ def network_od_node_edge_paths_assembly(points_dataframe, graph,
         try:
             destinations = list(set(points_dataframe.loc[[origin], destination_id_column].values.tolist()))
 
-            get_epath,get_npath,get_gcost = network_od_node_edge_path_estimations(
+            get_epath,get_npath,get_cpath, get_gcost = network_od_node_edge_path_estimations(
                     graph, origin, destinations, cost_criteria,path_id_column)
 
             # tons = points_dataframe.loc[[origin], tonnage_column].values
             save_paths += list(zip([origin]*len(destinations),
                                 destinations, get_epath,get_npath,
-                                get_gcost))
+                                get_cpath,get_gcost))
 
             # print(f"done with {origin}")
         except:
             print(f"* no path between {origin}-{destinations}")
     
     cols = [
-        origin_id_column, destination_id_column, 'edge_path','node_path',cost_criteria
+        origin_id_column, destination_id_column, 'edge_path','node_path',f'{cost_criteria}_path',
+        cost_criteria
     ]
     save_paths_df = pd.DataFrame(save_paths, columns=cols)
     if store_paths is False:
@@ -812,13 +817,27 @@ def od_flow_allocation_capacity_constrained(flow_ods,network_dataframe,
                                                         network_dataframe,flow_column,path_id_column,subtract=True)
                     network_dataframe.drop("added_flow",axis=1,inplace=True)
                     flow_ods = over_capacity_ods[over_capacity_ods["residual_ratio"] > 0.01]
-                    flow_ods.drop(["edge_path","node_path",cost_column,"residual_ratio"],axis=1,inplace=True)
+                    flow_ods.drop(["edge_path","node_path",f"{cost_column}_path",cost_column,"residual_ratio"],axis=1,inplace=True)
                     del over_capacity_ods
                 else:
                     if store_edge_path is False:
-                        flow_ods.drop(["edge_path","node_path"],axis=1,inplace=True)
+                        flow_ods.drop(["edge_path","node_path",f"{cost_column}_path"],axis=1,inplace=True)
                     capacity_ods.append(flow_ods)
                     network_dataframe.drop(["residual_capacity","added_flow"],axis=1,inplace=True)
                     flow_ods = pd.DataFrame()
 
     return capacity_ods, unassigned_paths
+
+def truncate_by_threshold(flow_dataframe, flow_column='flux', threshold=.99):
+    print(f"Truncating paths with threshold {threshold * 100:.0f}%.")
+    flows_sorted = flow_dataframe.reset_index(drop=True).sort_values(by=flow_column, ascending=False)
+    fluxes_sorted = flows_sorted[flow_column]
+    total_flux = fluxes_sorted.sum()
+    flux_percentiles = fluxes_sorted.cumsum() / total_flux
+    excess = flux_percentiles[flux_percentiles >= threshold]
+    cutoff = excess.idxmin()
+    keep = flux_percentiles[flux_percentiles <= threshold].index
+    flows_truncated = flows_sorted.loc[keep, :]
+    print(f"Number of paths before: {len(flows_sorted):,.0f}.")
+    print(f"Number of paths after: {len(flows_truncated):,.0f}.")
+    return flows_truncated

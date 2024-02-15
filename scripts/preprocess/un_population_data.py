@@ -46,19 +46,24 @@ def main(config):
         print (year_cols)
         pop_df = pd.read_csv(os.path.join(processed_data_path,
                             "admin_boundaries",
+                            "un_urban_population",
                             "un_urban_population_estimates.csv"))
         
         for y in year_cols:
             pop_df[str(y)] = pop_df[str(y)].str.replace(" ",'')
             pop_df[str(y)] = pop_df[str(y)].astype(int)
         pop_df.rename(columns={"Index":"city_id"},inplace=True)
+        pop_df["city_id"] = pop_df.progress_apply(lambda x:f"city_{x.city_id}",axis=1)
         pop_df["geometry"] = gpd.points_from_xy(
                                 pop_df["Longitude"],pop_df["Latitude"])
 
         pop_df = gpd.GeoDataFrame(pop_df,geometry="geometry",crs="EPSG:4326")
         pop_df = add_iso_code(pop_df,"city_id",processed_data_path)
         pop_df = gpd.GeoDataFrame(pop_df,geometry="geometry",crs="EPSG:4326")
-        pop_df.to_file(os.path.join(processed_data_path,"admin_boundaries","un_pop_df.gpkg"),driver="GPKG")
+        pop_df.to_file(os.path.join(processed_data_path,
+                                    "admin_boundaries",
+                                    "un_urban_population",
+                                    "un_pop_df.gpkg"),driver="GPKG")
 
 
 

@@ -27,7 +27,6 @@ def main(config):
 
     mine_id_col = "mine_cluster_mini"
     mine_tons_column = "mine_output_approx_copper"
-    copper_conversion_stage = 3.0
     """Step 1: Get the input datasets
     """
     # Mine locations in Africa with the copper tonages
@@ -41,7 +40,7 @@ def main(config):
 
     # Correct the tons outputs for copper because they do not match country export values
     # Hopefully this will be avoided in future versions of the data
-    correct_tons = True
+    correct_tons = False
     if correct_tons is True:
         trade_groupby_columns = ["reference_mineral","export_country_code", 
                                 "final_refined_stage"]
@@ -96,11 +95,44 @@ def main(config):
                                 "copper_mines_tons_corrected.gpkg"),
                                 driver="GPKG")
 
-    mine_tonnages = gpd.read_file(
+    mines_df = gpd.read_file(
                         os.path.join(
                             processed_data_path,
                             "minerals",
                             "copper_mines_tons_corrected.gpkg"))
+    pr_conv_factors_df = pd.read_excel(os.path.join(processed_data_path,
+                                        "mineral_usage_factors",
+                                        "aggregated_stages.xlsx"))[[
+                                            "reference_mineral",
+                                            "initial_refined_stage",
+                                            "final_refined_stage", 
+                                            "aggregate_ratio_normalised"
+                                            ]]
+    years = [2021,2030]
+    reference_mineral = "copper"
+    final_refined_stage = 3.0
+    for year in years:
+        if year > 2021:
+            conversion_factor = pr_conv_factors_df[
+                                    (pr_conv_factors_df["reference_mineral"] == reference_mineral)
+                                    & (pr_conv_factors_df["final_refined_stage"] == final_refined_stage)
+                                    ]["aggregate_ratio_normalised"].values[0]
+            print (conversion_factor)
+            mines_df[mine_tons_column] = np.where(
+                                            mines_df["final_refined_stage"] == 1,
+                                            1.0*mines_df[mine_tons_column]/conversion_factor,
+                                            mines_df[mine_tons_column])
+            mines_df["final_refined_stage"] = np.where(
+                                            mines_df["final_refined_stage"] == 1,
+                                            final_refined_stage,
+                                            mines_df["final_refined_stage"])
+
+        mines_df.to_file(
+                        os.path.join(
+                            processed_data_path,
+                            "minerals",
+                            f"copper_mines_tons_{year}.gpkg"))
+
     
     # mines_df = pd.merge(mines_df,
     #             mine_tonnages[[mine_id_col,"corrected_tons"]],
