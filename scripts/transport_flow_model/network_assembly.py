@@ -104,13 +104,25 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
     return multi_modal_df
 
 def main():
+    # Get capacity information at ports only
+    cargo_type = "General Cargo"
+    port_df = pd.read_csv(os.path.join(
+                            processed_data_path,
+                            "port_statistics",
+                            "port_vessel_types_and_capacities.csv"
+                                )
+                            )
+    port_df = port_df[port_df["vessel_type_main"] == cargo_type]
+    port_capacities = list(zip(port_df["id"].values.tolist(),
+                            port_df[
+                                "annual_vessel_capacity_tons"]))
     network_graph = multimodal_network_assembly(
                             modes=["rail","road","sea","intermodal"],
                             rail_status=["open"],
                             intermodal_ports="all",
-                            cargo_type="general_cargo",
+                            cargo_type=f"{cargo_type.lower().replace(' ','_')}",
                             default_capacity=1e10,
-                            port_to_land_capacity=None)
+                            port_to_land_capacity=port_capacities)
     network_graph = pd.concat(network_graph,axis=0,ignore_index=True)
     print (network_graph)
 
