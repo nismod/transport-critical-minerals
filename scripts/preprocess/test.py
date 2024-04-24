@@ -30,6 +30,35 @@ def main(config):
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
+    # baci = pd.read_csv(os.path.join(processed_data_path,"baci","baci_ccg_country_level_trade_2040.csv"))
+    # baci = baci.groupby(["export_country_code","final_refined_stage"])["trade_quantity_tons"].sum().reset_index()
+    # baci.to_csv("test.csv")
+
+    gdf = gpd.read_file(os.path.join(processed_data_path,"minerals","mine_est_output.gpkg"))
+    print (gdf.columns.values.tolist())
+    gdf = gdf.groupby(["shapeGroup_primary_admin0"])[['copper_unprocessed_ton','copper_processed_ton']].sum().reset_index()
+    print (gdf)
+    gdf.to_csv("test.csv",index=False)
+
+    # results_folder = os.path.join(output_data_path,"flow_mapping")
+    # od_df = pd.read_csv(os.path.join(results_folder,
+    #                         f"mining_city_node_level_ods_2021.csv"))
+    # print (od_df)
+
+    # path_df = pd.read_parquet(
+    #                     os.path.join(results_folder,f"copper_flow_paths_2021.parquet"))
+    # print (path_df)
+    # path_df["edge_path"] = path_df["edge_path"].map(tuple)
+    # path_df = path_df.drop_duplicates(subset=["origin_id","destination_id",
+    #                         "export_country_code","import_country_code","edge_path"],keep="first")
+    # print (path_df)
+    # path_df[["origin_id","destination_id",
+    #                         "export_country_code","import_country_code","mine_output_tons"]].to_csv("test0.csv")
+    # path_df = path_df.groupby(["origin_id","destination_id",
+    #                         "export_country_code","import_country_code"])["mine_output_tons"].sum().reset_index()
+    # print (path_df)
+
+    # pd.merge(od_df,path_df,how="left",on=["origin_id","destination_id","export_country_code","import_country_code"]).to_csv("test.csv")
     # results_folder = os.path.join(output_data_path,"flow_mapping")
     
     # global_df = pd.read_parquet(
@@ -71,16 +100,16 @@ def main(config):
     #                         "africa_roads_edges.geoparquet"))
     # print (road_edges.columns.values.tolist())
 
-    road_nodes = gpd.read_parquet(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_roads_nodes.geoparquet"))
-    road_nodes.rename(columns={"road_id":"id","iso_a3":"iso3"},inplace=True)
+    # road_nodes = gpd.read_parquet(os.path.join(
+    #                         processed_data_path,
+    #                         "infrastructure",
+    #                         "africa_roads_nodes.geoparquet"))
+    # road_nodes.rename(columns={"road_id":"id","iso_a3":"iso3"},inplace=True)
     # road_nodes.to_parquet(os.path.join(
     #                         processed_data_path,
     #                         "infrastructure",
     #                         "africa_roads_nodes.geoparquet"))
-    print (road_nodes.columns.values.tolist())
+    # print (road_nodes.columns.values.tolist())
 
 
     # condition = False

@@ -26,6 +26,7 @@ def main(config):
         os.mkdir(results_folder)
 
     mine_id_col = "mine_cluster_mini"
+    reference_mineral = "copper"
     # cargo_type = "Dry bulk"
     cargo_type = "General cargo"
     trade_groupby_columns = ["reference_mineral","export_country_code", 
@@ -37,7 +38,6 @@ def main(config):
     tons_column = "trade_quantity_tons"
     value_column = "trade_value_thousandUSD"
     od_columns = ["reference_mineral",
-                    "process_binary",
                     "final_refined_stage",
                     "export_country_code",
                     "import_country_code",
@@ -62,7 +62,7 @@ def main(config):
                                     "un_urban_population",
                                     "un_pop_df.gpkg"))
     un_pop_df = un_pop_df[un_pop_df["CONTINENT"] == "Africa"]
-    pop_years = [2020,2030]
+    pop_years = [2020,2030,2035]
 
     # Get the global port network data for General Cargo transport
     # We assume CCG critical minerals are transported as Dry Bulk Cargo (General Cargo maybe)
@@ -96,15 +96,22 @@ def main(config):
     #                             "baci",
     #                             "commodity_codes_refined_unrefined.csv"))
 
-    years = [2021,2030]
+    years = [2021,2030,2040]
     for idx,(year,pop_year) in enumerate(zip(years,pop_years)):
         # Mine locations in Africa with the copper tonages
-        mines_df = gpd.read_file(os.path.join(processed_data_path,
-                                        "minerals",
-                                        f"copper_mines_tons_{year}.gpkg"))
+        mines_df = gpd.read_file(os.path.join(output_data_path,
+                                        "location_outputs",
+                                        f"{reference_mineral}_mines_tons_{year}.gpkg"))
         # Select only tonnages > 0
         mines_df = mines_df[mines_df["mine_output_approx_copper"] > 0]
         mine_isos = list(set(mines_df["shapeGroup_primary_admin0"].values.tolist()))
+        # City locations in Africa with the copper tonages
+        cities_df = gpd.read_file(os.path.join(output_data_path,
+                                        "location_outputs",
+                                        f"{reference_mineral}_city_tons_{year}.gpkg"))
+        # Select only tonnages > 0
+        cities_df = cities_df[cities_df["city_output_approx_copper"] > 0]
+        city_isos = list(set(cities_df["ISO_A3"].values.tolist()))
         # Get the BACI trade linkages between countries 
         trade_df = pd.read_csv(os.path.join(processed_data_path,
                                 "baci",
@@ -134,12 +141,24 @@ def main(config):
             # else:
             #     mine_refined_df = mines_df[mines_df["process_binary"] == 0]
             mine_refined_df = mines_df[mines_df["final_refined_stage"] == pr_st]
+            city_refined_df = cities_df[cities_df["final_refined_stage"] == pr_st]
+            if len(mine_refined_df) > 0:
+                mine_refined_df = pd.merge(mine_refined_df,
+                                            t_df,
+                                            how="left",
+                                            left_on=["shapeGroup_primary_admin0","final_refined_stage"],
+                                            right_on=["export_country_code","final_refined_stage"])
+                mine_refined_df.rename(columns={mine_id_col:"origin_id"},inplace=True)
+            else:
+                mine_refined_df = pd.merge(city_refined_df,
+                                            t_df,
+                                            how="left",
+                                            left_on=["ISO_A3","final_refined_stage"],
+                                            right_on=["export_country_code","final_refined_stage"])
+                mine_refined_df.rename(columns={"city_id":"origin_id",
+                                            "city_output_approx_copper":"mine_output_approx_copper"},
+                                            inplace=True)
 
-            mine_refined_df = pd.merge(mine_refined_df,
-                                        t_df,
-                                        how="left",
-                                        left_on=["shapeGroup_primary_admin0","final_refined_stage"],
-                                        right_on=["export_country_code","final_refined_stage"])
             # mine_refined_df[
             #         "corrected_tons"] = mine_refined_df[
             #         "mine_output_approx_copper"]*mine_refined_df.groupby(
@@ -158,7 +177,7 @@ def main(config):
             # mine_refined_df.to_csv(f"{mineral_class}_{refined_type}_mine_level.csv",index=False)
             # mine_refined_df.drop_duplicates(
             #     subset=mine_id_col,keep="first").to_csv(f"{mineral_class}_{refined_type}_mine_output.csv",index=False)
-            mine_refined_df.rename(columns={mine_id_col:"origin_id"},inplace=True)
+            # mine_refined_df.rename(columns={mine_id_col:"origin_id"},inplace=True)
             # mine_refined_df["reference_mineral"] = mineral_class
             """Get the flows being exported out of Africa to ports around the world
             """
@@ -226,7 +245,7 @@ def main(config):
 
         combined_trade_df.to_csv(os.path.join(
                                 results_folder,
-                                f"mining_node_level_ods_full_{year}.csv"),index=False)
+                                f"mining_city__node_level_ods_full_{year}.csv"),index=False)
 
         tons_total = combined_trade_df["mine_output_tons"].sum()
         value_total = combined_trade_df["mine_output_thousandUSD"].sum()
@@ -242,7 +261,7 @@ def main(config):
         
         combined_trade_df.to_csv(os.path.join(
                                 results_folder,
-                                f"mining_node_level_ods_{year}.csv"),index=False)
+                                f"mining_city_node_level_ods_{year}.csv"),index=False)
 
 
 

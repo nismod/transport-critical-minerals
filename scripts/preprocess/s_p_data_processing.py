@@ -5,12 +5,13 @@ import os
 import pandas as pd
 import sys
 import geopandas as gpd
+import numpy as np
 import re
 from collections import defaultdict
 from utils import *
 from tqdm import tqdm
 
-def add_iso_code(df,df_id_column,processed_data_path):
+def add_iso_code(df,df_id_column,global_boundaries):
     # Insert countries' ISO CODE
     # africa_boundaries = gpd.read_file(os.path.join(
     #                         incoming_data_path,
@@ -19,10 +20,10 @@ def add_iso_code(df,df_id_column,processed_data_path):
     #                         "AFR_Political_ADM0_Boundaries.shp",
     #                         "AFR_Political_ADM0_Boundaries.shp"))
     # africa_boundaries.rename(columns={"DsgAttr03":"iso3"},inplace=True)
-    global_boundaries = gpd.read_file(os.path.join(processed_data_path,
-                                    "admin_boundaries",
-                                    "gadm36_levels_gpkg",
-                                    "gadm36_levels_continents.gpkg"))
+    # global_boundaries = gpd.read_file(os.path.join(processed_data_path,
+    #                                 "admin_boundaries",
+    #                                 "gadm36_levels_gpkg",
+    #                                 "gadm36_levels_continents.gpkg"))
     # Spatial join
     m = gpd.sjoin(df, 
                     global_boundaries[['geometry', 'ISO_A3','CONTINENT']], 
@@ -39,6 +40,11 @@ def main(config):
 
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
+
+    global_boundaries = gpd.read_file(os.path.join(processed_data_path,
+                                    "admin_boundaries",
+                                    "gadm36_levels_gpkg",
+                                    "gadm36_levels_continents.gpkg"))
 
     process_data = False
     if process_data is True:
@@ -67,9 +73,9 @@ def main(config):
                                 s_and_p_mines["LONGITUDE"],s_and_p_mines["LATITUDE"])
 
         s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
-        s_and_p_mines = add_iso_code(s_and_p_mines,"PROP_ID",incoming_data_path)
+        s_and_p_mines = add_iso_code(s_and_p_mines,"PROP_ID",global_boundaries)
         s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
-        s_and_p_mines.to_file(os.path.join(processed_data_path,"Minerals","s_and_p_mines.gpkg"),driver="GPKG")
+        s_and_p_mines.to_file(os.path.join(processed_data_path,"minerals","s_and_p_mines.gpkg"),driver="GPKG")
 
     process_data = False
     if process_data is True:
@@ -89,11 +95,11 @@ def main(config):
                                 s_and_p_mines["longitude"],s_and_p_mines["latitude"])
 
         s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
-        s_and_p_mines = add_iso_code(s_and_p_mines,"property_ID",processed_data_path)
+        s_and_p_mines = add_iso_code(s_and_p_mines,"property_ID",global_boundaries)
         s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
         s_and_p_mines = s_and_p_mines[~s_and_p_mines.geometry.isna()]
         s_and_p_mines.to_file(os.path.join(processed_data_path,
-                                        "Minerals",
+                                        "minerals",
                                         "s_and_p_mines_global_all.gpkg"),
                                         driver="GPKG")
 
@@ -131,21 +137,21 @@ def main(config):
         if len(s_and_p_df) > 0:
             s_and_p_mines = pd.concat(s_and_p_df,axis=0,ignore_index=True)
             s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
-            s_and_p_mines = add_iso_code(s_and_p_mines,"PROP_ID",processed_data_path)
+            s_and_p_mines = add_iso_code(s_and_p_mines,"PROP_ID",global_boundaries)
             s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
             s_and_p_mines.to_file(os.path.join(processed_data_path,
-                                        "Minerals",
+                                        "minerals",
                                         "s_and_p_mines_with_current_mineral_tonnages.gpkg"),driver="GPKG")
 
-    process_data = True
+    process_data = False
     if process_data is True:
         s_and_p_mines = gpd.read_file(os.path.join(processed_data_path,
-                                        "Minerals",
+                                        "minerals",
                                         "s_and_p_mines_with_current_mineral_tonnages.gpkg"))
         commodity_columns = [c for c in s_and_p_mines.columns.values.tolist() if "COMMODITY_PRODUCTION_TONNE_BY_PERIOD_2022_" in c]
         country_sums = s_and_p_mines.groupby(["ISO_A3"])[commodity_columns].sum().reset_index()
         country_sums.to_csv(os.path.join(processed_data_path,
-                                        "Minerals",
+                                        "minerals",
                                         "s_and_p_mines_country_mineral_tonnages.csv"),index=False)
 
         baci_df = pd.read_csv(os.path.join(processed_data_path,
@@ -168,10 +174,35 @@ def main(config):
         baci_m_df = pd.concat(baci_m_df,axis=1).fillna(0)
         baci_m_df = baci_m_df.reset_index()
         baci_m_df.to_csv(os.path.join(processed_data_path,
-                                        "Minerals",
+                                        "minerals",
                                         "baci_s_and_p_tonnages_comparison.csv"),
                                     index=False)
         
+    process_data = True
+    if process_data is True:
+        years = [str(y) for y in np.arange(1980,2041,1)]
+        file_directory = os.path.join(processed_data_path,"minerals","mine_level_s_and_p_estimates")
+        for root, dirs, files in os.walk(file_directory):
+            for file in files:
+                if file.endswith(".xlsx"):
+                    s_and_p_mines = pd.read_excel(os.path.join(root,file))
+                    s_and_p_mines["geometry"] = gpd.points_from_xy(
+                                s_and_p_mines["LONGITUDE"],s_and_p_mines["LATITUDE"])
+                    s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
+                    s_and_p_mines = add_iso_code(s_and_p_mines,"PROP_ID",global_boundaries)
+                    s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
+                    s_and_p_mines.drop(["index","index_right"],axis=1,inplace=True)
+                    s_and_p_mines.columns = s_and_p_mines.columns.astype(str)
+                    s_and_p_mines[years] = s_and_p_mines[years].fillna(0)
+                    s_and_p_mines["mine_id"] = s_and_p_mines.progress_apply(
+                                                        lambda x:f"s_and_p_{x['PROP_ID']}",
+                                                        axis=1)
+                    s_and_p_mines.to_file(os.path.join(processed_data_path,
+                                                    "minerals",
+                                                    "s_and_p_mines_estimates.gpkg"),
+                                                    layer=file.replace(".xlsx",""),
+                                                    driver="GPKG")
+                    print (file)
 
 
 

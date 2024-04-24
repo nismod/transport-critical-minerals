@@ -25,7 +25,7 @@ def main(config):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
 
-    years = [2021,2030]
+    years = [2021,2030,2040]
     import_export_groupby_columns = ["reference_mineral",
                             "export_country_code", 
                             "import_country_code",
@@ -35,7 +35,7 @@ def main(config):
     trade_value_columns = ["trade_value_thousandUSD","trade_quantity_tons"]
     tons_column = "trade_quantity_tons"
     value_column = "trade_value_thousandUSD"
-    conversion_factor_column = "aggregate_ratio_normalised"
+    conversion_factor_column = "aggregate_ratio"
     trade_df = pd.read_csv(
                     os.path.join(processed_data_path,
                         "baci","baci_full_clean_continent_trade.csv"))
@@ -49,7 +49,7 @@ def main(config):
                                             "reference_mineral",
                                             "initial_refined_stage",
                                             "final_refined_stage", 
-                                            "aggregate_ratio_normalised"
+                                            "aggregate_ratio"
                                             ]] 
     """Create the reference commodity level OD first
     """
@@ -96,7 +96,7 @@ def main(config):
                 mineral_shares_df.append(t_df)
 
             mineral_shares_df = pd.concat(mineral_shares_df,axis=0,ignore_index=True)
-            mineral_shares_df.to_csv("test_total.csv")
+            mineral_shares_df.to_csv(f"test_total_{year}.csv")
 
             # global_importers = mineral_shares_df[mineral_shares_df["initial_mineral_type"] == "refined"]
             # global_importers[["import_country_code",

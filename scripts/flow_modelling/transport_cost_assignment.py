@@ -13,6 +13,7 @@ epsg_meters = 3395
 config = load_config()
 incoming_data_path = config['paths']['incoming_data']
 processed_data_path = config['paths']['data']
+output_data_path = config['paths']['results']
 
 def assign_road_speeds(x):
     if float(x.tag_maxspeed) > 0:
@@ -220,6 +221,14 @@ def transport_cost_assignment_function(network_edges,transport_mode):
                                                 ]/network_edges[
                                                 "max_speed_kmh"
                                                 ]) + network_edges["border_USD_t"]
+        network_edges["distance_km"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]
+        network_edges["time_hr"] = network_edges["border_dwell"] + 0.001*network_edges[
+                                                "length_m"
+                                                ]/network_edges[
+                                                "max_speed_kmh"
+                                                ]
     elif transport_mode == "sea":
         network_edges["gcost_usd_tons"] = network_edges[
                                                 "distance_km"
@@ -229,6 +238,12 @@ def transport_cost_assignment_function(network_edges,transport_mode):
                                                 ]*(network_edges["time_h"] + network_edges[
                                                 "handling_h"
                                                 ]) + network_edges["handling_USD_t"]
+        network_edges["distance_km"] = network_edges[
+                                                "distance_km"
+                                                ]
+        network_edges["time_hr"] = network_edges["time_h"] + network_edges[
+                                                "handling_h"
+                                                ]
     elif transport_mode == "IWW":
         network_edges["gcost_usd_tons"] = 0.001*network_edges[
                                                 "length_m"
@@ -241,12 +256,25 @@ def transport_cost_assignment_function(network_edges,transport_mode):
                                                 ]/network_edges[
                                                 "max_speed_kmh"
                                                 ])
+        network_edges["distance_km"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]
+        network_edges["time_hr"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]/network_edges[
+                                                "max_speed_kmh"
+                                                ]
+
     else:
         network_edges["gcost_usd_tons"] = network_edges[
                                                 f"{transport_mode}_cost_tonne_h_shipper"
                                                 ]*network_edges[
                                                 "dwell_time_h"
                                                 ] + network_edges["handling_cost_usd_t"]
+        network_edges["distance_km"] = 0
+        network_edges["time_hr"] = network_edges[
+                                                "dwell_time_h"
+                                                ]
 
     return network_edges
 
@@ -325,10 +353,10 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
                     edges.loc[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land")),"capacity"] = 1.0*capacity/cap_factor
         edges["mode"] = mode
         edges = transport_cost_assignment_function(edges,mode)
-        multi_modal_df.append(edges[["from_id","to_id","id","mode","capacity","gcost_usd_tons"]])
+        multi_modal_df.append(edges[["from_id","to_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"]])
         if mode in ("road","rail"):
-            add_edges = edges[["from_id","to_id","id","mode","capacity","gcost_usd_tons"]].copy()
-            add_edges.columns = ["to_id","from_id","id","mode","capacity","gcost_usd_tons"]
+            add_edges = edges[["from_id","to_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"]].copy()
+            add_edges.columns = ["to_id","from_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"]
             multi_modal_df.append(add_edges)
 
 
@@ -516,6 +544,8 @@ def connect_points_to_transport(points_df,points_id_col,
                                                 axis=1)
         points_transport_df["capacity"] = default_capacity
         points_transport_df["gcost_usd_tons"] = 0
+        points_transport_df["distance_km"] = 0
+        points_transport_df["time_hr"] = 0
         points_transport_df["mode"] = points_type
 
 
@@ -526,7 +556,7 @@ def connect_points_to_transport(points_df,points_id_col,
 def create_mines_to_port_network(mines_df,mine_id_col,
                     modes=["IWW","rail","road","sea","intermodal"],
                     rail_status=["open"],distance_threshold=50,
-                    network_columns=["from_id","to_id","id","mode","capacity","gcost_usd_tons"],
+                    network_columns=["from_id","to_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"],
                     intermodal_ports="all",cargo_type="general_cargo",port_to_land_capacity=None):
     multi_modal_df = multimodal_network_assembly(modes=modes,
                     rail_status=rail_status,
@@ -553,7 +583,7 @@ def create_mines_and_cities_to_port_network(mines_df,mine_id_col,
                     cities_df,city_id_col,
                     modes=["IWW","rail","road","sea","intermodal"],
                     rail_status=["open"],distance_threshold=50,
-                    network_columns=["from_id","to_id","id","mode","capacity","gcost_usd_tons"],
+                    network_columns=["from_id","to_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"],
                     intermodal_ports="all",cargo_type="general_cargo",port_to_land_capacity=None):
     multi_modal_df = multimodal_network_assembly(modes=modes,
                     rail_status=rail_status,
@@ -682,8 +712,8 @@ def add_port_path(edges,nodes,G):
                 source = source.split("_")[0]
                 target = target.split("_")[0]
                 if source != target:
-                    route,points,_,_ = network_od_node_edge_path_estimations(G,
-                                    source, target,"distance","id")
+                    route,points,_,_,_,_ = network_od_node_edge_path_estimations(G,
+                                    source, target,"distance","distance","distance","id")
                     new_edges += route[0]
                     new_nodes += points[0]
             else:

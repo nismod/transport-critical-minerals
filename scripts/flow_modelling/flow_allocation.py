@@ -33,7 +33,7 @@ def main(config):
                             "export_continent","export_landlocked",
                             "import_continent","import_landlocked"]
     trade_value_columns = ["trade_value_thousandUSD","trade_quantity_tons"]
-    od_columns = ["reference_mineral","process_binary",
+    od_columns = ["reference_mineral",
                     "final_refined_stage",
                     "export_country_code",
                     "import_country_code",
@@ -104,7 +104,7 @@ def main(config):
     for year in years:
         combined_trade_df = pd.read_csv(os.path.join(
                                                 results_folder,
-                                                f"mining_node_level_ods_{year}.csv"))
+                                                f"mining_city_node_level_ods_{year}.csv"))
         mineral_classes = list(set(combined_trade_df.reference_mineral.values.tolist()))
         edges_flows_df = []
         nodes_flows_df = []
@@ -145,11 +145,17 @@ def main(config):
             #             index=False)
 
             network_graph[trade_ton_column] = 0
-            mine_routes, unassinged_routes = od_flow_allocation_capacity_constrained(
+            mine_routes, unassinged_routes, network_graph = od_flow_allocation_capacity_constrained(
                                                 c_t_df,network_graph,
                                                 trade_ton_column,"gcost_usd_tons",
+                                                "distance_km","time_hr",
                                                 "id",origin_id,
                                                 destination_id)
+            network_graph = network_graph[network_graph[trade_ton_column] > 0]
+            network_graph.to_csv(os.path.join(results_folder,
+                        f"{mineral_class}_total_flows_{year}.csv"),
+                        index=False)
+            del network_graph
             if len(unassinged_routes) > 0:
                 unassinged_routes = pd.concat(unassinged_routes,axis=0,ignore_index=True)
                 if "geometry" in unassinged_routes.columns.values.tolist():
@@ -184,6 +190,17 @@ def main(config):
                 #                                         network_graph.drop_duplicates(subset=["id"],keep="first"),
                 #                                     "edge_path","node_path")
                 # mine_routes.to_parquet("test.parquet",index=False)
+                mine_routes["edge_path"] = mine_routes["edge_path"].map(tuple)
+                mine_routes = mine_routes.drop_duplicates(
+                                        subset=["origin_id",
+                                                "destination_id",
+                                                "export_country_code",
+                                                "reference_mineral",
+                                                "final_refined_stage",
+                                                "import_country_code",
+                                                "edge_path"],
+                                        keep="first")
+                mine_routes['edge_path'] = mine_routes['edge_path'].map(list)
                 mine_routes = convert_port_routes(mine_routes,"edge_path","node_path")
                 mine_routes[[origin_id,destination_id] + od_columns + [
                                         "edge_path",
@@ -191,61 +208,63 @@ def main(config):
                                         "full_edge_path",
                                         "full_node_path",
                                         "gcost_usd_tons_path",
+                                        "distance_km_path",
+                                        "time_hr_path",
                                         "gcost_usd_tons"]].to_parquet(
                         os.path.join(results_folder,f"{mineral_class}_flow_paths_{year}.parquet"),
                         index=False)
 
-                for flow_column in [trade_ton_column,trade_usd_column]:
-                    for refined_type in ["unrefined","refined"]:
-                        for path_type in ["full_edge_path","full_node_path"]:
-                            if refined_type == "unrefined":
-                                f_df = get_flow_on_edges(
-                                                mine_routes[mine_routes["process_binary"] == 0],
-                                                "id",path_type,
-                                                flow_column)
-                            else:
-                                f_df = get_flow_on_edges(
-                                                mine_routes[mine_routes["process_binary"] == 1],
-                                                "id",path_type,
-                                                flow_column)
-                            f_df.rename(columns={flow_column:f"{mineral_class}_{refined_type}_{flow_column}"},
-                                    inplace=True)
-                            if path_type == "full_edge_path":
-                                edges_flows_df.append(f_df)
-                            else:
-                                nodes_flows_df.append(f_df)
-                        flow_column_types.append(f"{mineral_class}_{refined_type}_{flow_column}")
+        #         for flow_column in [trade_ton_column,trade_usd_column]:
+        #             for refined_type in list(set(mine_routes["final_refined_stage"].values.tolist())):
+        #                 for path_type in ["full_edge_path","full_node_path"]:
+        #                     f_df = get_flow_on_edges(
+        #                                         mine_routes[mine_routes["final_refined_stage"] == refined_type],
+        #                                         "id",path_type,
+        #                                         flow_column)
+        #                     f_df[f"{mineral_class}_{flow_column}"] = f_df[flow_column]
+        #                     f_df.rename(columns={flow_column:f"{mineral_class}_{flow_column}_stage_{refined_type}"},
+        #                             inplace=True)
+        #                     if path_type == "full_edge_path":
+        #                         edges_flows_df.append(f_df)
+        #                     else:
+        #                         nodes_flows_df.append(f_df)
+        #                 flow_column_types.append(f"{mineral_class}_{flow_column}_stage_{refined_type}")
 
-        for mineral_class in mineral_classes:
-            for path_type in ["edges","nodes"]:
-                if path_type == "edges":
-                    flows_df = pd.concat(edges_flows_df,axis=0,ignore_index=True).fillna(0)
-                else:
-                    flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
-                flows_df = flows_df.groupby(["id"]).agg(
-                            dict(
-                                    [(ft,"sum") for ft in flow_column_types]
-                                )
-                            ).reset_index()
+        # for mineral_class in mineral_classes:
+        #     for path_type in ["edges","nodes"]:
+        #         if path_type == "edges":
+        #             flows_df = pd.concat(edges_flows_df,axis=0,ignore_index=True).fillna(0)
+        #         else:
+        #             flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
+        #         flows_df = flows_df.groupby(["id"]).agg(
+        #                     dict(
+        #                            [(f"{mineral_class}_{flow_column}","sum") for flow_column in [trade_ton_column,trade_usd_column]] + [(ft,"sum") for ft in flow_column_types]
+        #                         )
+        #                     ).reset_index()
 
-                for flow_column in [trade_ton_column,trade_usd_column]:
-                    flows_df[
-                            f"{mineral_class}_{flow_column}"
-                            ] = flows_df[
-                                    f"{mineral_class}_unrefined_{flow_column}"
-                                ] + flows_df[f"{mineral_class}_refined_{flow_column}"]
+        #         # for flow_column in [trade_ton_column,trade_usd_column]:
+        #         #     # flows_df[
+        #         #     #         f"{mineral_class}_{flow_column}"
+        #         #     #         ] = flows_df[
+        #         #     #                 f"{mineral_class}_unrefined_{flow_column}"
+        #         #     #             ] + flows_df[f"{mineral_class}_refined_{flow_column}"]
+        #         #     flows_df[
+        #         #             f"{mineral_class}_{flow_column}"
+        #         #             ] = flows_df[
+        #         #                     f"{mineral_class}_unrefined_{flow_column}"
+        #         #                 ] + flows_df[f"{mineral_class}_refined_{flow_column}"]
                     
-                    # flows_df = flows_df.reset_index()
-                flows_df = add_geometries_to_flows(flows_df,
-                                    merge_column="id",
-                                    modes=["rail","sea","road"],
-                                    layer_type=path_type)
-                if path_type == "nodes":
-                    flows_df = add_node_degree_to_flows(flows_df,mineral_class)
+        #             # flows_df = flows_df.reset_index()
+        #         flows_df = add_geometries_to_flows(flows_df,
+        #                             merge_column="id",
+        #                             modes=["rail","sea","road"],
+        #                             layer_type=path_type)
+        #         if path_type == "nodes":
+        #             flows_df = add_node_degree_to_flows(flows_df,mineral_class)
 
-                flows_df.to_file(os.path.join(results_folder,
-                                        f"{mineral_class}_flows_{year}.gpkg"),
-                                        layer=path_type,driver="GPKG")
+        #         flows_df.to_file(os.path.join(results_folder,
+        #                                 f"{mineral_class}_flows_{year}.gpkg"),
+        #                                 layer=path_type,driver="GPKG")
 
 
 if __name__ == '__main__':
