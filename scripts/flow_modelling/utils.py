@@ -320,7 +320,7 @@ def network_od_path_estimations_multiattribute(graph,
     return pd.DataFrame(paths_list)
 
 def network_od_node_edge_path_estimations(graph,
-    source, target, cost_criteria,distance_criteria,time_criteria,path_id_column):
+    source, target, cost_criteria,distance_criteria,time_criteria,border_cost_criteria,path_id_column):
     """Estimate the paths, distances, times, and costs for given OD pair
 
     Parameters
@@ -361,6 +361,7 @@ def network_od_node_edge_path_estimations(graph,
     path_gcost_list = []
     path_dcost_list = []
     path_tcost_list = []
+    path_bcost_list = []
     total_path_gcost_list = []
     # for p in range(len(paths)):
     for path in edge_paths:
@@ -368,6 +369,7 @@ def network_od_node_edge_path_estimations(graph,
         path_gcost = []
         path_dcost = []
         path_tcost = []
+        path_bcost = []
         total_gcost = 0
         if path:
             for n in path:
@@ -375,12 +377,14 @@ def network_od_node_edge_path_estimations(graph,
                 path_gcost.append(graph.es[n][cost_criteria])
                 path_dcost.append(graph.es[n][distance_criteria])
                 path_tcost.append(graph.es[n][time_criteria])
+                path_bcost.append(graph.es[n][border_cost_criteria])
             total_gcost = sum(path_gcost)
 
         edge_path_list.append(edge_path)
         path_gcost_list.append(path_gcost)
         path_dcost_list.append(path_dcost)
         path_tcost_list.append(path_tcost)
+        path_bcost_list.append(path_bcost)
         total_path_gcost_list.append(total_gcost)
     for path in node_paths:
         node_path = []
@@ -389,10 +393,11 @@ def network_od_node_edge_path_estimations(graph,
                 node_path.append(graph.vs[n]["name"])
         node_path_list.append(node_path)
     
-    return edge_path_list,node_path_list,path_gcost_list,path_dcost_list,path_tcost_list,total_path_gcost_list    
+    return edge_path_list,node_path_list,path_gcost_list,path_dcost_list,path_tcost_list,path_bcost_list,total_path_gcost_list    
 
 def network_od_node_edge_paths_assembly(points_dataframe, graph,
                                 cost_criteria,distance_criteria,time_criteria,
+                                border_cost_criteria,
                                 path_id_column,
                                 origin_id_column,destination_id_column,
                                 store_paths=True):
@@ -425,13 +430,13 @@ def network_od_node_edge_paths_assembly(points_dataframe, graph,
     for origin in origins:
         destinations = list(set(points_dataframe.loc[[origin], destination_id_column].values.tolist()))
 
-        get_epath,get_npath,get_cpath,get_dpath,get_tpath,get_gcost = network_od_node_edge_path_estimations(
-                graph, origin, destinations, cost_criteria,distance_criteria,time_criteria,path_id_column)
+        get_epath,get_npath,get_cpath,get_dpath,get_tpath,get_bpath,get_gcost = network_od_node_edge_path_estimations(
+                graph, origin, destinations, cost_criteria,distance_criteria,time_criteria,border_cost_criteria,path_id_column)
 
         # tons = points_dataframe.loc[[origin], tonnage_column].values
         save_paths += list(zip([origin]*len(destinations),
                             destinations, get_epath,get_npath,
-                            get_cpath,get_dpath,get_tpath,get_gcost))
+                            get_cpath,get_dpath,get_tpath,get_bpath,get_gcost))
 
         # print(f"done with {origin}")
         # except:
@@ -440,7 +445,7 @@ def network_od_node_edge_paths_assembly(points_dataframe, graph,
     cols = [
         origin_id_column, destination_id_column, 'edge_path','node_path',
         f'{cost_criteria}_path',f'{distance_criteria}_path',f'{time_criteria}_path',
-        cost_criteria
+        f'{border_cost_criteria}_path',cost_criteria
     ]
     save_paths_df = pd.DataFrame(save_paths, columns=cols)
     if store_paths is False:
@@ -760,6 +765,7 @@ def find_minimal_flows_along_overcapacity_paths(over_capacity_ods,network_datafr
 def od_flow_allocation_capacity_constrained(flow_ods,network_dataframe,
                                             flow_column,cost_column,
                                             distance_column,time_column,
+                                            border_column,
                                             path_id_column,origin_id_column,
                                             destination_id_column,
                                             store_edge_path=True):
@@ -785,6 +791,7 @@ def od_flow_allocation_capacity_constrained(flow_ods,network_dataframe,
                                     cost_column,
                                     distance_column,
                                     time_column,
+                                    border_column,
                                     path_id_column,origin_id_column,
                                     destination_id_column)
             unassigned_paths.append(flow_ods[flow_ods[cost_column] == 0])
@@ -831,11 +838,14 @@ def od_flow_allocation_capacity_constrained(flow_ods,network_dataframe,
                     flow_ods = over_capacity_ods[over_capacity_ods["residual_ratio"] > 0.01]
                     flow_ods.drop(["edge_path","node_path",f"{cost_column}_path",
                                     f"{distance_column}_path",f"{time_column}_path",
-                                    cost_column,"residual_ratio"],axis=1,inplace=True)
+                                    f"{border_column}_path",cost_column,
+                                    "residual_ratio"],axis=1,inplace=True)
                     del over_capacity_ods
                 else:
                     if store_edge_path is False:
-                        flow_ods.drop(["edge_path","node_path",f"{cost_column}_path"],axis=1,inplace=True)
+                        flow_ods.drop(["edge_path","node_path",f"{cost_column}_path",
+                                    f"{distance_column}_path",f"{time_column}_path",
+                                    f"{border_column}_path"],axis=1,inplace=True)
                     capacity_ods.append(flow_ods)
                     network_dataframe.drop(["residual_capacity","added_flow"],axis=1,inplace=True)
                     flow_ods = pd.DataFrame()

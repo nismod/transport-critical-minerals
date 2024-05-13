@@ -34,11 +34,80 @@ def main(config):
     # baci = baci.groupby(["export_country_code","final_refined_stage"])["trade_quantity_tons"].sum().reset_index()
     # baci.to_csv("test.csv")
 
-    gdf = gpd.read_file(os.path.join(processed_data_path,"minerals","mine_est_output.gpkg"))
-    print (gdf.columns.values.tolist())
-    gdf = gdf.groupby(["shapeGroup_primary_admin0"])[['copper_unprocessed_ton','copper_processed_ton']].sum().reset_index()
-    print (gdf)
-    gdf.to_csv("test.csv",index=False)
+    road_edges = gpd.read_parquet(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "africa_roads_edges.geoparquet"))
+    print (road_edges.columns.values.tolist())
+
+    road_nodes = gpd.read_parquet(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "africa_roads_nodes.geoparquet"))
+    # road_nodes.rename(columns={"road_id":"id","iso_a3":"iso3"},inplace=True)
+    # road_nodes.to_parquet(os.path.join(
+                            # processed_data_path,
+                            # "infrastructure",
+                            # "africa_roads_nodes.geoparquet"))
+    print (road_nodes.columns.values.tolist())
+
+    extract_countires = ["ZMB","COD","ZWE","MOZ"]
+    country_nodes = road_nodes[road_nodes["iso_a3"].isin(extract_countires)]
+    print (country_nodes)
+
+    country_edges = road_edges[(road_edges["from_iso_a3"].isin(extract_countires)) | (road_edges["to_iso_a3"].isin(extract_countires))]
+    print (country_edges)
+
+    country_nodes.to_parquet(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "country_roads_nodes.geoparquet"),index=False)
+    country_edges.to_parquet(os.path.join(
+                            processed_data_path,
+                            "infrastructure",
+                            "country_roads_edges.geoparquet"),index=False)
+
+    # gdf = gpd.read_file(os.path.join(processed_data_path,"minerals","ccg_mines_est_production.gpkg"))
+    # print (gdf.columns.values.tolist())
+    # gdf = gdf.groupby(["country_code"])[['copper_unprocessed_ton','copper_processed_ton']].sum().reset_index()
+    # print (gdf)
+    # gdf.to_csv("test.csv",index=False)
+
+    # country_outputs = []
+    # for year in [2022,2030,2040]:
+    #     for reference_mineral in ["copper","cobalt","manganese","lithium","graphite","nickel"]:
+    #         if year == 2022:
+    #             mines_df = gpd.read_file(os.path.join(output_data_path,
+    #                                 "location_outputs",
+    #                                f"mine_city_tons_{year}.gpkg"),
+    #                             layer=reference_mineral)
+    #             mines_df = mines_df.groupby(
+    #                                         ["ISO_A3",
+    #                                         "reference_mineral"]
+    #                                         )[
+    #                                     [f"{reference_mineral}_initial_tons",
+    #                                     f"{reference_mineral}_final_tons"]].sum().reset_index()
+    #             mines_df["year"] = year
+    #             mines_df["percentile"] = 50
+    #             country_outputs.append(mines_df)
+    #         else:
+    #             for percentile in [25,50,75]:
+    #                 mines_df = gpd.read_file(os.path.join(output_data_path,
+    #                                 "location_outputs",
+    #                                f"mine_city_tons_{year}.gpkg"),
+    #                             layer=f"{reference_mineral}_{percentile}")
+    #                 mines_df = mines_df.groupby(
+    #                                         ["ISO_A3",
+    #                                         "reference_mineral"]
+    #                                         )[
+    #                                     [f"{reference_mineral}_initial_tons",
+    #                                     f"{reference_mineral}_final_tons"]].sum().reset_index()
+    #                 mines_df["year"] = year
+    #                 mines_df["percentile"] = percentile
+    #                 country_outputs.append(mines_df)
+
+    # country_outputs = pd.concat(country_outputs,axis=0,ignore_index=True)
+    # country_outputs.to_csv("country_totals_over_time.csv",index=False)
 
     # results_folder = os.path.join(output_data_path,"flow_mapping")
     # od_df = pd.read_csv(os.path.join(results_folder,

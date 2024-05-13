@@ -29,7 +29,7 @@ def find_country_edges(edges,network_edges):
     # return result
     # return [e for e in edges if e in network_edges]
 
-def main(config):
+def main(config,reference_mineral,year,percentile):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
@@ -40,83 +40,22 @@ def main(config):
 
     """Step 1: Get the input datasets
     """
-    reference_mineral = "copper"
-    final_refined_stage = 3.0
+    # reference_mineral = "copper"
+    # final_refined_stage = 3.0
     trade_ton_column = "mine_output_tons"
-    trade_usd_column = "mine_output_thousandUSD"
-    years = [2021,2030]
-    find_flows = False
-    if find_flows is True:
-        for year in years:
-            od_df = pd.read_parquet(
-                                os.path.join(results_folder,
-                                    f"{reference_mineral}_flow_paths_{year}.parquet")
-                                )
-            origin_isos = list(set(od_df["export_country_code"].values.tolist()))
-            stages = list(set(od_df["final_refined_stage"].values.tolist()))
-            country_df = []
-            edges_flows_df = []
-            nodes_flows_df = []
-            sum_dict = []    
-            for o_iso in origin_isos:
-                for stage in stages:
-                    df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["final_refined_stage"] == stage)]
-                    for flow_column in [trade_ton_column,trade_usd_column]:
-                        sum_dict.append((f"{reference_mineral}_{flow_column}_stage_{stage}_origin_{o_iso}","sum"
-                                            ))
-                        for path_type in ["full_edge_path","full_node_path"]:
-                            f_df = get_flow_on_edges(
-                                           df,
-                                            "id",path_type,
-                                            flow_column)
-                            f_df.rename(columns={flow_column:f"{reference_mineral}_{flow_column}_stage_{stage}_origin_{o_iso}"},
-                                inplace=True)
-                            if path_type == "full_edge_path":
-                                edges_flows_df.append(f_df)
-                            else:
-                                nodes_flows_df.append(f_df)
-                print ("* Done with:",o_iso)
-
-            degree_df = pd.DataFrame()
-            for path_type in ["edges","nodes"]:
-                if path_type == "edges":
-                    flows_df = pd.concat(edges_flows_df,axis=0,ignore_index=True).fillna(0)
-                else:
-                    flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
-                flows_df = flows_df.groupby(["id"]).agg(dict(sum_dict)).reset_index()
-
-                for flow_column in [trade_ton_column,trade_usd_column]:
-                    flow_sums = []
-                    for stage in stages:
-                        stage_sums = []
-                        for o_iso in origin_isos:
-                            stage_sums.append(f"{reference_mineral}_{flow_column}_stage_{stage}_origin_{o_iso}")
-
-                        flows_df[f"{reference_mineral}_{flow_column}_stage_{stage}"] = flows_df[stage_sums].sum(axis=1)
-                        flow_sums.append(f"{reference_mineral}_{flow_column}_stage_{stage}")
-
-                    flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[flow_sums].sum(axis=1) 
-
-                flows_df = add_geometries_to_flows(flows_df,
-                                        merge_column="id",
-                                        modes=["rail","sea","road"],
-                                        layer_type=path_type)
-                if path_type == "edges":
-                    degree_df = flows_df[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
-                elif path_type == "nodes" and len(degree_df.index) > 0:
-                    flows_df = pd.merge(flows_df,degree_df,how="left",on=["id"])
-
-                gpd.GeoDataFrame(flows_df,
-                        geometry="geometry",
-                        crs="EPSG:4326").to_file(os.path.join(results_folder,
-                                f"{reference_mineral}_flows_{year}.gpkg"),
-                                layer=path_type,driver="GPKG")
-
+    # trade_usd_column = "mine_output_thousandUSD"
+    # years = [2021,2030]
+    # find_flows = True
 
     # Find 2030 locations
+    if year == 2022:
+            layer_name = f"{reference_mineral}"
+    else:
+        layer_name = f"{reference_mineral}_{percentile}"
+
     flows_df = gpd.read_file(os.path.join(results_folder,
-                            f"{reference_mineral}_flows_2030.gpkg"),
-                            layer="nodes",driver="GPKG")
+                            f"nodes_flows_{year}.gpkg"),
+                            layer=layer_name)
     # origin_isos = list(set(od_df["export_country_code"].values.tolist()))
     # for o_iso in origin_isos:
     #     df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["final_refined_stage"] == final_refined_stage)]
@@ -126,14 +65,15 @@ def main(config):
     #         print(f_df[["id",f"{reference_mineral}_{trade_ton_column}_stage_{final_refined_stage}_origin_{o_iso}","degree"]])
 
     od_df = pd.read_parquet(
-                                os.path.join(results_folder,
-                                    f"{reference_mineral}_flow_paths_2030.parquet")
-                                )
+                        os.path.join(results_folder,
+                            f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet")
+                        )
     od_df["path_index"] = od_df.index.values.tolist()
     origin_isos = list(set(od_df["export_country_code"].values.tolist()))
     max_flow_min_cost_locations = []
     for o_iso in origin_isos:
-        df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["final_refined_stage"] == final_refined_stage)]
+        # df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["final_refined_stage"] == final_refined_stage)]
+        df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["initial_refined_stage"] != od_df["final_refined_stage"])]
         # df["total_mine_tons"] = df.groupby(["origin_id"])[trade_ton_column].transform('sum')
         if len(df.index) > 0:
             country_df_flows = []
@@ -146,21 +86,32 @@ def main(config):
                 dist = np.cumsum(row.distance_km_path)
                 time = np.cumsum(row.time_hr_path)
                 flow = getattr(row,trade_ton_column)
-                values_usd = getattr(row,trade_usd_column)
+                # values_usd = getattr(row,trade_usd_column)
                 # total_flow = getattr(row,"total_mine_tons")
+                # country_df_flows += list(zip([pidx]*len(node_path),
+                #                         [origin]*len(node_path),
+                #                         [o_iso]*len(node_path),
+                #                         node_path,gcosts,dist,time,
+                #                         [flow]*len(node_path),
+                #                         [values_usd]*len(node_path)
+                #                         ))
                 country_df_flows += list(zip([pidx]*len(node_path),
                                         [origin]*len(node_path),
                                         [o_iso]*len(node_path),
                                         node_path,gcosts,dist,time,
-                                        [flow]*len(node_path),
-                                        [values_usd]*len(node_path)
+                                        [flow]*len(node_path)
                                         ))
             
+            # country_df_flows = pd.DataFrame(country_df_flows,
+            #                             columns=["path_index",
+            #                             "origin_id","export_country_code",
+            #                             "id","gcost","distance_km","time_hr",
+            #                             trade_ton_column,trade_usd_column])
             country_df_flows = pd.DataFrame(country_df_flows,
                                         columns=["path_index",
                                         "origin_id","export_country_code",
                                         "id","gcost","distance_km","time_hr",
-                                        trade_ton_column,trade_usd_column])
+                                        trade_ton_column])
             country_df_flows = pd.merge(country_df_flows,f_df[["id","iso3","mode"]],how="left",on=["id"])
             country_df_flows["total_network_tons"] = country_df_flows.groupby(["id"])[trade_ton_column].transform('sum')
             country_df_flows["total_gcost"] = country_df_flows.groupby(["id"])["gcost"].transform('sum')
@@ -193,8 +144,21 @@ def main(config):
                                             "total_gcost",
                                             "total_distance_km",
                                             "total_time_hr"])
-    print (max_flow_min_cost_locations)
+    max_flow_min_cost_locations = gpd.GeoDataFrame(pd.merge(max_flow_min_cost_locations,
+                                        flows_df[["id","geometry"]],
+                                        how="left",on=["id"]),geometry="geometry",crs=flows_df.crs)
+
+    max_flow_min_cost_locations.to_file(os.path.join(results_folder,
+                            f"mineral_processing_locations_{year}.gpkg"),
+                            layer=layer_name,driver="GPKG")
 
 if __name__ == '__main__':
     CONFIG = load_config()
-    main(CONFIG)
+    try:
+        reference_mineral = str(sys.argv[1])
+        year = int(sys.argv[2])
+        percentile = int(sys.argv[3])
+    except IndexError:
+        print("Got arguments", sys.argv)
+        exit()
+    main(CONFIG,reference_mineral,year,percentile)

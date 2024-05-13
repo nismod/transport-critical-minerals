@@ -26,6 +26,245 @@ def assign_road_speeds(x):
     else:
         return min(x["Urban_min"],x["Rural_min"]),min(x["Urban_max"],x["Rural_max"])
 
+
+def transport_cost_assignment_function_destination_based(network_edges,transport_mode,destination_iso):    
+    costs_df = pd.read_csv(
+                        os.path.join(
+                            processed_data_path,
+                            "transport_costs",
+                            "country_transport_information.csv"))
+    costs_df = costs_df[costs_df["iso3"] == destination_iso]
+    """Tariffs and cost of time
+    """
+    if len(costs_df.index) > 0:
+        if transport_mode in ("road","rail","IWW"):
+            network_edges = pd.merge(network_edges,
+                                costs_df[["iso3",
+                                f"{transport_mode}_cost_tonnes_km",
+                                f"{transport_mode}_cost_tonne_h_shipper"]],
+                                how="left",left_on=["to_iso_a3"],right_on=["iso3"])
+            network_edges[f"{transport_mode}_cost_tonnes_km"] = network_edges[f"{transport_mode}_cost_tonnes_km"].fillna(0)
+        elif transport_mode == "air":
+            network_edges = pd.merge(network_edges,
+                                costs_df[["iso3",
+                                f"{transport_mode}_cost_US_tonnes",
+                                f"{transport_mode}_cost_tonne_h_shipper"]],
+                                how="left",left_on=["to_iso_a3"],right_on=["iso3"])
+            network_edges[f"{transport_mode}_cost_US_tonnes"] = network_edges[f"{transport_mode}_cost_US_tonnes"].fillna(0)
+        elif transport_mode == "sea":
+            network_edges = pd.merge(network_edges,
+                                costs_df[["iso3",
+                                f"{transport_mode}_cost_tonne_h_shipper"]],
+                                how="left",left_on=["to_iso_a3"],right_on=["iso3"])
+        elif transport_mode == "intermodal":
+            network_edges = pd.merge(network_edges,
+                                costs_df[["iso3",
+                                "road_cost_tonne_h_shipper",
+                                "rail_cost_tonne_h_shipper",
+                                "sea_cost_tonne_h_shipper",
+                                "IWW_cost_tonne_h_shipper"]],
+                                how="left",left_on=["to_iso_a3"],right_on=["iso3"])
+            network_edges[
+                "intermodal_cost_tonne_h_shipper"
+                ] = network_edges.progress_apply(lambda x:x[f"{x.to_infra}_cost_tonne_h_shipper"],axis=1)
+            network_edges.drop(["road_cost_tonne_h_shipper",
+                                "rail_cost_tonne_h_shipper",
+                                "sea_cost_tonne_h_shipper",
+                                "IWW_cost_tonne_h_shipper"],axis=1,inplace=True)   
+        network_edges[f"{transport_mode}_cost_tonne_h_shipper"] = network_edges[f"{transport_mode}_cost_tonne_h_shipper"].fillna(0)
+        network_edges.drop("iso3",axis=1,inplace=True)
+    else:
+        network_edges[f"{transport_mode}_cost_tonne_h_shipper"] = 1.0
+        network_edges["intermodal_cost_tonne_h_shipper"] = 1.0
+        network_edges[f"{transport_mode}_cost_US_tonnes"] = 1.0
+        network_edges[f"{transport_mode}_cost_tonnes_km"] = 1.0
+
+
+    if transport_mode in ("road","rail"):
+        inter_country_costs_df = pd.read_csv(
+                                    os.path.join(
+                                            processed_data_path,
+                                            "transport_costs",
+                                            "OD_trade_information.csv"))
+        """Border dwell times
+        """
+        network_edges = pd.merge(network_edges,
+                            inter_country_costs_df[[
+                            "from_iso3","to_iso3",
+                            "border_dwell","border_USD_t"]],
+                            how="left",
+                            left_on=["from_iso_a3","to_iso_a3"],
+                            right_on=["from_iso3","to_iso3"])
+        network_edges["border_dwell"] = 24.0*network_edges["border_dwell"].fillna(0)
+        network_edges["border_USD_t"] = network_edges["border_USD_t"].fillna(0)
+        network_edges.drop(["from_iso3","to_iso3"],axis=1,inplace=True)
+        del inter_country_costs_df
+
+    if transport_mode == "intermodal":
+        intermodal_costs_df = pd.read_excel(
+                                os.path.join(
+                                processed_data_path,
+                                "transport_costs",
+                                "intermodal.xlsx"),
+                            sheet_name="Sheet1")
+        network_edges = pd.merge(network_edges,
+                            intermodal_costs_df,
+                        how="left",on=["from_infra","to_infra"])
+
+
+    if transport_mode == "road":
+        speeds_df = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "transport_costs",
+                            "speed_tables.xlsx"),
+                        sheet_name="road")
+        network_edges = pd.merge(network_edges,
+                            speeds_df,
+                            how="left",
+                            left_on=["from_iso_a3"],
+                            right_on=["ISO_A3"]
+                        )
+        # infer a likely min and max road speed
+        network_edges["min_max_speed"] = network_edges.apply(
+            lambda x: assign_road_speeds(x), axis=1
+        )
+
+        # assign_road_speeds returned two values, unpack these into two columns
+        network_edges[["min_speed_kmh", "max_speed_kmh"]] = network_edges[
+                    "min_max_speed"
+                    ].apply(pd.Series)
+
+        # drop the intermediate columns
+        network_edges.drop(
+                    ["min_max_speed"] + speeds_df.columns.values.tolist(),
+                    axis=1,
+                    inplace=True,
+                )
+        del speeds_df
+    elif transport_mode == "rail":
+        speeds_df = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "transport_costs",
+                            "speed_tables.xlsx"),
+                        sheet_name="rail")
+        speeds_df["gauge"] = speeds_df["gauge"].astype(str)
+        network_edges["gauge"] = network_edges["gauge"].astype(str)
+        network_edges = pd.merge(network_edges,
+                            speeds_df,
+                            how="left",
+                            on=["gauge"]
+                        )
+        del speeds_df
+    elif transport_mode == "IWW":
+        speeds_df = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "transport_costs",
+                            "speed_tables.xlsx"),
+                        sheet_name="iww")
+        # print (speeds_df)
+        network_edges["min_speed_kmh"] = speeds_df["min_speed_kmh"].values[0]
+        network_edges["max_speed_kmh"] = speeds_df["max_speed_kmh"].values[0]
+        del speeds_df
+    
+    network_edges["land_border_cost_usd_tons"] = 0
+    if transport_mode in ("road","rail"):
+        # voc = 1.5/20.0
+        # network_edges["gcost_usd_tons"] = 0.001*network_edges[
+        #                                         "length_m"
+        #                                         ]*(network_edges[
+        #                                 f"{transport_mode}_cost_tonnes_km"
+        #                                 ]) + network_edges[
+        #                                         f"{transport_mode}_cost_tonne_h_shipper"
+        #                                         ]*(network_edges["border_dwell"] + 0.001*network_edges[
+        #                                         "length_m"
+        #                                         ]/network_edges[
+        #                                         "max_speed_kmh"
+        #                                         ]) + network_edges["border_USD_t"]
+        network_edges["gcost_usd_tons"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]*(network_edges[
+                                        f"{transport_mode}_cost_tonnes_km"
+                                        ]) + network_edges[
+                                                f"{transport_mode}_cost_tonne_h_shipper"
+                                                ]*(0.001*network_edges[
+                                                "length_m"
+                                                ]/network_edges[
+                                                "max_speed_kmh"
+                                                ])
+        network_edges["land_border_cost_usd_tons"] = network_edges[
+                                                        f"{transport_mode}_cost_tonne_h_shipper"
+                                                        ]*network_edges["border_dwell"
+                                                        ] + network_edges["border_USD_t"]
+        network_edges["distance_km"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]
+        # network_edges["time_hr"] = network_edges["border_dwell"] + 0.001*network_edges[
+        #                                         "length_m"
+        #                                         ]/network_edges[
+        #                                         "max_speed_kmh"
+        #                                         ]
+        network_edges["time_hr"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]/network_edges[
+                                                "max_speed_kmh"
+                                                ]
+    elif transport_mode == "sea":
+        network_edges["gcost_usd_tons"] = network_edges[
+                                                "distance_km"
+                                                ]*network_edges["cost_USD_t_km"
+                                                    ] + network_edges[
+                                                f"{transport_mode}_cost_tonne_h_shipper"
+                                                ]*(network_edges["time_h"] + network_edges[
+                                                "handling_h"
+                                                ]) + network_edges["handling_USD_t"]
+        network_edges["distance_km"] = network_edges[
+                                                "distance_km"
+                                                ]
+        network_edges["time_hr"] = network_edges["time_h"] + network_edges[
+                                                "handling_h"
+                                                ]
+    elif transport_mode == "IWW":
+        network_edges["gcost_usd_tons"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]*network_edges[
+                                        f"{transport_mode}_cost_tonnes_km"
+                                        ] + network_edges[
+                                                f"{transport_mode}_cost_tonne_h_shipper"
+                                                ]*(0.001*network_edges[
+                                                "length_m"
+                                                ]/network_edges[
+                                                "max_speed_kmh"
+                                                ])
+        network_edges["distance_km"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]
+        network_edges["time_hr"] = 0.001*network_edges[
+                                                "length_m"
+                                                ]/network_edges[
+                                                "max_speed_kmh"
+                                                ]
+
+    else:
+        network_edges["gcost_usd_tons"] = network_edges[
+                                                f"{transport_mode}_cost_tonne_h_shipper"
+                                                ]*network_edges[
+                                                "dwell_time_h"
+                                                ] + network_edges["handling_cost_usd_t"]
+        network_edges["distance_km"] = 0
+        network_edges["time_hr"] = network_edges[
+                                                "dwell_time_h"
+                                                ]
+
+    return network_edges
+
+
+"""
+Modified cost function above
+"""
+
 def transport_cost_assignment_function(network_edges,transport_mode):    
     costs_df = pd.read_csv(
                         os.path.join(
@@ -299,6 +538,27 @@ def transport_cost_assignment_function(network_edges,transport_mode):
 
     return network_edges
 
+def multimodal_network_costs_destination_based(multi_modal_edges,destination_iso,
+                        modes=["IWW","rail","road","sea","intermodal"],
+                        network_columns=["from_id","to_id","id",
+                                        "mode","capacity","distance_km",
+                                        "time_hr","land_border_cost_usd_tons",
+                                        "gcost_usd_tons"]):
+    multi_modal_df = []
+    for mode in modes:
+        edges = transport_cost_assignment_function_destination_based(
+                                multi_modal_edges[multi_modal_edges["mode"] ==  mode],
+                                mode,destination_iso)
+        multi_modal_df.append(edges[network_columns])
+
+    multi_modal_df.append(multi_modal_edges[~multi_modal_edges["mode"].isin(modes)])
+
+    return pd.concat(multi_modal_df,axis=0,ignore_index=True).fillna(0)
+
+
+
+    
+
 def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
                             rail_status=["open"],intermodal_ports="all",cargo_type="general_cargo",
                             default_capacity=1e10,port_to_land_capacity=None):    
@@ -373,29 +633,39 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
                     cap_factor = 0.5*len(edges[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land"))].index)
                     edges.loc[((edges["from_id"] == f"{port}_land") | (edges["to_id"] == f"{port}_land")),"capacity"] = 1.0*capacity/cap_factor
         edges["mode"] = mode
-        edges = transport_cost_assignment_function(edges,mode)
+        # edges = transport_cost_assignment_function(edges,mode)
         # multi_modal_df.append(edges[["from_id","to_id","id",
         #                                 "mode","capacity","distance_km",
         #                                 "time_hr",
         #                                 "gcost_usd_tons"]])
+        # multi_modal_df.append(edges[["from_id","to_id","id",
+        #                                 "mode","capacity","distance_km",
+        #                                 "time_hr","land_border_cost_usd_tons",
+        #                                 "gcost_usd_tons"]])
         multi_modal_df.append(edges[["from_id","to_id","id",
-                                        "mode","capacity","distance_km",
-                                        "time_hr","land_border_cost_usd_tons",
-                                        "gcost_usd_tons"]])
-
+                                        "mode","capacity"]])
         if mode in ("road","rail"):
             # add_edges = edges[["from_id","to_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"]].copy()
             # add_edges.columns = ["to_id","from_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"]
             add_edges = edges[["from_id","to_id","id",
-                                "mode","capacity","distance_km",
-                                "time_hr","land_border_cost_usd_tons",
-                                "gcost_usd_tons"]].copy()
+                                "mode","capacity"]].copy()
             add_edges.columns = ["to_id","from_id",
-                                "id","mode","capacity",
-                                "distance_km","time_hr",
-                                "land_border_cost_usd_tons",
-                                "gcost_usd_tons"]
+                                "id","mode","capacity"]
             multi_modal_df.append(add_edges)
+
+        # if mode in ("road","rail"):
+        #     # add_edges = edges[["from_id","to_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"]].copy()
+        #     # add_edges.columns = ["to_id","from_id","id","mode","capacity","distance_km","time_hr","gcost_usd_tons"]
+        #     add_edges = edges[["from_id","to_id","id",
+        #                         "mode","capacity","distance_km",
+        #                         "time_hr","land_border_cost_usd_tons",
+        #                         "gcost_usd_tons"]].copy()
+        #     add_edges.columns = ["to_id","from_id",
+        #                         "id","mode","capacity",
+        #                         "distance_km","time_hr",
+        #                         "land_border_cost_usd_tons",
+        #                         "gcost_usd_tons"]
+        #     multi_modal_df.append(add_edges)
 
 
     return multi_modal_df
@@ -466,71 +736,10 @@ def add_node_degree_to_flows(nodes_flows_dataframe,mineral_class):
 
     return gpd.GeoDataFrame(nodes_flows_dataframe,geometry="geometry",crs="EPSG:4326")
 
-
-# def connect_mines_to_transport(mines_df,mine_id_col,rail_status="open",distance_threshold=50,default_capacity=1e10):
-#     config = load_config()
-#     incoming_data_path = config['paths']['incoming_data']
-#     processed_data_path = config['paths']['data']
-
-#     mine_transport_df = []
-#     for mode in ["rail","road"]:
-#         if mode == "rail":
-#             edges = gpd.read_file(os.path.join(
-#                                     processed_data_path,
-#                                     "infrastructure",
-#                                     "africa_railways_network.gpkg"
-#                                         ), layer="edges"
-#                             )
-#             edges = edges[edges["status"] == rail_status]
-#             node_ids = list(set(edges["from_id"].values.tolist() + edges["to_id"].values.tolist()))
-#             nodes = gpd.read_file(os.path.join(
-#                                     processed_data_path,
-#                                     "infrastructure",
-#                                     "africa_railways_network.gpkg"
-#                                         ), layer="nodes"
-#                             )
-#             nodes = nodes[(nodes["id"].isin(node_ids)) & (nodes["infra"].isin(['stop','station']))]
-#         else:
-#             nodes = gpd.read_parquet(os.path.join(
-#                             processed_data_path,
-#                             "infrastructure",
-#                             "africa_roads_nodes.geoparquet"))
-#             nodes.rename(columns={"road_id":"id"},inplace=True)
-
-
-#         """Find mines attached to rail and roads
-#         """
-#         mine_node_intersects = gpd.sjoin_nearest(mines_df[[mine_id_col,"geometry"]].to_crs(epsg=epsg_meters),
-#                                 nodes[["id","geometry"]].to_crs(epsg=epsg_meters),
-#                                 how="left",distance_col="distance").reset_index()
-#         if mode == "rail":
-#             mine_node_intersects = mine_node_intersects[mine_node_intersects["distance"] <= distance_threshold]
-        
-#         mine_node_intersects = mine_node_intersects.drop_duplicates(subset=[mine_id_col],keep="first")
-#         mine_node_intersects = mine_node_intersects[[mine_id_col,"id"]]
-#         mine_node_intersects.columns = ["from_id","to_id"]
-#         mine_transport_df.append(mine_node_intersects)
-#         mine_dup = mine_node_intersects.copy()
-#         mine_dup.columns = ["to_id","from_id"]
-#         mine_transport_df.append(mine_dup)
-    
-#     if len(mine_transport_df) > 0:
-#         mine_transport_df = pd.concat(mine_transport_df,axis=0,ignore_index=True)
-#         mine_transport_df["id"] = mine_transport_df.index.values.tolist()
-#         mine_transport_df["id"] = mine_transport_df.progress_apply(lambda x:f"minetransporte{x.id}",axis=1)
-#         mine_transport_df["capacity"] = default_capacity
-#         mine_transport_df["gcost_usd_tons"] = 0
-#         mine_transport_df["mode"] = "mine"
-
-
-#         return [mine_transport_df]
-    # else:
-    #     return mine_transport_df
-
 def connect_points_to_transport(points_df,points_id_col,
                             points_type,
                             rail_status=["open"],
-                            distance_threshold=1500,
+                            distance_threshold=50,
                             default_capacity=1e10):
     points_transport_df = []
     for mode in ["rail","road"]:
@@ -581,10 +790,10 @@ def connect_points_to_transport(points_df,points_id_col,
                                                 lambda x:f"{points_type}transporte{x.id}",
                                                 axis=1)
         points_transport_df["capacity"] = default_capacity
-        points_transport_df["gcost_usd_tons"] = 0
-        points_transport_df["distance_km"] = 0
-        points_transport_df["time_hr"] = 0
-        points_transport_df["land_border_cost_usd_tons"] = 0
+        # points_transport_df["gcost_usd_tons"] = 0
+        # points_transport_df["distance_km"] = 0
+        # points_transport_df["time_hr"] = 0
+        # points_transport_df["land_border_cost_usd_tons"] = 0
         points_transport_df["mode"] = points_type
 
 
@@ -623,10 +832,12 @@ def create_mines_and_cities_to_port_network(mines_df,mine_id_col,
                     cities_df,city_id_col,
                     modes=["IWW","rail","road","sea","intermodal"],
                     rail_status=["open"],distance_threshold=50,
+                    # network_columns=["from_id","to_id","id",
+                    #                 "mode","capacity","distance_km",
+                    #                 "time_hr","land_border_cost_usd_tons",
+                    #                 "gcost_usd_tons"],
                     network_columns=["from_id","to_id","id",
-                                    "mode","capacity","distance_km",
-                                    "time_hr","land_border_cost_usd_tons",
-                                    "gcost_usd_tons"],
+                                    "mode","capacity"],
                     intermodal_ports="all",cargo_type="general_cargo",port_to_land_capacity=None):
     multi_modal_df = multimodal_network_assembly(modes=modes,
                     rail_status=rail_status,
@@ -755,8 +966,8 @@ def add_port_path(edges,nodes,G):
                 source = source.split("_")[0]
                 target = target.split("_")[0]
                 if source != target:
-                    route,points,_,_,_,_,_ = network_od_node_edge_path_estimations(G,
-                                    source, target,"distance","distance","distance","distance","id")
+                    route,points,_,_,_,_ = network_od_node_edge_path_estimations(G,
+                                    source, target,"distance","distance","distance","id")
                     new_edges += route[0]
                     new_nodes += points[0]
             else:

@@ -71,27 +71,44 @@ def main(config):
                                 ]["country_code"].values.tolist()
         # baci_trade = pd.read_csv(os.path.join(processed_data_path,
         #                     "baci","BACI_HS17_Y2021_V202301.csv"))
+        # baci_trade = pd.read_csv(os.path.join(processed_data_path,
+        #                     "baci","BACI_HS17_Y2022_V202401.csv"))
         baci_trade = pd.read_csv(os.path.join(processed_data_path,
-                            "baci","BACI_HS17_Y2022_V202401.csv"))
-        print (baci_trade)
-        baci_trade["v"] = baci_trade.progress_apply(lambda x: modify_from_string_to_float(x,"v"),axis=1)
-        baci_trade["q"] = baci_trade.progress_apply(lambda x: modify_from_string_to_float(x,"q"),axis=1)
-        baci_trade["q_v_ratio"] = baci_trade["q"]/baci_trade["v"]
-        baci_trade["q_v_ratio_mean"]=baci_trade.groupby(["i","k"])["q_v_ratio"].transform('mean')
-        baci_trade["q_mod"] = np.where(baci_trade["q"].isna(),
-                                        baci_trade["v"]*baci_trade["q_v_ratio_mean"],
-                                        baci_trade["q"])
-        if len(baci_trade["q_mod"].isna()) > 0:
-            baci_trade["q_v_ratio_mean"]=baci_trade.groupby(["k"])["q_v_ratio"].transform('mean')
-            baci_trade["q_mod"] = np.where(baci_trade["q_mod"].isna(),
-                                        baci_trade["v"]*baci_trade["q_v_ratio_mean"],
-                                        baci_trade["q_mod"])
-        baci_trade = baci_trade[["t","i","j","k","v","q","q_mod"]]
+                            "baci","baci_baptiste.csv"))
+        
+        baci_trade["v_baptiste"] = baci_trade.progress_apply(
+                                        lambda x: modify_from_string_to_float(x,"v_baptiste"),
+                                        axis=1)
+        baci_trade["q_baptiste"] = baci_trade.progress_apply(
+                                        lambda x: modify_from_string_to_float(x,"q_baptiste"),
+                                        axis=1)
+
+        # baci_trade["v"] = baci_trade.progress_apply(lambda x: modify_from_string_to_float(x,"v"),axis=1)
+        # baci_trade["q"] = baci_trade.progress_apply(lambda x: modify_from_string_to_float(x,"q"),axis=1)
+        # baci_trade["q_v_ratio"] = baci_trade["q"]/baci_trade["v"]
+        # baci_trade["q_v_ratio_mean"]=baci_trade.groupby(["i","k"])["q_v_ratio"].transform('mean')
+        # baci_trade["q_mod"] = np.where(baci_trade["q"].isna(),
+        #                                 baci_trade["v"]*baci_trade["q_v_ratio_mean"],
+        #                                 baci_trade["q"])
+        # if len(baci_trade["q_mod"].isna()) > 0:
+        #     baci_trade["q_v_ratio_mean"]=baci_trade.groupby(["k"])["q_v_ratio"].transform('mean')
+        #     baci_trade["q_mod"] = np.where(baci_trade["q_mod"].isna(),
+        #                                 baci_trade["v"]*baci_trade["q_v_ratio_mean"],
+        #                                 baci_trade["q_mod"])
+        # baci_trade = baci_trade[["t","i","j","k","v","q","q_mod"]]
+
+        baci_trade = baci_trade[["i","j","k","q","v_baptiste","q_baptiste"]]
         baci_trade.rename(
-        				columns={"k":"product_code",
-        				"v":"trade_value_thousandUSD",
-        				"q_mod":"trade_quantity_tons"},inplace=True)
+                        columns={"k":"product_code",
+                        "v_baptiste":"trade_value_thousandUSD",
+                        "q_baptiste":"trade_quantity_tons"},inplace=True)
+        
+        # baci_trade.rename(
+        #               columns={"k":"product_code",
+        #               "v":"trade_value_thousandUSD",
+        #               "q_mod":"trade_quantity_tons"},inplace=True)
         print (baci_trade)
+        baci_trade = baci_trade[~baci_trade["trade_quantity_tons"].isna()]
         baci_trade = pd.merge(baci_trade,
                                 baci_countries,
                                 how="left",left_on=["i"],right_on=["country_code"])
@@ -125,29 +142,31 @@ def main(config):
         baci_trade.drop(["code"],
                         axis=1,inplace=True)
         print (baci_trade)
+        # product_stages = pd.read_csv(os.path.join(processed_data_path,
+        #                     "baci","productcodes_minerals_refs.csv"))[
+        #                                         [
+        #                                         "product_code",
+        #                                         "product_description",
+        #                                         "refining_stage",
+        #                                         "refining_stage_cam",
+        #                                         "reference_mineral",
+        #                                         "processing_level"]]
+        # product_stages["product_description"] = product_stages["product_description"].str.lower() 
+        # product_stages.to_csv(os.path.join(processed_data_path,
+        #                     "baci","productcodes_minerals_refs_updated.csv"))
         product_stages = pd.read_csv(os.path.join(processed_data_path,
-                            "baci","productcodes_minerals_refs.csv"))[
-                                                [
-                                                "product_code",
-                                                "product_description",
-                                                "refining_stage",
-                                                "refining_stage_cam",
-                                                "reference_mineral",
-                                                "processing_level"]]
-        product_stages["product_description"] = product_stages["product_description"].str.lower() 
-        product_stages.to_csv(os.path.join(processed_data_path,
                             "baci","productcodes_minerals_refs_updated.csv"))
         baci_trade = pd.merge(baci_trade,
                             product_stages,how="left",
                             on=["product_code","product_description"])
         print (baci_trade)
 
-        baci_trade[baci_trade["q"].isna()].to_csv(os.path.join(processed_data_path,
-                            "baci","baci_na_values.csv"),index=False)
+        # baci_trade[baci_trade["q"].isna()].to_csv(os.path.join(processed_data_path,
+        #                     "baci","baci_na_values.csv"),index=False)
         baci_trade.drop("q",axis=1,inplace=True)
-        baci_trade.to_csv(os.path.join(processed_data_path,
-                            "baci","baci_trade_all_2022.csv"),
-                        index=False)
+        # baci_trade.to_csv(os.path.join(processed_data_path,
+        #                     "baci","baci_trade_all_2022.csv"),
+        #                 index=False)
         
         baci_trade = baci_trade[~baci_trade["refining_stage_cam"].isna()]
         country_conditions = pd.read_csv(os.path.join(processed_data_path,
@@ -172,7 +191,7 @@ def main(config):
         ccg_minerals = ["copper","cobalt","nickel","graphite","manganese","lithium"]
         baci_trade.loc[baci_trade["reference_mineral"].isin(ccg_minerals),"ccg_mineral"] = 1
         baci_trade.to_csv(os.path.join(processed_data_path,
-                            "baci","baci_ccg_minerals_trade_2022.csv"),index=False)
+                            "baci","baci_ccg_minerals_trade_2022_updated.csv"),index=False)
         baci_trade = baci_trade[(baci_trade["ccg_exporter"] == 1) & (baci_trade["ccg_mineral"] == 1)]
         baci_trade = baci_trade.groupby(
                             ["product_code",
@@ -180,8 +199,10 @@ def main(config):
                             "export_country_code",
                             "reference_mineral",
                             "refining_stage_cam"])[["trade_value_thousandUSD","trade_quantity_tons"]].sum().reset_index()
+        # baci_trade.to_csv(os.path.join(processed_data_path,
+        #                     "baci","baci_ccg_reference_minerals_exports_2022.csv"),index=False)
         baci_trade.to_csv(os.path.join(processed_data_path,
-                            "baci","baci_ccg_reference_minerals_exports_2022.csv"),index=False)
+                            "baci","baci_ccg_reference_minerals_exports_2022_updated.csv"),index=False)
 
 
 if __name__ == '__main__':

@@ -17,6 +17,7 @@ def main(config):
         os.mkdir(results_folder)
 
     years = [2022,2030,2040]
+    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
     new_trade_minerals = ["cobalt","graphite"]
     import_export_groupby_columns = ["reference_mineral",
                             "export_country_code", 
@@ -33,26 +34,36 @@ def main(config):
                         "initial_refined_stage",
                         "final_refined_stage",
                         "trade_type"] + trade_value_columns
+    # reference_mineral  
+    # export_country_code 
+    # import_country_code 
+    # ccg_exporter    
+    # export_continent    
+    # import_continent    
+    # initial_mineral_type    
+    # initial_refined_stage   
+    # final_refined_stage 
+    # trade_type
     
     trade_df = pd.read_csv(
                     os.path.join(processed_data_path,
-                        "baci","baci_ccg_minerals_trade_2022.csv"))
+                        "baci","baci_ccg_minerals_trade_2022_updated.csv"))
     
     codes_types_df = pd.read_csv(os.path.join(processed_data_path,
                             "baci",
-                            "commodity_codes_refined_unrefined.csv"))
-    codes_types_df["initial_refined_stage"] = codes_types_df["initial_refined_stage"].astype(str)
-    codes_types_df["final_refined_stage"] = codes_types_df["final_refined_stage"].astype(str)
+                            "commodity_codes_refined_unrefined.csv"),dtype=data_type)
+    # codes_types_df["initial_refined_stage"] = codes_types_df["initial_refined_stage"].astype(str)
+    # codes_types_df["final_refined_stage"] = codes_types_df["final_refined_stage"].astype(str)
     pr_conv_factors_df = pd.read_excel(os.path.join(processed_data_path,
                                         "mineral_usage_factors",
-                                        "aggregated_stages.xlsx"))[[
+                                        "aggregated_stages.xlsx"),dtype=data_type)[[
                                             "reference_mineral",
                                             "initial_refined_stage",
                                             "final_refined_stage", 
                                             "aggregate_ratio"
                                             ]] 
-    pr_conv_factors_df["initial_refined_stage"] = pr_conv_factors_df["initial_refined_stage"].astype(str)
-    pr_conv_factors_df["final_refined_stage"] = pr_conv_factors_df["final_refined_stage"].astype(str)
+    # pr_conv_factors_df["initial_refined_stage"] = pr_conv_factors_df["initial_refined_stage"].astype(str)
+    # pr_conv_factors_df["final_refined_stage"] = pr_conv_factors_df["final_refined_stage"].astype(str)
                                            
     """Get existing trade relationships for each processing type 
     """
@@ -224,6 +235,7 @@ def main(config):
                     trade_shares_df.append(n_df)
 
         trade_shares_df = pd.concat(trade_shares_df,axis=0,ignore_index=True)
+        trade_shares_df = trade_shares_df[trade_shares_df[tons_column]>0]
         trade_shares_df[final_columns].to_csv(os.path.join(results_folder,
                                     f"baci_ccg_country_level_trade_{year}.csv"),index=False)
         m_s_df = trade_shares_df.copy()
