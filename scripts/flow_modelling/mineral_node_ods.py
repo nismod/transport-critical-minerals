@@ -33,7 +33,6 @@ def main(config,
     od_combine_cols = [mine_id_col,"iso3","weight"]
     reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
     # reference_minerals = ["copper"]
-    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
     # cargo_type = "Dry bulk"
     cargo_type = "General cargo"
     trade_groupby_columns = [
@@ -127,6 +126,7 @@ def main(config,
     all_ports_df = pd.concat(
                     [port_df[["id","iso3"]],landlocked_port_df[["id","iso3"]]],
                     axis=0,ignore_index=True)
+    all_ports_df["id"] = all_ports_df.progress_apply(lambda x:f"{x.id}_land",axis=1)
     all_ports_df["weight"] = 1
     all_ports_df["initial_processing_location"
         ] = all_ports_df["final_processing_location"
