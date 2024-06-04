@@ -11,12 +11,13 @@ import igraph as ig
 import geopandas as gpd
 from utils import *
 from transport_cost_assignment import *
+from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
 
 
-def main(config,reference_mineral,year,percentile):
+def main(config,reference_mineral,year,percentile,efficient_scale):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
@@ -32,14 +33,20 @@ def main(config,reference_mineral,year,percentile):
     #                         "export_continent","export_landlocked",
     #                         "import_continent","import_landlocked"]
     # trade_value_columns = ["trade_value_thousandUSD","trade_quantity_tons"]
-    od_columns = ["reference_mineral",
-                    "initial_refined_stage",
-                    "final_refined_stage",
+    od_columns = [
+                    "reference_mineral",
                     "export_country_code",
                     "import_country_code",
                     "export_continent",
                     "import_continent",
-                    "mine_output_tons"]
+                    "trade_type",
+                    "initial_processing_stage",
+                    "final_processing_stage",
+                    "initial_processing_location",
+                    "final_processing_location",
+                    "initial_stage_production_tons",    
+                    "final_stage_production_tons"
+                ]
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
     """Step 1: Get the OD matrix
     """
@@ -48,7 +55,7 @@ def main(config,reference_mineral,year,percentile):
         od_file_name = f"mining_city_node_level_ods_{year}.csv"
         mine_layer = f"{reference_mineral}"
     else:
-        od_file_name = f"mining_city_node_level_ods_{year}_{percentile}.csv"
+        od_file_name = f"mining_city_node_level_ods_{year}_{percentile}_{efficient_scale}.csv"
         mine_layer = f"{reference_mineral}_{percentile}"
 
     # print (od_file_name)
@@ -64,12 +71,9 @@ def main(config,reference_mineral,year,percentile):
 
     # Mine locations in Africa with the mineral tonages
     mine_id_col = "mine_id"
-    mines_df = gpd.read_file(os.path.join(output_data_path,
-                                    "location_outputs",
-                                   f"mine_city_tons_{year}.gpkg"),layer=mine_layer)
-    mines_df = mines_df[(mines_df["id"].isin(od_locations)) & (mines_df["location_type"] == "mine")]
-    mines_df.rename(columns={"id":mine_id_col},inplace=True)
-    mines_df = mines_df[[mine_id_col,"geometry"]]
+    mines_df = get_mine_layer(reference_mineral,year,percentile,
+                        mine_id_col=mine_id_col,return_columns=[mine_id_col,"geometry"])
+    mines_df = mines_df[mines_df[mine_id_col].isin(od_locations)]
 
     # Population locations for urban cities
     pop_id_col = "city_id"
@@ -116,7 +120,7 @@ def main(config,reference_mineral,year,percentile):
     set_port_capacity = [("port137",0.27*1e6),("port784",0.0)]
     origin_id = "origin_id"
     destination_id = "destination_id"
-    trade_ton_column = "mine_output_tons"
+    trade_ton_column = "final_stage_production_tons"
     trade_usd_column = "mine_output_thousandUSD"
     # combined_trade_df = pd.read_csv(os.path.join(
     #                                         results_folder,
@@ -164,6 +168,7 @@ def main(config,reference_mineral,year,percentile):
                             port_to_land_capacity=export_port_ids,
                             distance_threshold=1500
                             )
+    print (network_graph)
     # network_graph.to_parquet(os.path.join(results_folder,
     #             f"global_network_{year}.parquet"),
     #             index=False)
@@ -226,9 +231,14 @@ def main(config,reference_mineral,year,percentile):
         #                                 "edge_path"],
         #                         keep="first")
         # mine_routes['edge_path'] = mine_routes['edge_path'].map(list)
-        print (mine_routes)
-        print (mine_routes.columns.values.tolist())
+        # print (mine_routes)
+        # print (mine_routes.columns.values.tolist())
         mine_routes = convert_port_routes(mine_routes,"edge_path","node_path")
+        if year > 2022:
+            file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet"
+        else:
+            file_name = f"{reference_mineral}_flow_paths_{year}.parquet"
+
         mine_routes[[origin_id,destination_id] + od_columns + [
                                 "edge_path",
                                 "node_path",
@@ -239,7 +249,7 @@ def main(config,reference_mineral,year,percentile):
                                 "time_hr_path",
                                 "land_border_cost_usd_tons_path",
                                 "gcost_usd_tons"]].to_parquet(
-                os.path.join(results_folder,f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet"),
+                os.path.join(results_folder,file_name),
                 index=False)
 
         #         for flow_column in [trade_ton_column,trade_usd_column]:
@@ -301,7 +311,8 @@ if __name__ == '__main__':
         reference_mineral = str(sys.argv[1])
         year = int(sys.argv[2])
         percentile = int(sys.argv[3])
+        efficient_scale = str(sys.argv[4])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,reference_mineral,year,percentile)
+    main(CONFIG,reference_mineral,year,percentile,efficient_scale)

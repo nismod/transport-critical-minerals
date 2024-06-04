@@ -30,42 +30,63 @@ def main(config):
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
+    ccg_totals = pd.read_csv(
+                        os.path.join(
+                            output_data_path,
+                            "baci_trade_matrices",
+                            "baci_ccg_country_metal_content_production_2022.csv"))
+    print (ccg_totals)
+
+    bgs_totals = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "baci","BGS_SnP_comparison.xlsx"),
+                        index_col=[0,1])
+    bgs_totals = bgs_totals.reset_index()
+    print (bgs_totals)
+    bgs_totals.rename(columns={"level_0":"reference_mineral","level_1":"export_country_code"},inplace=True)
+    bgs_totals["reference_mineral"] = bgs_totals["reference_mineral"].str.lower()
+
+    ccg_totals = pd.merge(ccg_totals,bgs_totals,how="left",on=["reference_mineral","export_country_code"]).fillna(0)
+    print (ccg_totals)
+    ccg_totals.to_csv("baci_bgs_snp_comparison.csv",index=False)
+
     # baci = pd.read_csv(os.path.join(processed_data_path,"baci","baci_ccg_country_level_trade_2040.csv"))
     # baci = baci.groupby(["export_country_code","final_refined_stage"])["trade_quantity_tons"].sum().reset_index()
     # baci.to_csv("test.csv")
 
-    road_edges = gpd.read_parquet(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_roads_edges.geoparquet"))
-    print (road_edges.columns.values.tolist())
+    # road_edges = gpd.read_parquet(os.path.join(
+    #                         processed_data_path,
+    #                         "infrastructure",
+    #                         "africa_roads_edges.geoparquet"))
+    # print (road_edges.columns.values.tolist())
 
-    road_nodes = gpd.read_parquet(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "africa_roads_nodes.geoparquet"))
-    # road_nodes.rename(columns={"road_id":"id","iso_a3":"iso3"},inplace=True)
-    # road_nodes.to_parquet(os.path.join(
-                            # processed_data_path,
-                            # "infrastructure",
-                            # "africa_roads_nodes.geoparquet"))
-    print (road_nodes.columns.values.tolist())
+    # road_nodes = gpd.read_parquet(os.path.join(
+    #                         processed_data_path,
+    #                         "infrastructure",
+    #                         "africa_roads_nodes.geoparquet"))
+    # # road_nodes.rename(columns={"road_id":"id","iso_a3":"iso3"},inplace=True)
+    # # road_nodes.to_parquet(os.path.join(
+    #                         # processed_data_path,
+    #                         # "infrastructure",
+    #                         # "africa_roads_nodes.geoparquet"))
+    # print (road_nodes.columns.values.tolist())
 
-    extract_countires = ["ZMB","COD","ZWE","MOZ"]
-    country_nodes = road_nodes[road_nodes["iso_a3"].isin(extract_countires)]
-    print (country_nodes)
+    # extract_countires = ["ZMB","COD","ZWE","MOZ"]
+    # country_nodes = road_nodes[road_nodes["iso_a3"].isin(extract_countires)]
+    # print (country_nodes)
 
-    country_edges = road_edges[(road_edges["from_iso_a3"].isin(extract_countires)) | (road_edges["to_iso_a3"].isin(extract_countires))]
-    print (country_edges)
+    # country_edges = road_edges[(road_edges["from_iso_a3"].isin(extract_countires)) | (road_edges["to_iso_a3"].isin(extract_countires))]
+    # print (country_edges)
 
-    country_nodes.to_parquet(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "country_roads_nodes.geoparquet"),index=False)
-    country_edges.to_parquet(os.path.join(
-                            processed_data_path,
-                            "infrastructure",
-                            "country_roads_edges.geoparquet"),index=False)
+    # country_nodes.to_parquet(os.path.join(
+    #                         processed_data_path,
+    #                         "infrastructure",
+    #                         "country_roads_nodes.geoparquet"),index=False)
+    # country_edges.to_parquet(os.path.join(
+    #                         processed_data_path,
+    #                         "infrastructure",
+    #                         "country_roads_edges.geoparquet"),index=False)
 
     # gdf = gpd.read_file(os.path.join(processed_data_path,"minerals","ccg_mines_est_production.gpkg"))
     # print (gdf.columns.values.tolist())

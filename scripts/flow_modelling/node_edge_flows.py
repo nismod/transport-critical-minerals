@@ -29,7 +29,7 @@ def find_country_edges(edges,network_edges):
     # return result
     # return [e for e in edges if e in network_edges]
 
-def main(config,reference_mineral,year,percentile):
+def main(config,reference_mineral,year,percentile,efficient_scale):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
@@ -42,39 +42,77 @@ def main(config,reference_mineral,year,percentile):
     """
     # reference_mineral = "copper"
     # final_refined_stage = 3.0
-    trade_ton_column = "mine_output_tons"
+    trade_ton_columns = [
+                            "initial_stage_production_tons",
+                            "final_stage_production_tons"
+                        ]
     # trade_usd_column = "mine_output_thousandUSD"
     # years = [2021,2030]
     # find_flows = True
     
+    # # Read data on production scales
+    # production_size_df = pd.read_excel(
+    #                             os.path.join(
+    #                                 processed_data_path,
+    #                                 "production_costs",
+    #                                 "scales.xlsx"),
+    #                             sheet_name="efficient_scales"
+    #                             )
+    # # print (production_size_df)
+    # production_size = production_size_df[
+    #                             production_size_df[
+    #                                 "reference_mineral"] == reference_mineral
+    #                                 ][efficient_scale].values[0]
+    # max_production_size = production_size_df[
+    #                             production_size_df[
+    #                                 "reference_mineral"] == reference_mineral
+    #                                 ]["main_product_world_min_prod_tonnes"].values[0]
+    if year > 2022:
+        file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet"
+        # Read data on production scales
+        production_size_df = pd.read_excel(
+                                    os.path.join(
+                                        processed_data_path,
+                                        "production_costs",
+                                        "scales.xlsx"),
+                                    sheet_name="efficient_scales"
+                                    )
+        # print (production_size_df)
+        production_size = production_size_df[
+                                    production_size_df[
+                                        "reference_mineral"] == reference_mineral
+                                        ][efficient_scale].values[0]
+    else:
+        file_name = f"{reference_mineral}_flow_paths_{year}.parquet"
+        production_size = 0
     od_df = pd.read_parquet(
                         os.path.join(results_folder,
-                            f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet")
+                            file_name)
                         )
+    od_df = od_df[od_df["trade_type"] != "Import"]
     origin_isos = list(set(od_df["export_country_code"].values.tolist()))
-    stages = list(set(od_df["final_refined_stage"].values.tolist()))
+    stages = list(set(od_df["final_processing_stage"].values.tolist()))
     country_df = []
     edges_flows_df = []
     nodes_flows_df = []
     sum_dict = []    
     for o_iso in origin_isos:
         for stage in stages:
-            df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["final_refined_stage"] == stage)]
-            # for flow_column in [trade_ton_column,trade_usd_column]:
-            for flow_column in [trade_ton_column]:
-                sum_dict.append((f"{reference_mineral}_{flow_column}_stage_{stage}_origin_{o_iso}","sum"
-                                    ))
-                for path_type in ["full_edge_path","full_node_path"]:
-                    f_df = get_flow_on_edges(
-                                   df,
-                                    "id",path_type,
-                                    flow_column)
-                    f_df.rename(columns={flow_column:f"{reference_mineral}_{flow_column}_stage_{stage}_origin_{o_iso}"},
-                        inplace=True)
-                    if path_type == "full_edge_path":
-                        edges_flows_df.append(f_df)
-                    else:
-                        nodes_flows_df.append(f_df)
+            df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["final_processing_stage"] == stage)]
+            if len(df.index) > 0:
+                for flow_column in trade_ton_columns:
+                    sum_dict.append(f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}")
+                    for path_type in ["full_edge_path","full_node_path"]:
+                        f_df = get_flow_on_edges(
+                                       df,
+                                        "id",path_type,
+                                        flow_column)
+                        f_df.rename(columns={flow_column:f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}"},
+                            inplace=True)
+                        if path_type == "full_edge_path":
+                            edges_flows_df.append(f_df)
+                        else:
+                            nodes_flows_df.append(f_df)
         print ("* Done with:",o_iso)
 
     degree_df = pd.DataFrame()
@@ -83,18 +121,19 @@ def main(config,reference_mineral,year,percentile):
             flows_df = pd.concat(edges_flows_df,axis=0,ignore_index=True).fillna(0)
         else:
             flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
-        flows_df = flows_df.groupby(["id"]).agg(dict(sum_dict)).reset_index()
+        flows_df = flows_df.groupby(["id"]).agg(dict([(c,"sum") for c in sum_dict])).reset_index()
 
         # for flow_column in [trade_ton_column,trade_usd_column]:
-        for flow_column in [trade_ton_column]:
+        for flow_column in trade_ton_columns:
             flow_sums = []
             for stage in stages:
                 stage_sums = []
                 for o_iso in origin_isos:
-                    stage_sums.append(f"{reference_mineral}_{flow_column}_stage_{stage}_origin_{o_iso}")
+                    if f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}" in sum_dict:
+                        stage_sums.append(f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}")
 
-                flows_df[f"{reference_mineral}_{flow_column}_stage_{stage}"] = flows_df[stage_sums].sum(axis=1)
-                flow_sums.append(f"{reference_mineral}_{flow_column}_stage_{stage}")
+                flows_df[f"{reference_mineral}_{flow_column}_{stage}"] = flows_df[stage_sums].sum(axis=1)
+                flow_sums.append(f"{reference_mineral}_{flow_column}_{stage}")
 
             flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[flow_sums].sum(axis=1) 
 
@@ -106,6 +145,9 @@ def main(config,reference_mineral,year,percentile):
             degree_df = flows_df[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
         elif path_type == "nodes" and len(degree_df.index) > 0:
             flows_df = pd.merge(flows_df,degree_df,how="left",on=["id"])
+            if year > 2022:
+                flows_df[f"{reference_mineral}_{efficient_scale}"] = production_size
+            # flows_df["min_production_size_global_tons"] = min_production_size_global
 
         flows_df = gpd.GeoDataFrame(flows_df,
                                 geometry="geometry",
@@ -113,7 +155,7 @@ def main(config,reference_mineral,year,percentile):
         if year == 2022:
             layer_name = f"{reference_mineral}"
         else:
-            layer_name = f"{reference_mineral}_{percentile}"
+            layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         flows_df.to_file(os.path.join(results_folder,
                             f"{path_type}_flows_{year}.gpkg"),
                             layer=layer_name,driver="GPKG")
@@ -125,7 +167,8 @@ if __name__ == '__main__':
         reference_mineral = str(sys.argv[1])
         year = int(sys.argv[2])
         percentile = int(sys.argv[3])
+        efficient_scale = str(sys.argv[4])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,reference_mineral,year,percentile)
+    main(CONFIG,reference_mineral,year,percentile,efficient_scale)
