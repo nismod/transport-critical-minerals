@@ -30,11 +30,11 @@ def get_importer_shares(existing_trade_df,import_groupby_columns,value_column,to
     global_import_df = existing_trade_df.groupby(import_groupby_columns)[[value_column,tons_column]].sum().reset_index()
     global_import_df["cost_to_tons_ratio"] = global_import_df[value_column]/global_import_df[tons_column]
 
-    global_import_df["import_shares"
-        ] = global_import_df[tons_column
-        ]/global_import_df.groupby(
-            ["refining_stage_cam"])[tons_column
-        ].transform("sum")
+    # global_import_df["import_shares"
+    #     ] = global_import_df[tons_column
+    #     ]/global_import_df.groupby(
+    #         ["refining_stage_cam"])[tons_column
+    #     ].transform("sum")
     global_import_df["average_global_cost_to_tons_ratio"] = (global_import_df.groupby(
                                 ["product_code"]
                                         )[value_column].transform('sum'))/(global_import_df.groupby(
@@ -51,7 +51,7 @@ def get_importer_shares(existing_trade_df,import_groupby_columns,value_column,to
     added_import_df["import_shares"
         ] = added_import_df[tons_column
         ]/added_import_df.groupby(
-            ["refining_stage_cam"])[tons_column
+            ["reference_mineral","refining_stage_cam"])[tons_column
         ].transform("sum")
 
     return added_import_df
@@ -193,7 +193,7 @@ def main(config,
                                                     pr_conv_factors_df,
                                                     "initial_processing_stage",
                                                     "final_processing_stage"),axis=1)
-    # mine_exports_df.to_csv("test.csv",index=False)
+    mine_exports_df.to_csv("test.csv",index=False)
 
 
     # Get the total tonnage of exports and imports of each CCG country
@@ -646,6 +646,7 @@ def main(config,
                         "refining_stage_cam"]
                     )["future_trade_quantity_tons"].transform("sum")
     updated_trade_df["ccg_export_diff"] = updated_trade_df["final_tons_export"] - updated_trade_df["future_exports"]
+    # updated_trade_df.to_csv("test0.csv")
     new_trade_df = updated_trade_df[
                         (updated_trade_df["ccg_export_diff"] > 1e-2
                         ) & (updated_trade_df["export_country_code"].isin(ccg_countries))]
@@ -676,9 +677,11 @@ def main(config,
     existing_trade_df = trade_df[
                             (~trade_df["import_country_code"].isin(ccg_countries)
                             ) & (trade_df[tons_column] > 0)]
-    import_groupby_columns = [
-        c for c in trade_df.columns.values.tolist() if c not in export_country_columns + [value_column,tons_column]
-        ]
+    # import_groupby_columns = [
+    #     c for c in trade_df.columns.values.tolist() if c not in export_country_columns + [value_column,tons_column]
+    #     ]
+    import_groupby_columns = import_country_columns + product_columns + ["ccg_mineral","refining_stage_cam"]
+    # print (import_groupby_columns)
     global_import_df = get_importer_shares(
                             existing_trade_df,
                             import_groupby_columns,
@@ -714,9 +717,10 @@ def main(config,
         df = pd.merge(df,c_df,how="cross")
         df["trade_quantity_tons"] = df["ccg_export_diff"]*df["import_shares"]
         df["trade_value_thousandUSD"] = df["trade_quantity_tons"]*df["cost_to_tons_ratio"]
+        df["ccg_exporter"] = 1
         added_trade_df.append(df[trade_df_columns])
     added_trade_df = pd.concat(added_trade_df,axis=0,ignore_index=True)
-    added_trade_df["ccg_exporter"] = 1
+    # added_trade_df["ccg_exporter"] = 1
     # added_trade_df.to_csv("new_trade.csv",index=False)
 
     updated_trade_df = pd.concat([updated_trade_df[trade_df_columns],added_trade_df],axis=0,ignore_index=True)
@@ -854,13 +858,13 @@ def main(config,
     final_trade_matrix_df = final_trade_matrix_df[
                             final_trade_matrix_df["final_stage_production_tons"]>0
                             ]
-    print (final_trade_matrix_df)
+    # print (final_trade_matrix_df)
     groupby_cols = [c for c in final_trade_matrix_df.columns.values.tolist() if c not in ["initial_stage_production_tons","final_stage_production_tons"]]
     final_trade_matrix_df = final_trade_matrix_df.groupby(
                                 groupby_cols
                                 )[["initial_stage_production_tons",
                                 "final_stage_production_tons"]].sum().reset_index()
-    print (final_trade_matrix_df)
+    # print (final_trade_matrix_df)
     final_trade_matrix_df.to_csv(
                             os.path.join(
                                 results_folder,
