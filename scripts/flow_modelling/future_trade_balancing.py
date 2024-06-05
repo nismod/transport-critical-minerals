@@ -47,8 +47,14 @@ def get_importer_shares(existing_trade_df,import_groupby_columns,value_column,to
         aim_df["refining_stage_cam"] = nt["future_stage"]
         added_import_df.append(aim_df)
 
+    added_import_df = pd.concat(added_import_df,axis=0,ignore_index=True)
+    added_import_df["import_shares"
+        ] = added_import_df[tons_column
+        ]/added_import_df.groupby(
+            ["refining_stage_cam"])[tons_column
+        ].transform("sum")
 
-    return pd.concat(added_import_df,axis=0,ignore_index=True)
+    return added_import_df
 
 def main(config,
         year,

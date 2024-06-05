@@ -14,11 +14,11 @@ def main(config):
 
     year_percentile_combinations = [
                                     (2022,0),
-                                    # (2030,25),
-                                    # (2030,50),
+                                    (2030,25),
+                                    (2030,50),
                                     (2030,75),
-                                    # (2040,25),
-                                    # (2040,50),
+                                    (2040,25),
+                                    (2040,50),
                                     (2040,75)
                                     ]
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
@@ -34,32 +34,32 @@ def main(config):
     # print (args)
     # subprocess.run(args)
 
-    # for th in tonnage_thresholds:
-    #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
-    #         if year > 2022:
-    #             args = [
-    #                 "python",
-    #                 "future_trade_balancing.py",
-    #                 f"{year}",
-    #                 f"{percentile}",
-    #                 f"{th}",
-    #                 ]
-    #             print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
-    #             print (args)
-    #             subprocess.run(args)
+    for th in tonnage_thresholds:
+        for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            if year > 2022:
+                args = [
+                    "python",
+                    "future_trade_balancing.py",
+                    f"{year}",
+                    f"{percentile}",
+                    f"{th}",
+                    ]
+                print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
+                print (args)
+                subprocess.run(args)
 
-    # for th in tonnage_thresholds:
-    #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
-    #         args = [
-    #             "python",
-    #             "mineral_node_ods.py",
-    #             f"{year}",
-    #             f"{percentile}",
-    #             f"{th}",
-    #             ]
-    #         print (f"* Start the creation of the {year} {percentile} percentile node OD matrices under {th} limits")
-    #         print (args)
-    #         subprocess.run(args)
+    for th in tonnage_thresholds:
+        for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            args = [
+                "python",
+                "mineral_node_ods.py",
+                f"{year}",
+                f"{percentile}",
+                f"{th}",
+                ]
+            print (f"* Start the creation of the {year} {percentile} percentile node OD matrices under {th} limits")
+            print (args)
+            subprocess.run(args)
 
     # for percentile in percentiles:
     #     args = [
@@ -116,33 +116,33 @@ def main(config):
     #                 subprocess.run(args)
 
     # reference_minerals = ["copper"]
-    for reference_mineral in reference_minerals:
-        for idx, (year,percentile) in enumerate(year_percentile_combinations):
-            if year == 2022:
-                args = [
-                    "python",
-                    "node_edge_flows.py",
-                    f"{reference_mineral}",
-                    f"{year}",
-                    f"{percentile}",
-                    f"0"
-                    ]
-                print ("* Start the creation of the flow flow allocation outputs")
-                print (args)
-                subprocess.run(args)
-            else:
-                for th in tonnage_thresholds:
-                    args = [
-                        "python",
-                        "node_edge_flows.py",
-                        f"{reference_mineral}",
-                        f"{year}",
-                        f"{percentile}",
-                        f"{th}"
-                        ]
-                    print ("* Start the creation of the flow flow allocation outputs")
-                    print (args)
-                    subprocess.run(args)
+    # for reference_mineral in reference_minerals:
+    #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
+    #         if year == 2022:
+    #             args = [
+    #                 "python",
+    #                 "node_edge_flows.py",
+    #                 f"{reference_mineral}",
+    #                 f"{year}",
+    #                 f"{percentile}",
+    #                 f"0"
+    #                 ]
+    #             print ("* Start the creation of the flow flow allocation outputs")
+    #             print (args)
+    #             subprocess.run(args)
+    #         else:
+    #             for th in tonnage_thresholds:
+    #                 args = [
+    #                     "python",
+    #                     "node_edge_flows.py",
+    #                     f"{reference_mineral}",
+    #                     f"{year}",
+    #                     f"{percentile}",
+    #                     f"{th}"
+    #                     ]
+    #                 print ("* Start the creation of the flow flow allocation outputs")
+    #                 print (args)
+    #                 subprocess.run(args)
 
 
     # for reference_mineral in reference_minerals:

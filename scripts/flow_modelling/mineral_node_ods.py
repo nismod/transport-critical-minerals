@@ -258,9 +258,9 @@ def main(config,
         file_name = f"mining_city_node_level_ods_{year}.csv"
 
     combined_trade_df = pd.concat(combined_trade_df,axis=0,ignore_index=True)
-    # combined_trade_df.to_csv(os.path.join(
-    #                         results_folder,
-    #                         file_name_full),index=False)
+    combined_trade_df.to_csv(os.path.join(
+                            results_folder,
+                            file_name_full),index=False)
 
     tons_total = combined_trade_df["final_stage_production_tons"].sum()
     combined_trade_df = truncate_by_threshold(combined_trade_df,
