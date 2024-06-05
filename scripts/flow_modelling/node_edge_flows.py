@@ -136,7 +136,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
             flows_df = pd.concat(edges_flows_df,axis=0,ignore_index=True).fillna(0)
         else:
             flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
-        flows_df = flows_df.groupby(["id"]).agg(dict([(c,"sum") for k,c in sum_dict.items()])).reset_index()
+        flows_df = flows_df.groupby(["id"]).agg(dict([(c,"sum") for c in v for k,v in sum_dict.items()])).reset_index()
 
         # for flow_column in [trade_ton_column,trade_usd_column]:
         for flow_column,stages in sum_dict.items():
