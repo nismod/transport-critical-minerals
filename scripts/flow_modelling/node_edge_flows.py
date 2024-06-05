@@ -24,10 +24,6 @@ def find_country_edges(edges,network_edges):
 
     result = sorted(set(edges) & set(network_edges), key=lambda i: weights[i])
     return result
-    # items = set(edges) & set(network_edges)
-    # result = sorted(items, key=lambda element: edges.index(element))
-    # return result
-    # return [e for e in edges if e in network_edges]
 
 def main(config,reference_mineral,year,percentile,efficient_scale):
     incoming_data_path = config['paths']['incoming_data']
@@ -40,33 +36,10 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
 
     """Step 1: Get the input datasets
     """
-    # reference_mineral = "copper"
-    # final_refined_stage = 3.0
     trade_ton_columns = [
                             "initial_stage_production_tons",
                             "final_stage_production_tons"
                         ]
-    # trade_usd_column = "mine_output_thousandUSD"
-    # years = [2021,2030]
-    # find_flows = True
-    
-    # # Read data on production scales
-    # production_size_df = pd.read_excel(
-    #                             os.path.join(
-    #                                 processed_data_path,
-    #                                 "production_costs",
-    #                                 "scales.xlsx"),
-    #                             sheet_name="efficient_scales"
-    #                             )
-    # # print (production_size_df)
-    # production_size = production_size_df[
-    #                             production_size_df[
-    #                                 "reference_mineral"] == reference_mineral
-    #                                 ][efficient_scale].values[0]
-    # max_production_size = production_size_df[
-    #                             production_size_df[
-    #                                 "reference_mineral"] == reference_mineral
-    #                                 ]["main_product_world_min_prod_tonnes"].values[0]
     if year > 2022:
         file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet"
         # Read data on production scales
@@ -134,7 +107,6 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     sum_add = []
     for k,v in sum_dict.items():
         sum_add += list(zip(v,["sum"]*len(v)))
-    # print (sum_add) 
     # print ([list(zip(v,["sum"]*len(v))) for k,v in sum_dict.items()])
     degree_df = pd.DataFrame()
     for path_type in ["edges","nodes"]:
@@ -150,14 +122,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
             flow_sums = []
             stage_sums = defaultdict(list)
             for stage in stages:
-                # stage_sums = defaultdict(list)
-                for o_iso in origin_isos:
-                    # if f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}" in sum_dict:
-                    #     stage_sums.append(f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}")
-                    stage_sums[
-                        stage.replace(f"_origin_{o_iso}","")
-                        ].append(stage)
-
+                stage_sums[stage.split("_origin")[0]].append(stage)
             for k,v in stage_sums.items():
                 flows_df[k] = flows_df[v].sum(axis=1)
                 flow_sums.append(k)
@@ -166,7 +131,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
 
         flows_df = add_geometries_to_flows(flows_df,
                                 merge_column="id",
-                                modes=["rail","sea","road"],
+                                modes=["rail","sea","road","mine","city"],
                                 layer_type=path_type)
         if path_type == "edges":
             degree_df = flows_df[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')

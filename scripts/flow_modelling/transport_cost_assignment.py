@@ -400,7 +400,41 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
 
     return multi_modal_df
 
-def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea","road","IWW"],layer_type="edges"):    
+def get_all_mines(mine_id_col="id"):
+    # Mine locations in Africa with the mineral tonnages
+    all_mines = []
+    mines_df = gpd.read_file(
+                    os.path.join(
+                        processed_data_path,
+                        "minerals",
+                        "ccg_mines_est_production.gpkg"))
+    mines_crs = mines_df.crs
+    mines_df["geometry"] = mines_df.geometry.centroid
+    # mines_df = gpd.GeoDataFrame(mines_df,geometry="geometry",crs=mines_crs)
+    mines_df.rename(columns={"id":mine_id_col,"country_code":"iso3"},inplace=True)
+    all_mines.append(mines_df[[mine_id_col,"iso3","geometry"]])
+    
+    rms = ["copper","cobalt","manganese","lithium","graphite","nickel"]
+    for rm in rms:
+        for pct in [25,50,75]:
+            mines_df = gpd.read_file(
+                            os.path.join(
+                                processed_data_path,
+                                "minerals",
+                                "s_and_p_mines_estimates.gpkg"),
+                            layer=f"{rm}_{pct}")
+            mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
+            all_mines.append(mines_df[[mine_id_col,"iso3","geometry"]])
+
+    all_mines = pd.concat(all_mines,axis=0,ignore_index=True)
+    all_mines = all_mines.drop_duplicates(subset=[mine_id_col],keep="first")
+
+    return gpd.GeoDataFrame(all_mines,geometry="geometry",crs=mines_crs)
+
+def add_geometries_to_flows(flows_dataframe,
+                        merge_column="id",
+                        modes=["rail","sea","road","IWW","mine","city"],
+                        layer_type="edges"):    
     flow_edges = []
     for mode in modes:
         if mode == "IWW":
@@ -436,7 +470,25 @@ def add_geometries_to_flows(flows_dataframe,merge_column="id",modes=["rail","sea
                         "infrastructure",
                         "global_maritime_network.gpkg"
                     ),layer=layer_type)
+        elif mode == "city":
+            if layer_type == "edges":
+                edges = pd.DataFrame(columns=[merge_column,"from_id","to_id","geometry"])
+            else:
+                edges = gpd.read_file(os.path.join(processed_data_path,
+                                        "admin_boundaries",
+                                        "un_urban_population",
+                                        "un_pop_df.gpkg"))
+                edges.rename(columns={"city_id":merge_column,"ISO_A3":"iso3"},inplace=True)
+                edges["infra"] = mode
+        elif mode == "mine":
+            if layer_type == "edges":
+                edges = pd.DataFrame(columns=[merge_column,"from_id","to_id","geometry"])
+            else:
+                edges = get_all_mines()
+                edges["infra"] = mode
+
         edges["mode"] = mode
+        print (edges)
         if layer_type == "edges":
             edges = edges[[merge_column,"from_id","to_id","mode","geometry"]]
         else:
