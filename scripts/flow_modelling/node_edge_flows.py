@@ -92,13 +92,13 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     # od_df = od_df[od_df["trade_type"] != "Import"]
     origin_isos = list(set(od_df["export_country_code"].values.tolist()))
     stages = list(
-    				set(
-    					zip(
-    						od_df["initial_processing_stage"].values.tolist(),
-    						od_df["final_processing_stage"].values.tolist()
-    						)
-    					)
-    				)
+                    set(
+                        zip(
+                            od_df["initial_processing_stage"].values.tolist(),
+                            od_df["final_processing_stage"].values.tolist()
+                            )
+                        )
+                    )
     country_df = []
     edges_flows_df = []
     nodes_flows_df = []
@@ -106,15 +106,15 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     for o_iso in origin_isos:
         for idx,(i_st,f_st) in enumerate(stages):
             df = od_df[
-            			(
-            				od_df["export_country_code"] == o_iso
-            			) & (
-            				od_df["initial_processing_stage"] == i_st
-            			) & (
-            				od_df["final_processing_stage"] == f_st
-            			)]
+                        (
+                            od_df["export_country_code"] == o_iso
+                        ) & (
+                            od_df["initial_processing_stage"] == i_st
+                        ) & (
+                            od_df["final_processing_stage"] == f_st
+                        )]
             if len(df.index) > 0:
-            	st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
+                st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
                 for jdx, (st,flow_column) in st_tons:
                     sum_dict[flow_column].append(f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}")
                     for path_type in ["full_edge_path","full_node_path"]:
@@ -147,9 +147,9 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                 for o_iso in origin_isos:
                     # if f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}" in sum_dict:
                     #     stage_sums.append(f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}")
-                	stage_sums[
-                		stage.replace(f"_origin_{o_iso}","")
-                		].append(stage)
+                    stage_sums[
+                        stage.replace(f"_origin_{o_iso}","")
+                        ].append(stage)
 
             for k,v in stage_sums.items():
                 flows_df[k] = flows_df[v].sum(axis=1)
