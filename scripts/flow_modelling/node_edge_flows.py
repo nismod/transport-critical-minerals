@@ -115,7 +115,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                         )]
             if len(df.index) > 0:
                 st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
-                for jdx, (st,flow_column) in st_tons:
+                for jdx, (st,flow_column) in enumerate(st_tons):
                     sum_dict[flow_column].append(f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}")
                     for path_type in ["full_edge_path","full_node_path"]:
                         f_df = get_flow_on_edges(

@@ -24,42 +24,42 @@ def main(config):
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
     # percentiles = [25,50,75]
     # # percentiles = [25]
-    reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    # reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
 
-    args = [
-            "python",
-            "existing_trade_balancing.py"
-            ]
-    print ("* Start the creation of the high-level OD matrices in the present")
-    print (args)
-    subprocess.run(args)
+    # args = [
+    #         "python",
+    #         "existing_trade_balancing.py"
+    #         ]
+    # print ("* Start the creation of the high-level OD matrices in the present")
+    # print (args)
+    # subprocess.run(args)
 
-    for th in tonnage_thresholds:
-        for idx, (year,percentile) in enumerate(year_percentile_combinations):
-            if year > 2022:
-                args = [
-                    "python",
-                    "future_trade_balancing.py",
-                    f"{year}",
-                    f"{percentile}",
-                    f"{th}",
-                    ]
-                print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
-                print (args)
-                subprocess.run(args)
+    # for th in tonnage_thresholds:
+    #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
+    #         if year > 2022:
+    #             args = [
+    #                 "python",
+    #                 "future_trade_balancing.py",
+    #                 f"{year}",
+    #                 f"{percentile}",
+    #                 f"{th}",
+    #                 ]
+    #             print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
+    #             print (args)
+    #             subprocess.run(args)
 
-    for th in tonnage_thresholds:
-        for idx, (year,percentile) in enumerate(year_percentile_combinations):
-            args = [
-                "python",
-                "mineral_node_ods.py",
-                f"{year}",
-                f"{percentile}",
-                f"{th}",
-                ]
-            print (f"* Start the creation of the {year} {percentile} percentile node OD matrices under {th} limits")
-            print (args)
-            subprocess.run(args)
+    # for th in tonnage_thresholds:
+    #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
+    #         args = [
+    #             "python",
+    #             "mineral_node_ods.py",
+    #             f"{year}",
+    #             f"{percentile}",
+    #             f"{th}",
+    #             ]
+    #         print (f"* Start the creation of the {year} {percentile} percentile node OD matrices under {th} limits")
+    #         print (args)
+    #         subprocess.run(args)
 
     # for percentile in percentiles:
     #     args = [
