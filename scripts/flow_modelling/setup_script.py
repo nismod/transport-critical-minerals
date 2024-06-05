@@ -25,7 +25,7 @@ def main(config):
     # percentiles = [25,50,75]
     # # percentiles = [25]
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
-    reference_minerals = ["cobalt"]
+    # reference_minerals = ["cobalt"]
 
     args = [
             "python",
@@ -117,7 +117,7 @@ def main(config):
                     subprocess.run(args)
 
     # reference_minerals = ["copper"]
-    reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    # reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
     for reference_mineral in reference_minerals:
         for idx, (year,percentile) in enumerate(year_percentile_combinations):
             if year == 2022:
