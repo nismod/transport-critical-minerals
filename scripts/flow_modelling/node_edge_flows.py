@@ -89,25 +89,40 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                         os.path.join(results_folder,
                             file_name)
                         )
-    od_df = od_df[od_df["trade_type"] != "Import"]
+    # od_df = od_df[od_df["trade_type"] != "Import"]
     origin_isos = list(set(od_df["export_country_code"].values.tolist()))
-    stages = list(set(od_df["final_processing_stage"].values.tolist()))
+    stages = list(
+    				set(
+    					zip(
+    						od_df["initial_processing_stage"].values.tolist(),
+    						od_df["final_processing_stage"].values.tolist()
+    						)
+    					)
+    				)
     country_df = []
     edges_flows_df = []
     nodes_flows_df = []
-    sum_dict = []    
+    sum_dict = dict([(f,[]) for f in trade_ton_columns])    
     for o_iso in origin_isos:
-        for stage in stages:
-            df = od_df[(od_df["export_country_code"] == o_iso) & (od_df["final_processing_stage"] == stage)]
+        for idx,(i_st,f_st) in enumerate(stages):
+            df = od_df[
+            			(
+            				od_df["export_country_code"] == o_iso
+            			) & (
+            				od_df["initial_processing_stage"] == i_st
+            			) & (
+            				od_df["final_processing_stage"] == f_st
+            			)]
             if len(df.index) > 0:
-                for flow_column in trade_ton_columns:
-                    sum_dict.append(f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}")
+            	st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
+                for jdx, (st,flow_column) in st_tons:
+                    sum_dict[flow_column].append(f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}")
                     for path_type in ["full_edge_path","full_node_path"]:
                         f_df = get_flow_on_edges(
                                        df,
                                         "id",path_type,
                                         flow_column)
-                        f_df.rename(columns={flow_column:f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}"},
+                        f_df.rename(columns={flow_column:f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}"},
                             inplace=True)
                         if path_type == "full_edge_path":
                             edges_flows_df.append(f_df)
@@ -121,19 +136,24 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
             flows_df = pd.concat(edges_flows_df,axis=0,ignore_index=True).fillna(0)
         else:
             flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
-        flows_df = flows_df.groupby(["id"]).agg(dict([(c,"sum") for c in sum_dict])).reset_index()
+        flows_df = flows_df.groupby(["id"]).agg(dict([(c,"sum") for k,c in sum_dict.items()])).reset_index()
 
         # for flow_column in [trade_ton_column,trade_usd_column]:
-        for flow_column in trade_ton_columns:
+        for flow_column,stages in sum_dict.items():
             flow_sums = []
+            stage_sums = defaultdict(list)
             for stage in stages:
-                stage_sums = []
+                # stage_sums = defaultdict(list)
                 for o_iso in origin_isos:
-                    if f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}" in sum_dict:
-                        stage_sums.append(f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}")
+                    # if f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}" in sum_dict:
+                    #     stage_sums.append(f"{reference_mineral}_{flow_column}_{stage}_origin_{o_iso}")
+                	stage_sums[
+                		stage.replace(f"_origin_{o_iso}","")
+                		].append(stage)
 
-                flows_df[f"{reference_mineral}_{flow_column}_{stage}"] = flows_df[stage_sums].sum(axis=1)
-                flow_sums.append(f"{reference_mineral}_{flow_column}_{stage}")
+            for k,v in stage_sums.items():
+                flows_df[k] = flows_df[v].sum(axis=1)
+                flow_sums.append(k)
 
             flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[flow_sums].sum(axis=1) 
 
