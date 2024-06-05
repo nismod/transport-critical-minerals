@@ -62,7 +62,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                         os.path.join(results_folder,
                             file_name)
                         )
-    # od_df = od_df[od_df["trade_type"] != "Import"]
+    od_df = od_df[od_df["trade_type"] != "Import"]
     origin_isos = list(set(od_df["export_country_code"].values.tolist()))
     stages = list(
                     set(
