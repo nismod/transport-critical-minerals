@@ -24,7 +24,7 @@ def main(config):
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
     # percentiles = [25,50,75]
     # # percentiles = [25]
-    # reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
 
     # args = [
     #         "python",
