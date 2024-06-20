@@ -158,7 +158,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     #             intermodal_ports=export_ports_africa["id"].values.tolist(),
     #             cargo_type=f"{cargo_type.lower().replace(' ','_')}",
     #             port_to_land_capacity=export_port_ids
-    #             )
+    #             )s
     network_graph = create_mines_and_cities_to_port_network(
                             mines_df,mine_id_col,
                             un_pop_df,pop_id_col,

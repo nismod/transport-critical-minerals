@@ -796,5 +796,5 @@ def point_map_plotting_colors_width(ax,df,column,
                             loc='upper right')
     ax.add_artist(first_legend).set_zorder(20)
     print ('* Plotting ',plot_title)
-    legend_from_style_spec(ax, styles,fontsize=legend_size,loc='upper left')
+    # legend_from_style_spec(ax, styles,fontsize=legend_size,loc='lower left')
     return ax

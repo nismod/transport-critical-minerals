@@ -124,10 +124,10 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
             for stage in stages:
                 stage_sums[stage.split("_origin")[0]].append(stage)
             for k,v in stage_sums.items():
-                flows_df[k] = flows_df[v].sum(axis=1)
+                flows_df[k] = flows_df[list(set(v))].sum(axis=1)
                 flow_sums.append(k)
 
-            flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[flow_sums].sum(axis=1) 
+            flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[list(set(flow_sums))].sum(axis=1) 
 
         flows_df = add_geometries_to_flows(flows_df,
                                 merge_column="id",

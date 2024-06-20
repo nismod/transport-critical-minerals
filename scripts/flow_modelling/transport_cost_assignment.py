@@ -834,3 +834,19 @@ def convert_port_routes(route_dataframe,edge_path_column,node_path_column):
             ] = route_dataframe["full_paths"].apply(pd.Series)
     route_dataframe.drop("full_paths",axis=1,inplace=True)
     return route_dataframe
+
+def get_electricity_grid_lines():
+    file_directory = os.path.join(
+                    processed_data_path,
+                    "HVGrid")
+    grid_network = []
+    for root, dirs, files in os.walk(file_directory):
+        for file in files:
+            if file.endswith(".gpkg"):
+                grid_file = os.path.join(root, file)
+                grid_network.append(gpd.read_file(grid_file))
+
+    grid_network = gpd.GeoDataFrame(pd.concat(grid_network,axis=0,ignore_index=True),
+            geometry="geometry",crs="EPSG:4326")
+    grid_network["grid_id"] = grid_network.index.values.tolist()
+    return grid_network
