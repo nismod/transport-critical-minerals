@@ -14,6 +14,7 @@ import geopandas as gpd
 from collections import defaultdict
 from utils import *
 from transport_cost_assignment import *
+from trade_functions import * 
 from tqdm import tqdm
 tqdm.pandas()
 
