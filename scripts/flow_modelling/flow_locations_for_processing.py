@@ -159,6 +159,7 @@ def main(config,year,percentile,efficient_scale):
                         )
         od_df = od_df[od_df["trade_type"] != "Import"]
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
+        print (od_df)
         if year == 2022:
             df = od_df.copy()
         else:
