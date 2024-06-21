@@ -166,24 +166,24 @@ def main(config,year,percentile,efficient_scale):
                 if lt == "mine":
                     country_df_flows = []
                     for row in df.itertuples():
-                    	o_iso = row.export_country_code
-                    	in_st = row.initial_processing_stage
-                    	node_path = row.full_node_path
+                        o_iso = row.export_country_code
+                        in_st = row.initial_processing_stage
+                        node_path = row.full_node_path
                         f_st = row.initial_processing_stage
                         m_st = row.mine_final_refined_stage
                         in_tons = row.initial_stage_production_tons
                         f_tons = row.final_stage_production_tons
-                    	if f_st < m_st:
-                    		fst_list = [f_st] + [m_st]*(len(node_path) - 1)
-                    		cf = get_mine_conversion_factors(
-                    						metal_content_factors_df,
-                    						pr_conv_factors_df,
-                    						reference_mineral,
-                    						in_st,m_st)
-                    		ftons_list = [f_tons] + [in_tons/cf]*(len(node_path) - 1)
-                    	else:
-                    		fst_list = [f_st]*len(node_path)
-                    		ftons_list = [f_tons]*len(node_path)
+                        if f_st < m_st:
+                            fst_list = [f_st] + [m_st]*(len(node_path) - 1)
+                            cf = get_mine_conversion_factors(
+                                            metal_content_factors_df,
+                                            pr_conv_factors_df,
+                                            reference_mineral,
+                                            in_st,m_st)
+                            ftons_list = [f_tons] + [in_tons/cf]*(len(node_path) - 1)
+                        else:
+                            fst_list = [f_st]*len(node_path)
+                            ftons_list = [f_tons]*len(node_path)
                         
 
                         country_df_flows += list(zip([o_iso]*len(node_path),
