@@ -165,10 +165,10 @@ def main(config,year,percentile,efficient_scale):
         else:
             df = []
             for lt in location_types:
-                df.append(od_df[od_df["initial_processing_location"] == lt])
+                l_df = od_df[od_df["initial_processing_location"] == lt]
                 if lt == "mine":
                     country_df_flows = []
-                    for row in df.itertuples():
+                    for row in l_df.itertuples():
                         o_iso = row.export_country_code
                         in_st = row.initial_processing_stage
                         node_path = row.full_node_path
@@ -204,6 +204,8 @@ def main(config,year,percentile,efficient_scale):
                                         "final_stage_production_tons"])
                     country_df_flows["reference_mineral"] = reference_mineral
                     df.append(country_df_flows)
+                else:
+                    df.append(l_df)
             df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
 
         print (df)
