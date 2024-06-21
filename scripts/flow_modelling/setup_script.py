@@ -164,7 +164,7 @@ def main(config):
         if year == 2022:
             args = [
                 "python",
-                "flow_location_for_processing.py",
+                "flow_locations_for_processing.py",
                 f"{year}",
                 f"{percentile}",
                 f"0",
@@ -187,7 +187,7 @@ def main(config):
             for th in tonnage_thresholds:
                 args = [
                 "python",
-                "flow_location_for_processing.py",
+                "flow_locations_for_processing.py",
                 f"{year}",
                 f"{percentile}",
                 f"{th}",
