@@ -73,7 +73,7 @@ def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral):
                         ) & (
                             od_dataframe["final_processing_stage"] == f_st
                         )]
-            if len(df.index) > 0:
+            if len(dataframe.index) > 0:
                 st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
                 for jdx, (flow_column,st) in enumerate(st_tons):
                     sum_dict[flow_column].append(f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}")                    
