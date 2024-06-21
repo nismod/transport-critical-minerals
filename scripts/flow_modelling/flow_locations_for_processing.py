@@ -163,7 +163,7 @@ def main(config,year,percentile,efficient_scale):
             df = od_df.copy()
         else:
             for lt in location_types:
-                df = od_df[od["initial_processing_location"] == lt]
+                df = od_df[od_df["initial_processing_location"] == lt]
                 if lt == "mine":
                     country_df_flows = []
                     for row in df.itertuples():
