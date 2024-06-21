@@ -102,7 +102,7 @@ def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral):
 
         flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[list(set(flow_sums))].sum(axis=1) 
     
-    return nodes_flows_df
+    return flows_df
 
 def main(config,year,percentile,efficient_scale):
     incoming_data_path = config['paths']['incoming_data']
