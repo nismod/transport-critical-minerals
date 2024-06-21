@@ -210,7 +210,7 @@ def main(config,year,percentile,efficient_scale):
                         "final_processing_stage",
                         "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
         
-        flows_df = assign_node_flows(reference_mineral,df,trade_ton_columns)
+        flows_df = assign_node_flows(df,trade_ton_columns,reference_mineral)
         flows_df = add_geometries_to_flows(flows_df,
                                 merge_column="id",
                                 modes=["rail","sea","road","mine","city"],
