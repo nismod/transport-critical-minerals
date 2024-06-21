@@ -163,8 +163,9 @@ def main(config,year,percentile,efficient_scale):
         if year == 2022:
             df = od_df.copy()
         else:
+            df = []
             for lt in location_types:
-                df = od_df[od_df["initial_processing_location"] == lt]
+                df.append(od_df[od_df["initial_processing_location"] == lt])
                 if lt == "mine":
                     country_df_flows = []
                     for row in df.itertuples():
@@ -195,14 +196,17 @@ def main(config,year,percentile,efficient_scale):
                                         [in_tons]*len(node_path),
                                         ftons_list
                                         ))
-                    df = pd.DataFrame(country_df_flows,
+                    country_df_flows = pd.DataFrame(country_df_flows,
                                         columns=["export_country_code",
                                         "origin_id","initial_processing_stage",
                                         "final_processing_stage",
                                         "initial_stage_production_tons",
                                         "final_stage_production_tons"])
-                    df["reference_mineral"] = reference_mineral
+                    country_df_flows["reference_mineral"] = reference_mineral
+                    df.append(country_df_flows)
+            df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
 
+        print (df)
         df = df.groupby(
                         [
                         "reference_mineral",
