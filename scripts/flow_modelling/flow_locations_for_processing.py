@@ -188,7 +188,7 @@ def main(config,year,percentile,efficient_scale):
                         
 
                         country_df_flows += list(zip([o_iso]*len(node_path),
-                                        node_path
+                                        node_path,
                                         [in_st]*len(node_path),
                                         fst_list,
                                         [in_tons]*len(node_path),
