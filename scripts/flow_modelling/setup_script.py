@@ -13,7 +13,7 @@ def main(config):
     processed_data_path = config['paths']['data']
 
     year_percentile_combinations = [
-                                    # (2022,0),
+                                    (2022,0),
                                     # (2030,25),
                                     # (2030,50),
                                     (2030,75),

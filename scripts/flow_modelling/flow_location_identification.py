@@ -160,6 +160,7 @@ def main(config,year,percentile,efficient_scale):
                     all_flows,
                     geometry="geometry",
                     crs="EPSG:4326")
+    all_flows = all_flows.drop_duplicates(subset=["id"],keep="first")
 
     if year == 2022:
         layer_name = f"{year}"

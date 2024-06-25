@@ -51,8 +51,8 @@ def find_processing_locations(x,all_columns,rm,tr,ogns,tc="initial_stage_product
 
     return c,r
 
-def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral):
-    sum_dict = dict([(f,[]) for f in trade_ton_columns])
+def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral,additional_columns=[]):
+    sum_dict = dict([(f,[]) for f in trade_ton_columns + additional_columns])
     nodes_flows_df = []
     origin_isos = list(set(od_dataframe["export_country_code"].values.tolist()))
     stages = list(
@@ -75,6 +75,8 @@ def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral):
                         )]
             if len(dataframe.index) > 0:
                 st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
+                if len(additional_columns) > 0:
+                	st_tons += list(zip(additional_columns,[f_st]*len(additional_columns)))
                 for jdx, (flow_column,st) in enumerate(st_tons):
                     sum_dict[flow_column].append(f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}")                    
                     dataframe.rename(
@@ -135,10 +137,10 @@ def main(config,year,percentile,efficient_scale):
     for reference_mineral in reference_minerals:
         # Find year locations
         if year == 2022:
-            file_name = f"{reference_mineral}_flow_paths_{year}.parquet"
+            file_name = f"{reference_mineral}_flow_paths_{year}"
             production_size = 0
         else:
-            file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet"
+            file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}"
             # Read data on production scales
             production_size_df = pd.read_excel(
                                         os.path.join(
@@ -155,11 +157,12 @@ def main(config,year,percentile,efficient_scale):
 
         od_df = pd.read_parquet(
                         os.path.join(results_folder,
-                            file_name)
+                            f"{file_name}.parquet")
                         )
+        # od_df["path_index"] = od_df.index.values.tolist()
         od_df = od_df[od_df["trade_type"] != "Import"]
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
-        print (od_df)
+        new_cols = []
         if year == 2022:
             df = od_df.copy()
         else:
@@ -170,8 +173,13 @@ def main(config,year,percentile,efficient_scale):
                     country_df_flows = []
                     for row in l_df.itertuples():
                         o_iso = row.export_country_code
+                        # pidx = row.path_index
                         in_st = row.initial_processing_stage
-                        node_path = row.full_node_path
+                        node_path = row.node_path
+                        node_path = [n.replace("_land","") for n in node_path]
+                        gcosts = [0] + list(np.cumsum(row.gcost_usd_tons_path))
+                        dist = [0] + list(np.cumsum(row.distance_km_path))
+                        time = [0] + list(np.cumsum(row.time_hr_path))
                         f_st = row.initial_processing_stage
                         m_st = row.mine_final_refined_stage
                         in_tons = row.initial_stage_production_tons
@@ -190,36 +198,50 @@ def main(config,year,percentile,efficient_scale):
                         
 
                         country_df_flows += list(zip([o_iso]*len(node_path),
+                                        # [pidx]*len(node_path),
                                         node_path,
                                         [in_st]*len(node_path),
                                         fst_list,
                                         [in_tons]*len(node_path),
-                                        ftons_list
+                                        ftons_list,
+                                        gcosts,
+                                        dist,
+                                        time
                                         ))
                     country_df_flows = pd.DataFrame(country_df_flows,
                                         columns=["export_country_code",
+                                        # "path_index",
                                         "origin_id","initial_processing_stage",
                                         "final_processing_stage",
                                         "initial_stage_production_tons",
-                                        "final_stage_production_tons"])
+                                        "final_stage_production_tons",
+                                        "gcosts","distance_km","time_hr"])
                     country_df_flows["reference_mineral"] = reference_mineral
+                    # country_df_flows.to_csv(
+                    #         os.path.join(
+                    #                 results_folder,
+                    #                 f"{file_name}_node_costs.parquet"
+                    #                 ),index=False)
                     df.append(country_df_flows)
+                    new_cols = ["gcosts","distance_km","time_hr"]
                 else:
                     df.append(l_df)
             df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
 
-        print (df)
         df = df.groupby(
                         [
                         "reference_mineral",
                         "export_country_code",
                         "initial_processing_stage",
                         "final_processing_stage",
-                        "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
+                        "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns + new_cols])).reset_index()
+        # df.to_csv(
+        #         os.path.join(
+        #                 results_folder,
+        #                 f"{file_name}_node_costs.parquet"
+        #                 ),index=False)
         
-        print (df)
-        flows_df = assign_node_flows(df,trade_ton_columns,reference_mineral)
-        print (flows_df)
+        flows_df = assign_node_flows(df,trade_ton_columns,reference_mineral,additional_columns=new_cols)
         flows_df = add_geometries_to_flows(flows_df,
                                 merge_column="id",
                                 modes=["rail","sea","road","mine","city"],
