@@ -90,7 +90,7 @@ def main(config,year,percentile,efficient_scale):
                                 f"{file_name}.parquet")
                             )
             print (od_df)
-            mine_stage = od_df[f"{reference_mineral}_mine_highest_stage"].max()
+            mine_stage = all_flows[f"{reference_mineral}_mine_highest_stage"].max()
             columns = [f"{reference_mineral}_{c}_{mine_stage}_{lt}" for c in optimal_check_columns]
             if lt == "origin_in_country":
                 for o in origins:
