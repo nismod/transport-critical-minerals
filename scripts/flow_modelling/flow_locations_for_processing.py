@@ -180,7 +180,7 @@ def main(config,year,percentile,efficient_scale):
                         gcosts = [0] + list(np.cumsum(row.gcost_usd_tons_path))
                         dist = [0] + list(np.cumsum(row.distance_km_path))
                         time = [0] + list(np.cumsum(row.time_hr_path))
-                        f_st = row.initial_processing_stage
+                        f_st = row.final_processing_stage
                         m_st = row.mine_final_refined_stage
                         in_tons = row.initial_stage_production_tons
                         f_tons = row.final_stage_production_tons

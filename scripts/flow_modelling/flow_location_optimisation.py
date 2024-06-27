@@ -112,12 +112,16 @@ def main(config,year,percentile,efficient_scale):
             print (f"Done with {lt} case for {reference_mineral}")
 
     optimal_df = pd.DataFrame(optimal_df).fillna(0)
-    optimal_df.to_csv(
+    add_columns = [c for c in optimal_df.columns.values.tolist() if c not in ["iso3","id"]]
+    optimal_df = optimal_df.groupby(["id","iso3"]).agg(dict([(c,"sum") for c in add_columns])).reset_index()
+
+    optimal_df = pd.merge(optimal_df,all_flows[["id","geometry"]],how="left",on=["id"])
+    optimal_df = gpd.GeoDataFrame(optimal_df,geometry="geometry",crs=all_flows.crs)
+    optimal_df.to_file(
     		os.path.join(
     				results_folder,
-    				f"optimal_locations_{layer_name}.csv"),
-    		index=False)
-    print (optimal_df)
+    				"optimal_locations_for_processing.gpkg"),
+    		layer=layer_name,driver="GPKG")
 
 
 if __name__ == '__main__':

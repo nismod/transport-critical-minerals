@@ -211,6 +211,20 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
+    for idx, (year,percentile) in enumerate(year_percentile_combinations):
+        if year > 2022:
+            for th in tonnage_thresholds:
+                args = [
+                "python",
+                "flow_locations_optimisation.py",
+                f"{year}",
+                f"{percentile}",
+                f"{th}",
+                ]
+                print (f"* Start the creation of processing locations")
+                print (args)
+                subprocess.run(args)
+
 
 if __name__ == '__main__':
     CONFIG = load_config()
