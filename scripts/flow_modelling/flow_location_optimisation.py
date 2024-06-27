@@ -74,7 +74,6 @@ def main(config,year,percentile,efficient_scale):
     all_flows = gpd.read_file(os.path.join(results_folder,
                         f"node_locations_for_energy_conversion.gpkg"),
                         layer=layer_name)
-    print (all_flows)
     origins = list(set(all_flows["iso3"].values.tolist()))
     optimal_df = []
     for idx,(lt,lb) in enumerate(zip(location_types,location_binary)):
@@ -89,7 +88,6 @@ def main(config,year,percentile,efficient_scale):
                             os.path.join(results_folder,
                                 f"{file_name}.parquet")
                             )
-            print (od_df)
             mine_stage = all_flows[f"{reference_mineral}_mine_highest_stage"].max()
             columns = [f"{reference_mineral}_{c}_{mine_stage}_{lt}" for c in optimal_check_columns]
             if lt == "origin_in_country":
@@ -114,6 +112,11 @@ def main(config,year,percentile,efficient_scale):
             print (f"Done with {lt} case for {reference_mineral}")
 
     optimal_df = pd.DataFrame(optimal_df).fillna(0)
+    optimal_df.to_csv(
+    		os.path.join(
+    				results_folder,
+    				f"optimal_locations_{layer_name}.csv"),
+    		index=False)
     print (optimal_df)
 
 
