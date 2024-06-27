@@ -706,6 +706,14 @@ def get_flow_paths_indexes_of_edges(flow_dataframe,path_criteria):
     del flow_dataframe
     return edge_path_index
 
+def get_flow_paths_indexes_and_edges_dataframe(flow_dataframe,path_criteria,id_column="id"):
+    edge_path_index = []
+    for v in flow_dataframe.itertuples():
+        path = getattr(v,path_criteria)
+        edge_path_index += list(zip(path,[v.Index]*len(path)))
+    del flow_dataframe
+    return pd.DataFrame(edge_path_index,columns=[id_column,"path_index"])
+
 
 def update_flow_and_overcapacity(od_dataframe,network_dataframe,flow_column,edge_id_column="edge_id",subtract=False):
     edge_flows = get_flow_on_edges(od_dataframe,edge_id_column,"edge_path",flow_column)

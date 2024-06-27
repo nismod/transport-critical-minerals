@@ -7,6 +7,11 @@ pd.options.mode.chained_assignment = None  # default='warn'
 from utils import *
 import subprocess 
 
+"""Notes of BACI updates
+    - Correct the codes for Singapore manually
+    - Run the script baci_trade_data.py
+    - Run the script global_trade_balancing.py
+"""
 def main(config):
 
     incoming_data_path = config['paths']['incoming_data']
