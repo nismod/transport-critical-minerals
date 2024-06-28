@@ -26,7 +26,7 @@ def get_stage_1_tons_columns(df,reference_minerals,location_types,mc_factors):
             mf = mc_factors[mc_factors["reference_mineral"] == rm]["metal_content_factor"].values[0]
             df[f_col] = 1.0*df[in_col]/mf
 
-    return mf
+    return df
 
 
 def find_optimal_locations(opt_list,flows_df,path_df,
@@ -148,7 +148,7 @@ def main(config,year,percentile,efficient_scale):
         mines_df = get_stage_1_tons_columns(mines_df,reference_minerals,location_types,metal_content_factors_df)
         cities_df = mines_and_cities_df[mines_and_cities_df["mode"] == "city"]
         optimal_df = pd.merge(optimal_df,all_flows[["id"] + flow_cols],how="left",on=["id"]).fillna(0)
-        optimal_df = pd.concat([optimal_df,mines_df,cities_df],axis=0,ignore_index=True)
+        optimal_df = pd.concat([optimal_df,mines_df,cities_df],axis=0,ignore_index=True).fillna(0)
         optimal_df = gpd.GeoDataFrame(optimal_df,geometry="geometry",crs=all_flows.crs)
     else:
         optimal_df = all_flows.copy()
