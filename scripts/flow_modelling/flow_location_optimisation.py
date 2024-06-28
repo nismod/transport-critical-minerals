@@ -145,7 +145,7 @@ def main(config,year,percentile,efficient_scale):
         mines_and_cities_df = mines_and_cities_df[["id","iso3"] + flow_cols]
 
         mines_df = mines_and_cities_df[mines_and_cities_df["mode"] == "mine"]
-        mines_df = get_stage_1_tons_columns(mines_df,reference_minerals,metal_content_factors_df)
+        mines_df = get_stage_1_tons_columns(mines_df,reference_minerals,location_types,metal_content_factors_df)
         cities_df = mines_and_cities_df[mines_and_cities_df["mode"] == "city"]
         optimal_df = pd.merge(optimal_df,all_flows[["id"] + flow_cols],how="left",on=["id"]).fillna(0)
         optimal_df = pd.concat([optimal_df,mines_df,cities_df],axis=0,ignore_index=True)
