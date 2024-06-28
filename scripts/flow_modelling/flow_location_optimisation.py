@@ -21,8 +21,8 @@ tqdm.pandas()
 def get_stage_1_tons_columns(df,reference_minerals,location_types,mc_factors):
     for lt in location_types:
         for rm in reference_minerals:
-            in_col = f"{rm}_stage_production_tons_0.0_{lt}"
-            f_col = f"{rm}_stage_production_tons_1.0_{lt}"
+            in_col = f"{rm}_initial_stage_production_tons_0.0_{lt}"
+            f_col = f"{rm}_final_stage_production_tons_1.0_{lt}"
             mf = mc_factors[mc_factors["reference_mineral"] == rm]["metal_content_factor"].values[0]
             df[f_col] = 1.0*df[in_col]/mf
 
