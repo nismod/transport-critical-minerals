@@ -14,8 +14,20 @@ import geopandas as gpd
 from collections import defaultdict
 from utils import *
 from transport_cost_assignment import *
+from trade_functions import * 
 from tqdm import tqdm
 tqdm.pandas()
+
+def get_stage_1_tons_columns(df,reference_minerals,location_types,mc_factors):
+    for lt in location_types:
+        for rm in reference_minerals:
+            in_col = f"{rm}_stage_production_tons_0.0_{lt}"
+            f_col = f"{rm}_stage_production_tons_1.0_{lt}"
+            mf = mc_factors[mc_factors["reference_mineral"] == rm]["metal_content_factor"].values[0]
+            df[f_col] = 1.0*df[in_col]/mf
+
+    return mf
+
 
 def find_optimal_locations(opt_list,flows_df,path_df,
                             reference_mineral,
@@ -65,6 +77,14 @@ def main(config,year,percentile,efficient_scale):
     optimal_check_columns = ["final_stage_production_tons","gcosts","distance_km","time_hr"]
     location_types = ["origin_in_country","in_region"]
     location_binary = ["conversion_location_in_country","conversion_location_in_region"]
+    #  Get a number of input dataframes
+    baseline_year = 2022
+    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
+    (
+        _, 
+        metal_content_factors_df, 
+        _, _, _
+    ) = get_common_input_dataframes(data_type,year,baseline_year)
     all_flows = []
     if year == 2022:
         layer_name = f"{year}"
@@ -74,54 +94,71 @@ def main(config,year,percentile,efficient_scale):
     all_flows = gpd.read_file(os.path.join(results_folder,
                         f"node_locations_for_energy_conversion.gpkg"),
                         layer=layer_name)
-    origins = list(set(all_flows["iso3"].values.tolist()))
-    optimal_df = []
-    for idx,(lt,lb) in enumerate(zip(location_types,location_binary)):
-        for reference_mineral in reference_minerals:
-            # Find year locations
-            if year == 2022:
-                file_name = f"{reference_mineral}_flow_paths_{year}"
-            else:
-                file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}"
-            
-            od_df = pd.read_parquet(
-                            os.path.join(results_folder,
-                                f"{file_name}.parquet")
-                            )
-            mine_stage = all_flows[f"{reference_mineral}_mine_highest_stage"].max()
-            columns = [f"{reference_mineral}_{c}_{mine_stage}_{lt}" for c in optimal_check_columns]
-            if lt == "origin_in_country":
-                for o in origins:
-                    flows_df = all_flows[(all_flows["iso3"] == o) & (all_flows[f"{reference_mineral}_{lb}"] == 1)]
+    if year > 2022:
+        origins = list(set(all_flows["iso3"].values.tolist()))
+        optimal_df = []
+        for idx,(lt,lb) in enumerate(zip(location_types,location_binary)):
+            for reference_mineral in reference_minerals:
+                # Find year locations
+                if year == 2022:
+                    file_name = f"{reference_mineral}_flow_paths_{year}"
+                else:
+                    file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}"
+                
+                od_df = pd.read_parquet(
+                                os.path.join(results_folder,
+                                    f"{file_name}.parquet")
+                                )
+                mine_stage = all_flows[f"{reference_mineral}_mine_highest_stage"].max()
+                columns = [f"{reference_mineral}_{c}_{mine_stage}_{lt}" for c in optimal_check_columns]
+                if lt == "origin_in_country":
+                    for o in origins:
+                        flows_df = all_flows[(all_flows["iso3"] == o) & (all_flows[f"{reference_mineral}_{lb}"] == 1)]
+                        optimal_df = find_optimal_locations(optimal_df,flows_df,
+                                od_df.copy(),
+                                reference_mineral,
+                                lb,
+                                columns,
+                                mine_stage)
+
+                else:
+                    flows_df = all_flows[all_flows[f"{reference_mineral}_{lb}"] == 1]
                     optimal_df = find_optimal_locations(optimal_df,flows_df,
-                            od_df.copy(),
-                            reference_mineral,
-                            lb,
-                            columns,
-                            mine_stage)
+                                od_df.copy(),
+                                reference_mineral,
+                                lb,
+                                columns,
+                                mine_stage)
 
-            else:
-                flows_df = all_flows[all_flows[f"{reference_mineral}_{lb}"] == 1]
-                optimal_df = find_optimal_locations(optimal_df,flows_df,
-                            od_df.copy(),
-                            reference_mineral,
-                            lb,
-                            columns,
-                            mine_stage)
+                print (f"Done with {lt} case for {reference_mineral}")
 
-            print (f"Done with {lt} case for {reference_mineral}")
+        optimal_df = pd.DataFrame(optimal_df).fillna(0)
+        add_columns = [c for c in optimal_df.columns.values.tolist() if c not in ["iso3","id"]]
+        optimal_df = optimal_df.groupby(["id","iso3"]).agg(dict([(c,"sum") for c in add_columns])).reset_index()
+        flow_cols = [c for c in all_flows.columns.values.tolist() if c not in optimal_df.columns.values.tolist()]
 
-    optimal_df = pd.DataFrame(optimal_df).fillna(0)
-    add_columns = [c for c in optimal_df.columns.values.tolist() if c not in ["iso3","id"]]
-    optimal_df = optimal_df.groupby(["id","iso3"]).agg(dict([(c,"sum") for c in add_columns])).reset_index()
+        mines_and_cities_df = all_flows[all_flows["infra"].isin(["mine","city"])]
+        mines_and_cities_df = mines_and_cities_df[
+                            ~mines_and_cities_df["id"].isin(
+                                optimal_df["id"].values.tolist()
+                            )]
+        mines_and_cities_df = mines_and_cities_df[["id","iso3"] + flow_cols]
 
-    optimal_df = pd.merge(optimal_df,all_flows[["id","geometry"]],how="left",on=["id"])
-    optimal_df = gpd.GeoDataFrame(optimal_df,geometry="geometry",crs=all_flows.crs)
+        mines_df = mines_and_cities_df[mines_and_cities_df["infra"] == "mine"]
+        mines_df = get_stage_1_tons_columns(mines_df,reference_minerals,metal_content_factors_df)
+        cities_df = mines_and_cities_df[mines_and_cities_df["infra"] == "city"]
+        optimal_df = pd.merge(optimal_df,all_flows[["id"] + flow_cols],how="left",on=["id"]).fillna(0)
+        optimal_df = pd.concat([optimal_df,mines_df,cities_df],axis=0,ignore_index=True)
+        optimal_df = gpd.GeoDataFrame(optimal_df,geometry="geometry",crs=all_flows.crs)
+    else:
+        optimal_df = all_flows.copy()
+
+    print (optimal_df)
     optimal_df.to_file(
-    		os.path.join(
-    				results_folder,
-    				"optimal_locations_for_processing.gpkg"),
-    		layer=layer_name,driver="GPKG")
+            os.path.join(
+                    results_folder,
+                    "optimal_locations_for_processing.gpkg"),
+            layer=layer_name,driver="GPKG")
 
 
 if __name__ == '__main__':
