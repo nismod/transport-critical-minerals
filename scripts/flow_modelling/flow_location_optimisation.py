@@ -18,13 +18,14 @@ from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
-def get_stage_1_tons_columns(df,reference_minerals,location_types,mc_factors):
-    for lt in location_types:
+def get_stage_1_tons_columns(df,reference_minerals,location_types,location_binary,mc_factors):
+    for idx,(lt,lb) in enumerate(zip(location_types,location_binary)):
         for rm in reference_minerals:
             in_col = f"{rm}_initial_stage_production_tons_0.0_{lt}"
             f_col = f"{rm}_final_stage_production_tons_1.0_{lt}"
             mf = mc_factors[mc_factors["reference_mineral"] == rm]["metal_content_factor"].values[0]
             df[f_col] = 1.0*df[in_col]/mf
+            df[f"{reference_mineral}_{lb}"] = 1
 
     return df
 
@@ -85,7 +86,6 @@ def main(config,year,percentile,efficient_scale):
         metal_content_factors_df, 
         _, _, _
     ) = get_common_input_dataframes(data_type,year,baseline_year)
-    all_flows = []
     if year == 2022:
         layer_name = f"{year}"
     else:
@@ -137,15 +137,17 @@ def main(config,year,percentile,efficient_scale):
         optimal_df = optimal_df.groupby(["id","iso3"]).agg(dict([(c,"sum") for c in add_columns])).reset_index()
         flow_cols = [c for c in all_flows.columns.values.tolist() if c not in optimal_df.columns.values.tolist()]
 
+        mc_cols = [c for c in optimal_df.columns.values.tolist() if "final_stage_production_tons" in c]
+        mines_cities_cols = [c for c in all_flows.columns.values.tolist() if c not in mc_cols]
         mines_and_cities_df = all_flows[all_flows["mode"].isin(["mine","city"])]
         mines_and_cities_df = mines_and_cities_df[
                             ~mines_and_cities_df["id"].isin(
                                 optimal_df["id"].values.tolist()
                             )]
-        mines_and_cities_df = mines_and_cities_df[["id","iso3"] + flow_cols]
+        mines_and_cities_df = mines_and_cities_df[mines_cities_cols]
 
         mines_df = mines_and_cities_df[mines_and_cities_df["mode"] == "mine"]
-        mines_df = get_stage_1_tons_columns(mines_df,reference_minerals,location_types,metal_content_factors_df)
+        mines_df = get_stage_1_tons_columns(mines_df,reference_minerals,location_types,location_binary,metal_content_factors_df)
         cities_df = mines_and_cities_df[mines_and_cities_df["mode"] == "city"]
         optimal_df = pd.merge(optimal_df,all_flows[["id"] + flow_cols],how="left",on=["id"]).fillna(0)
         optimal_df = pd.concat([optimal_df,mines_df,cities_df],axis=0,ignore_index=True).fillna(0)

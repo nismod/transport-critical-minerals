@@ -216,7 +216,7 @@ def main(config):
             for th in tonnage_thresholds:
                 args = [
                 "python",
-                "flow_locations_optimisation.py",
+                "flow_location_optimisation.py",
                 f"{year}",
                 f"{percentile}",
                 f"{th}",
@@ -227,7 +227,7 @@ def main(config):
         else:
             args = [
             "python",
-            "flow_locations_optimisation.py",
+            "flow_location_optimisation.py",
             f"{year}",
             f"{percentile}",
             "0",
