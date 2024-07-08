@@ -24,32 +24,100 @@ def add_attributes(dataframe,columns_attributes):
 
     return dataframe
 
+def add_iso_code(df,df_id_column,global_boundaries):
+    # Insert countries' ISO CODE
+    # Spatial join
+    m = gpd.sjoin(df, 
+                    global_boundaries[['geometry', 'ISO_A3','CONTINENT']], 
+                    how="left", predicate='within').reset_index()
+    m = m[~m["ISO_A3"].isna()]        
+    un = df[~df[df_id_column].isin(m[df_id_column].values.tolist())]
+    un = gpd.sjoin_nearest(un,
+                            global_boundaries[['geometry', 'ISO_A3','CONTINENT']], 
+                            how="left").reset_index()
+    m = pd.concat([m,un],axis=0,ignore_index=True)
+    return m
 
 def main(config):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    ccg_totals = pd.read_csv(
-                        os.path.join(
-                            output_data_path,
-                            "baci_trade_matrices",
-                            "baci_ccg_country_metal_content_production_2022.csv"))
-    print (ccg_totals)
+    global_boundaries = gpd.read_file(os.path.join(processed_data_path,
+                                    "admin_boundaries",
+                                    "gadm36_levels_gpkg",
+                                    "gadm36_levels_continents.gpkg"))
 
     bgs_totals = pd.read_excel(
                         os.path.join(
                             processed_data_path,
                             "baci","BGS_SnP_comparison.xlsx"),
-                        index_col=[0,1])
+                        index_col=[0],header=[0,1]).fillna(0)
     bgs_totals = bgs_totals.reset_index()
+    print (bgs_totals.columns.values.tolist())
+    original_columns = bgs_totals.columns.values.tolist()
+    columns = [original_columns[0]] + [c for c in original_columns[1:] if c[0] == 'Max SP BGS']
+    print (columns)
+    bgs_totals = bgs_totals[columns]
+    reference_minerals = [c[1].lower() for c in columns[1:]]
     print (bgs_totals)
-    bgs_totals.rename(columns={"level_0":"reference_mineral","level_1":"export_country_code"},inplace=True)
-    bgs_totals["reference_mineral"] = bgs_totals["reference_mineral"].str.lower()
+    bgs_totals.columns = ["export_country_code"] + reference_minerals
+    print (bgs_totals)
 
-    ccg_totals = pd.merge(ccg_totals,bgs_totals,how="left",on=["reference_mineral","export_country_code"]).fillna(0)
+    bgs_totals_by_mineral = []
+    for reference_mineral in reference_minerals:
+        df = bgs_totals[["export_country_code",reference_mineral]]
+        df["reference_mineral"] = reference_mineral
+        df.rename(columns={reference_mineral:"SP_BGS_max"},inplace=True)
+        bgs_totals_by_mineral.append(df)
+
+    bgs_totals_by_mineral = pd.concat(bgs_totals_by_mineral,axis=0,ignore_index=True)
+    print (bgs_totals_by_mineral)
+
+    ccg_totals = pd.read_csv(
+                        os.path.join(
+                            processed_data_path,
+                            "baci",
+                            "baci_ccg_minerals_trade_2022_updated.csv"))
+    ccg_totals = ccg_totals[ccg_totals["refining_stage_cam"] == 1]
+    ccg_totals = ccg_totals.groupby(
+                        ["export_country_code","reference_mineral"]
+                        )["trade_quantity_tons"].sum().reset_index()
     print (ccg_totals)
-    ccg_totals.to_csv("baci_bgs_snp_comparison.csv",index=False)
+
+    # bgs_totals.rename(columns={"level_0":"reference_mineral","level_1":"export_country_code"},inplace=True)
+    # bgs_totals["reference_mineral"] = bgs_totals["reference_mineral"].str.lower()
+
+    mine_totals = []
+    file_directory = os.path.join(
+                            processed_data_path,
+                            "minerals",
+                            "future prod june 2024")
+    for root, dirs, files in os.walk(file_directory):
+        for file in files:
+            if file.endswith("_low_all.xlsx"):
+                s_and_p_mines = pd.read_excel(os.path.join(root,file))
+                s_and_p_mines["geometry"] = gpd.points_from_xy(
+                            s_and_p_mines["LONGITUDE"],s_and_p_mines["LATITUDE"])
+                s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
+                s_and_p_mines = add_iso_code(s_and_p_mines,"PROP_ID",global_boundaries)
+                s_and_p_mines = s_and_p_mines.groupby(["ISO_A3"])[2022].sum().reset_index()
+                s_and_p_mines.rename(
+                            columns={2022:"s_and_p_mine_total_2022","ISO_A3":"export_country_code"},
+                            inplace=True)
+                s_and_p_mines["reference_mineral"] = file.split("_")[0]
+                mine_totals.append(s_and_p_mines)
+
+    mine_totals = pd.concat(mine_totals,axis=0,ignore_index=True)
+    print (mine_totals)
+
+    df = pd.merge(bgs_totals_by_mineral,ccg_totals,
+                    how="left",on=["reference_mineral","export_country_code"]).fillna(0)
+    df = pd.merge(df,mine_totals,
+                    how="left",on=["reference_mineral","export_country_code"]).fillna(0)
+
+    df = df.set_index(["reference_mineral","export_country_code"])
+    df.to_excel("baci_bgs_snp_comparison.xlsx")
 
     # baci = pd.read_csv(os.path.join(processed_data_path,"baci","baci_ccg_country_level_trade_2040.csv"))
     # baci = baci.groupby(["export_country_code","final_refined_stage"])["trade_quantity_tons"].sum().reset_index()

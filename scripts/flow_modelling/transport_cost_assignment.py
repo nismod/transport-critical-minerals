@@ -434,7 +434,7 @@ def get_all_mines(mine_id_col="id"):
 def add_geometries_to_flows(flows_dataframe,
                         merge_column="id",
                         modes=["rail","sea","road","IWW","mine","city"],
-                        layer_type="edges"):    
+                        layer_type="edges",merge=True):    
     flow_edges = []
     for mode in modes:
         if mode == "IWW":
@@ -500,12 +500,15 @@ def add_geometries_to_flows(flows_dataframe,
             )
 
     flow_edges = pd.concat(flow_edges,axis=0,ignore_index=True)
-    return gpd.GeoDataFrame(
-                pd.merge(
-                        flows_dataframe,flow_edges,
-                        how="left",on=[merge_column]
-                        ),
-                    geometry="geometry",crs="EPSG:4326")
+    if merge is True:
+        return gpd.GeoDataFrame(
+                    pd.merge(
+                            flows_dataframe,flow_edges,
+                            how="left",on=[merge_column]
+                            ),
+                        geometry="geometry",crs="EPSG:4326")
+    else:
+        return flow_edges
 
 def add_node_degree_to_flows(nodes_flows_dataframe,mineral_class):
     edge_flows_df = gpd.read_file(os.path.join(output_data_path,
@@ -850,3 +853,138 @@ def get_electricity_grid_lines():
             geometry="geometry",crs="EPSG:4326")
     grid_network["grid_id"] = grid_network.index.values.tolist()
     return grid_network
+
+def get_distance_to_electricity_grid_lines(points_dataframe,global_epsg=4326):
+    file_directory = os.path.join(
+                    processed_data_path,
+                    "HVGrid")
+    data_details = pd.read_excel(
+                        os.path.join(
+                            file_directory,
+                            "grid_local_projections.xlsx")
+                        )
+    countries = data_details["iso3"].values.tolist()
+
+    global_boundaries = gpd.read_file(os.path.join(processed_data_path,
+                                    "admin_boundaries",
+                                    "gadm36_levels_gpkg",
+                                    "gadm36_levels_continents.gpkg"))
+    global_boundaries = global_boundaries[global_boundaries["ISO_A3"].isin(countries)]
+
+    points_with_distance_df = []
+    for row in data_details.itertuples():
+        boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
+        grid_network = gpd.read_file(os.path.join(file_directory,row.file_name))
+        grid_network = gpd.clip(grid_network,boundary_df)
+        
+        grid_network = grid_network.to_crs(epsg=row.projection_epsg)
+        grid_network["grid_id"] = grid_network.index.values.tolist()
+
+        pt_df = points_dataframe[points_dataframe["iso3"] == row.iso3]
+        pt_df = pt_df.to_crs(epsg=row.projection_epsg)
+
+        closest_df = gpd.sjoin_nearest(
+                                pt_df[["id","geometry"]],
+                                grid_network[["grid_id","geometry"]],
+                                how="left",
+                                distance_col="distance_to_grid_meters").reset_index()
+        closest_df = closest_df.to_crs(epsg=global_epsg)
+        points_with_distance_df.append(closest_df)
+
+    points_with_distance_df = gpd.GeoDataFrame(
+                                pd.concat(points_with_distance_df,
+                                        axis=0,ignore_index=True),
+                                geometry="geometry",
+                                crs=f"EPSG:{global_epsg}")
+    
+    return points_with_distance_df
+
+def get_distance_to_layer(
+                points_dataframe,
+                points_id_column="id",
+                global_epsg=4326):
+    
+    country_codes_and_projections = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "local_projections.xlsx")
+                        )
+    countries = country_codes_and_projections["iso3"].values.tolist()
+
+    global_boundaries = gpd.read_file(os.path.join(processed_data_path,
+                                    "admin_boundaries",
+                                    "gadm36_levels_gpkg",
+                                    "gadm36_levels_continents.gpkg"))
+    global_boundaries = global_boundaries[global_boundaries["ISO_A3"].isin(countries)]
+
+    layer_details = [
+                        {
+                            "layer_type":"grid",
+                            "layer_column":"grid_id"
+                        },
+                        {
+                            "layer_type":"KeyBiodiversityAreas",
+                            "layer_file":"Environmental datasets/KeyBiodiversityAreas/Africa_KBA/Africa_KBA.shp",
+                            "layer_column":"intname"
+                        },
+                        {
+                            "layer_type":"LastOfWild",
+                            "layer_file":"Environmental datasets/LastOfWildSouthernAfrica/low_southern_africa.shp",
+                            "layer_column":"biome"
+                        },
+                        {
+                            "layer_type":"ProtectedAreas",
+                            "layer_file":"Environmental datasets/ProtectedAreasSouthernAfrica/protected_areas_southern_africa.shp",
+                            "layer_column":"DESIG_ENG"
+                        },
+            ]
+
+    points_with_distance_df = []
+    for lyr in layer_details:
+        if lyr["layer_type"] == "grid":
+            layer_gdf = get_electricity_grid_lines()
+        else:
+            layer_gdf = gpd.read_file(os.path.join(processed_data_path,lyr["layer_file"]))
+            layer_gdf = layer_gdf.to_crs(epsg=global_epsg)
+
+        lyr_distance_df = []
+        for row in country_codes_and_projections.itertuples():
+            boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
+            lyr_network = gpd.clip(layer_gdf,boundary_df)
+
+            lyr_network = lyr_network.to_crs(epsg=row.projection_epsg)
+
+            pt_df = points_dataframe[points_dataframe["iso3"] == row.iso3]
+            pt_df = pt_df.to_crs(epsg=row.projection_epsg)
+
+            dist_column_name = f"distance_to_{lyr['layer_type'].lower()}_meters"
+            closest_df = gpd.sjoin_nearest(
+                                    pt_df[[points_id_column,"geometry"]],
+                                    lyr_network[[lyr["layer_column"],"geometry"]],
+                                    how="left",
+                                    distance_col=f"nearest_distance_to_{lyr['layer_type'].lower()}_km").reset_index()
+            closest_df[dist_column_name] = 0.001*closest_df[dist_column_name]
+            closest_df = closest_df.sort_values(by=dist_column_name,ascending=True)
+            closest_df = closest_df.drop_duplicates(subset=[points_id_column],keep="first")
+            if lyr["layer_type"] == "grid":
+                lyr_distance_df.append(closest_df[[points_id_column,dist_column_name]])
+            else:
+                closest_df.rename(columns={lyr["layer_column"]:f"nearest_{lyr['layer_type'].lower()}_type"},inplace=True)
+                lyr_distance_df.append(
+                            closest_df[[points_id_column,
+                            f"nearest_{lyr['layer_type'].lower()}_type",
+                              dist_column_name]])
+        lyr_distance_df = pd.concat(lyr_distance_df,axis=0,ignore_index=True)
+        points_with_distance_df.append(lyr_distance_df.set_index(points_id_column))
+
+    points_with_distance_df = pd.concat(points_with_distance_df,axis=1)
+    points_with_distance_df = gpd.GeoDataFrame(
+                                pd.merge(
+                                        points_dataframe,
+                                        points_with_distance_df.reset_index(),
+                                        how="left",
+                                        on=[points_id_column]),
+                                geometry="geometry",
+                                crs=f"EPSG:{global_epsg}")
+    
+    return points_with_distance_df

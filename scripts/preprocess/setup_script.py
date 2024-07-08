@@ -26,37 +26,16 @@ def main(config):
                                     (2040,"high")
                                     ]
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
+    # percentiles = [25,50,75]
+    # # percentiles = [25]
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
-    
-    args = [
-            "python",
-            "s_and_p_mines.py"
-            ]
-    print ("* Clean the S&P mine data and store new mines")
-    print (args)
-    subprocess.run(args)
-
-    args = [
-            "python",
-            "baci_cleaning.py"
-            ]
-    print ("* Clean the BACI matrices in the baseline")
-    print (args)
-    subprocess.run(args)
-
-    args = [
-            "python",
-            "global_trade_balancing.py"
-            ]
-    print ("* Balance global trade matrices to match BGS values")
-    print (args)
-    subprocess.run(args)    
+    # reference_minerals = ["cobalt"]
 
     args = [
             "python",
             "existing_trade_balancing.py"
             ]
-    print ("* Start the creation of the high-level OD matrices in the baseline")
+    print ("* Start the creation of the high-level OD matrices in the present")
     print (args)
     subprocess.run(args)
 
@@ -87,52 +66,89 @@ def main(config):
             print (args)
             subprocess.run(args)
 
-    baseline_year = 2022
-    num_blocks = 0
-    with open("paramter_set.txt","w+") as f:
-        for rf in reference_minerals:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
-                if year == baseline:
-                    th = "none"
-                    f.write(f"{rf},{year},{percentile},{th}\n")
-                    num_blocks += 1
-                else:
-                    for th in tonnage_thresholds:
-                        f.write(f"{rf},{year},{percentile},{th}\n")
-                        num_blocks += 1                    
-    f.close()
+    # # for percentile in percentiles:
+    # #     args = [
+    # #         "python",
+    # #         "mineral_node_ods.py",
+    # #         f"{percentile}"
+    # #         ]
+    # #     print ("* Start the creation of the mine-level outputs")
+    # #     print (args)
+    # #     subprocess.run(args)
 
-    """Next we call the flow analysis script and loop through the scenarios
-    """
-    args = [
-            "parallel",
-            "-j", str(num_blocks),
-            "--colsep", ",",
-            "-a",
-            "paramter_set.txt",
-            "python",
-            "flow_allocation.py",
-            "{}"
-            ]
-    print ("* Start the processing of flow allocation")
-    print (args)
-    subprocess.run(args)
+    
+    # # for reference_mineral in reference_minerals:
+    # #     for percentile in percentiles:
+    # #         args = [
+    # #             "python",
+    # #             "city_mine_scenarios.py",
+    # #             f"{reference_mineral}",
+    # #             f"{percentile}"
+    # #             ]
+    # #         print ("* Start the creation of the mine-level outputs")
+    # #         print (args)
+    # #         subprocess.run(args)
 
-    """Next we aggregate the flows through the scenarios
-    """
-    args = [
-            "parallel",
-            "-j", str(num_blocks),
-            "--colsep", ",",
-            "-a",
-            "paramter_set.txt",
-            "python",
-            "node_edge_flows.py",
-            "{}"
-            ]
-    print ("* Start the processing of flow allocation")
-    print (args)
-    subprocess.run(args)
+
+    # # reference_minerals = ["graphite"]
+    # for reference_mineral in reference_minerals:
+    #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
+    #         if year == 2022:
+    #             args = [
+    #                 "python",
+    #                 "flow_allocation.py",
+    #                 f"{reference_mineral}",
+    #                 f"{year}",
+    #                 f"{percentile}",
+    #                 f"0"
+    #                 ]
+    #             print ("* Start the creation of the flow allocation outputs")
+    #             print (args)
+    #             subprocess.run(args)
+    #         else:
+    #             for th in tonnage_thresholds:
+    #                 args = [
+    #                     "python",
+    #                     "flow_allocation.py",
+    #                     f"{reference_mineral}",
+    #                     f"{year}",
+    #                     f"{percentile}",
+    #                     f"{th}"
+    #                     ]
+
+    #                 print ("* Start the creation of the flow allocation outputs")
+    #                 print (args)
+    #                 subprocess.run(args)
+
+    # # reference_minerals = ["copper"]
+    # # reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    # for reference_mineral in reference_minerals:
+    #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
+    #         if year == 2022:
+    #             args = [
+    #                 "python",
+    #                 "node_edge_flows.py",
+    #                 f"{reference_mineral}",
+    #                 f"{year}",
+    #                 f"{percentile}",
+    #                 f"0"
+    #                 ]
+    #             print ("* Start the creation of the flow flow allocation outputs")
+    #             print (args)
+    #             subprocess.run(args)
+    #         else:
+    #             for th in tonnage_thresholds:
+    #                 args = [
+    #                     "python",
+    #                     "node_edge_flows.py",
+    #                     f"{reference_mineral}",
+    #                     f"{year}",
+    #                     f"{percentile}",
+    #                     f"{th}"
+    #                     ]
+    #                 print ("* Start the creation of the flow flow allocation outputs")
+    #                 print (args)
+    #                 subprocess.run(args)
 
 
     # # for reference_mineral in reference_minerals:

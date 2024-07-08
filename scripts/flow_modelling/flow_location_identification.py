@@ -146,12 +146,13 @@ def main(config,year,percentile,efficient_scale):
     add_columns = [c for c in all_flows.columns.values.tolist() if c not in ["id","iso3","mode"]]
 
     all_flows = all_flows.groupby(["id","iso3","mode"]).agg(dict([(c,"sum") for c in add_columns])).reset_index()
-    grid_network = get_electricity_grid_lines()
-    flows_grid_intersects = gpd.sjoin_nearest(
-                                all_geoms[["id","geometry"]].to_crs(epsg=epsg_meters),
-                                grid_network[["grid_id","geometry"]].to_crs(epsg=epsg_meters),
-                                how="left",distance_col="distance_to_grid_meters").reset_index()
-    flows_grid_intersects = flows_grid_intersects.to_crs(epsg=4326)
+    # grid_network = get_electricity_grid_lines()
+    # flows_grid_intersects = gpd.sjoin_nearest(
+    #                             all_geoms[["id","geometry"]].to_crs(epsg=epsg_meters),
+    #                             grid_network[["grid_id","geometry"]].to_crs(epsg=epsg_meters),
+    #                             how="left",distance_col="distance_to_grid_meters").reset_index()
+    # flows_grid_intersects = flows_grid_intersects.to_crs(epsg=4326)
+    flows_grid_intersects = get_distance_to_electricity_grid_lines(all_geoms)
     all_flows = pd.merge(all_flows,flows_grid_intersects[["id","distance_to_grid_meters","geometry"]],how="left",on=["id"])
     all_flows["on_grid"
     ] = np.where(all_flows["distance_to_grid_meters"] <= 2000.0,1,0)

@@ -12,6 +12,7 @@ import igraph as ig
 import geopandas as gpd
 from utils import *
 from transport_cost_assignment import *
+from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -137,7 +138,7 @@ def main(config,
     if year > 2022:
         file_name = f"baci_ccg_country_trade_breakdown_{year}_{percentile}_{efficient_scale}.csv"
     else:
-        file_name = f"baci_ccg_country_trade_breakdown_{year}.csv"
+        file_name = f"baci_ccg_country_trade_breakdown_{year}_{percentile}.csv"
     
     trade_df = pd.read_csv(os.path.join(
                             output_data_path,
@@ -147,56 +148,66 @@ def main(config,
     combined_trade_df = []
     for reference_mineral in reference_minerals:
         t_df = trade_df[trade_df["reference_mineral"] == reference_mineral]
-        if year > 2022:
-            layer = f"{reference_mineral}_{percentile}"
-        else:
-            layer = f"{reference_mineral}"
-        # Mine locations in Africa with the mineral tonnages
-        if year == 2022:
-            mines_df = gpd.read_file(
+        # layer = f"{reference_mineral}_{percentile}"
+        mines_df = gpd.read_file(
                             os.path.join(
                                 processed_data_path,
                                 "minerals",
-                                "ccg_mines_est_production.gpkg"))
-            if mine_id_col not in mines_df.columns.values.tolist():
-                mines_df[mine_id_col] = mines_df.index.values.tolist()
-                mines_df[mine_id_col] = mines_df.progress_apply(lambda x:f"mine_{x[mine_id_col]}",axis=1)
-            if f"{reference_mineral}_processed_ton" not in mines_df.columns.values.tolist():
-                mines_df[f"{reference_mineral}_processed_ton"] = 0
-            if f"{reference_mineral}_unprocessed_ton" not in mines_df.columns.values.tolist():
-                mines_df[f"{reference_mineral}_unprocessed_ton"] = 0
-
-            mines_df[f"{reference_mineral}"] = mines_df[f"{reference_mineral}"].astype(int)
-            mines_df = mines_df[mines_df[f"{reference_mineral}"] == 1]
-            # mines_df["reference_mineral"] = reference_mineral
-            mines_df.rename(columns={"country_code":"iso3"},inplace=True)
-            
-            # mines_df["initial_processing_location"
-            #     ] = mines_df["final_processing_location"] = "mine"
-            # mines_df["final_refined_stage"] = mines_df[f"highest_stage_{reference_mineral}"]
-            # mines_df["initial_refined_stage"] = np.where(
-            #                                     mines_df[f"{reference_mineral}_processed_ton"] > 0,
-            #                                     mine_final_refined_stage,
-            #                                     mine_initial_refined_stage)
-            # mines_df["final_refined_stage"] = np.where(
-            #                                     mines_df[f"{reference_mineral}_processed_ton"] > 0,
-            #                                     mine_final_refined_stage,
-            #                                     mine_initial_refined_stage)
-            mines_df["weight"] = mines_df[f"{reference_mineral}_processed_ton"] + mines_df[f"{reference_mineral}_unprocessed_ton"]
-            # mines_df[original_tons_column] = mines_df[mine_tons_column].copy()
-            # refined_df = mines_df[mines_df["final_refined_stage"] == mine_final_refined_stage]
-            # mines_df["location_type"] = "mine"
-            # location_df.append(mines_df[final_columns])
-        elif year > 2022:
-            mines_df = gpd.read_file(
-                            os.path.join(
-                                processed_data_path,
-                                "minerals",
-                                "s_and_p_mines_estimates.gpkg"),
+                                "s_and_p_mines_current_and_future_estimates.gpkg"),
                             layer=f"{reference_mineral}_{percentile}")
-            # mines_df["reference_mineral"] = reference_mineral
-            mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
-            mines_df["weight"] = mines_df[str(year)]
+        # mines_df["reference_mineral"] = reference_mineral
+        mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
+        mines_df["weight"] = mines_df[str(year)]
+        # if year > 2022:
+        #     layer = f"{reference_mineral}_{percentile}"
+        # else:
+        #     layer = f"{reference_mineral}"
+        # Mine locations in Africa with the mineral tonnages
+        # if year == 2022:
+        #     mines_df = gpd.read_file(
+        #                     os.path.join(
+        #                         processed_data_path,
+        #                         "minerals",
+        #                         "ccg_mines_est_production.gpkg"))
+        #     if mine_id_col not in mines_df.columns.values.tolist():
+        #         mines_df[mine_id_col] = mines_df.index.values.tolist()
+        #         mines_df[mine_id_col] = mines_df.progress_apply(lambda x:f"mine_{x[mine_id_col]}",axis=1)
+        #     if f"{reference_mineral}_processed_ton" not in mines_df.columns.values.tolist():
+        #         mines_df[f"{reference_mineral}_processed_ton"] = 0
+        #     if f"{reference_mineral}_unprocessed_ton" not in mines_df.columns.values.tolist():
+        #         mines_df[f"{reference_mineral}_unprocessed_ton"] = 0
+
+        #     mines_df[f"{reference_mineral}"] = mines_df[f"{reference_mineral}"].astype(int)
+        #     mines_df = mines_df[mines_df[f"{reference_mineral}"] == 1]
+        #     # mines_df["reference_mineral"] = reference_mineral
+        #     mines_df.rename(columns={"country_code":"iso3"},inplace=True)
+            
+        #     # mines_df["initial_processing_location"
+        #     #     ] = mines_df["final_processing_location"] = "mine"
+        #     # mines_df["final_refined_stage"] = mines_df[f"highest_stage_{reference_mineral}"]
+        #     # mines_df["initial_refined_stage"] = np.where(
+        #     #                                     mines_df[f"{reference_mineral}_processed_ton"] > 0,
+        #     #                                     mine_final_refined_stage,
+        #     #                                     mine_initial_refined_stage)
+        #     # mines_df["final_refined_stage"] = np.where(
+        #     #                                     mines_df[f"{reference_mineral}_processed_ton"] > 0,
+        #     #                                     mine_final_refined_stage,
+        #     #                                     mine_initial_refined_stage)
+        #     mines_df["weight"] = mines_df[f"{reference_mineral}_processed_ton"] + mines_df[f"{reference_mineral}_unprocessed_ton"]
+        #     # mines_df[original_tons_column] = mines_df[mine_tons_column].copy()
+        #     # refined_df = mines_df[mines_df["final_refined_stage"] == mine_final_refined_stage]
+        #     # mines_df["location_type"] = "mine"
+        #     # location_df.append(mines_df[final_columns])
+        # elif year > 2022:
+        #     mines_df = gpd.read_file(
+        #                     os.path.join(
+        #                         processed_data_path,
+        #                         "minerals",
+        #                         "s_and_p_mines_estimates.gpkg"),
+        #                     layer=f"{reference_mineral}_{percentile}")
+        #     # mines_df["reference_mineral"] = reference_mineral
+        #     mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
+        #     mines_df["weight"] = mines_df[str(year)]
         
         mines_df = mines_df[mines_df["weight"] > 0]
         mines_df["weight"
@@ -254,10 +265,11 @@ def main(config,
         file_name_full = f"mining_city_node_level_ods_full_{year}_{percentile}_{efficient_scale}.csv"
         file_name = f"mining_city_node_level_ods_{year}_{percentile}_{efficient_scale}.csv"
     else:
-        file_name_full = f"mining_city_node_level_ods_full_{year}.csv"
-        file_name = f"mining_city_node_level_ods_{year}.csv"
+        file_name_full = f"mining_city_node_level_ods_full_{year}_{percentile}.csv"
+        file_name = f"mining_city_node_level_ods_{year}_{percentile}.csv"
 
     combined_trade_df = pd.concat(combined_trade_df,axis=0,ignore_index=True)
+    combined_trade_df = combined_trade_df[combined_trade_df["final_stage_production_tons"]>0]
     combined_trade_df.to_csv(os.path.join(
                             results_folder,
                             file_name_full),index=False)
@@ -281,7 +293,7 @@ if __name__ == '__main__':
     CONFIG = load_config()
     try:
         year = int(sys.argv[1])
-        percentile = int(sys.argv[2])
+        percentile = str(sys.argv[2])
         efficient_scale = str(sys.argv[3])
     except IndexError:
         print("Got arguments", sys.argv)

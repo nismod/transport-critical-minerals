@@ -52,11 +52,11 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     """
     # print (year,percentile)
     if year == 2022:
-        od_file_name = f"mining_city_node_level_ods_{year}.csv"
-        mine_layer = f"{reference_mineral}"
+        od_file_name = f"mining_city_node_level_ods_{year}_{percentile}.csv"
+        # mine_layer = f"{reference_mineral}"
     else:
         od_file_name = f"mining_city_node_level_ods_{year}_{percentile}_{efficient_scale}.csv"
-        mine_layer = f"{reference_mineral}_{percentile}"
+        # mine_layer = f"{reference_mineral}_{percentile}"
 
     # print (od_file_name)
 
@@ -237,7 +237,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
         if year > 2022:
             file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet"
         else:
-            file_name = f"{reference_mineral}_flow_paths_{year}.parquet"
+            file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet"
 
         mine_routes[[origin_id,destination_id] + od_columns + [
                                 "edge_path",
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     try:
         reference_mineral = str(sys.argv[1])
         year = int(sys.argv[2])
-        percentile = int(sys.argv[3])
+        percentile = str(sys.argv[3])
         efficient_scale = str(sys.argv[4])
     except IndexError:
         print("Got arguments", sys.argv)

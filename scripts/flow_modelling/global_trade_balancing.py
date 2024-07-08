@@ -5,6 +5,7 @@ import os
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
 from utils import *
+from trade_functions import *
 
 def get_conversion_factors(x,mc_df,pcf_df,cf_column="aggregate_ratio"):
     ref_min = x["reference_mineral"]
@@ -103,14 +104,7 @@ def main(config):
                         inplace=True)
     
     # Read the BGS total of metal production
-    bgs_totals = pd.read_excel(
-                        os.path.join(
-                            processed_data_path,
-                            "baci","BGS_SnP_comparison.xlsx"),
-                        index_col=[0,1])
-    bgs_totals = bgs_totals.reset_index()
-    bgs_totals.rename(columns={"level_0":"reference_mineral","level_1":"export_country_code"},inplace=True)
-    bgs_totals["reference_mineral"] = bgs_totals["reference_mineral"].str.lower()
+    bgs_totals,bgs_tons_column = bgs_tonnage_estimates()
 
     # Read the finalised version of the BACI trade data
     ccg_countries = pd.read_csv(
@@ -346,7 +340,7 @@ def main(config):
     t_df = pd.merge(t_df,bgs_totals,how="left",on=["export_country_code","reference_mineral"]).fillna(0)
     t_df[
         "actual_export_tons"
-        ] = t_df[["baci_tons","BGS"]].min(axis=1)
+        ] = t_df[["baci_tons",bgs_tons_column]].min(axis=1)
     print (t_df)
 
     t_df[

@@ -124,13 +124,13 @@ def main(config,
     trade_proportion_df = pd.read_csv(
                             os.path.join(
                                 results_folder,
-                                f"baci_ccg_country_metal_content_production_{baseline_year}.csv")
+                                f"baci_ccg_country_metal_content_production_{baseline_year}_baseline.csv")
                             )[["export_country_code","reference_mineral","production_to_trade_fraction"]]
 
     import_proportion_df = pd.read_csv(
                             os.path.join(
                                 results_folder,
-                                f"baci_import_shares_{baseline_year}.csv")
+                                f"baci_import_shares_{baseline_year}_baseline.csv")
                             )[["import_country_code","reference_mineral",
                                 "initial_processing_stage","import_location",
                             "location_fraction"]]
@@ -147,7 +147,7 @@ def main(config,
                                 os.path.join(
                                     processed_data_path,
                                     "minerals",
-                                    "s_and_p_mines_estimates.gpkg"),
+                                    "s_and_p_mines_current_and_future_estimates.gpkg"),
                                 layer=f"{reference_mineral}_{percentile}")
         mines_df = mines_df.groupby(["ISO_A3"])[str(year)].sum().reset_index()
         mines_df = mines_df[mines_df[str(year)]>0]
@@ -193,7 +193,7 @@ def main(config,
                                                     pr_conv_factors_df,
                                                     "initial_processing_stage",
                                                     "final_processing_stage"),axis=1)
-    mine_exports_df.to_csv("test.csv",index=False)
+    # mine_exports_df.to_csv("test.csv",index=False)
 
 
     # Get the total tonnage of exports and imports of each CCG country
@@ -875,7 +875,7 @@ if __name__ == '__main__':
     CONFIG = load_config()
     try:
         year = int(sys.argv[1])
-        percentile = int(sys.argv[2])
+        percentile = str(sys.argv[2])
         efficient_scale = str(sys.argv[3])
     except IndexError:
         print("Got arguments", sys.argv)

@@ -56,7 +56,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                                         "reference_mineral"] == reference_mineral
                                         ][efficient_scale].values[0]
     else:
-        file_name = f"{reference_mineral}_flow_paths_{year}.parquet"
+        file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet"
         production_size = 0
     od_df = pd.read_parquet(
                         os.path.join(results_folder,
@@ -145,7 +145,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                                 geometry="geometry",
                                 crs="EPSG:4326")
         if year == 2022:
-            layer_name = f"{reference_mineral}"
+            layer_name = f"{reference_mineral}_{percentile}"
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         flows_df.to_file(os.path.join(results_folder,
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     try:
         reference_mineral = str(sys.argv[1])
         year = int(sys.argv[2])
-        percentile = int(sys.argv[3])
+        percentile = str(sys.argv[3])
         efficient_scale = str(sys.argv[4])
     except IndexError:
         print("Got arguments", sys.argv)

@@ -266,7 +266,7 @@ def main(config):
     country_imports_df.to_csv(
                     os.path.join(
                         results_folder,
-                        f"baci_import_shares_{baseline_year}.csv"),
+                        f"baci_import_shares_{baseline_year}_baseline.csv"),
                     index=False)
 
     # Now we need to incorporate the Export and Import Breakdown and location into the trade matrix
@@ -391,7 +391,7 @@ def main(config):
     final_trade_matrix_df.to_csv(
                             os.path.join(
                                 results_folder,
-                                f"baci_ccg_country_trade_breakdown_{baseline_year}.csv"),
+                                f"baci_ccg_country_trade_breakdown_{baseline_year}_baseline.csv"),
                             index=False)
 
     metal_content_df = final_trade_matrix_df[
@@ -404,27 +404,27 @@ def main(config):
                         ]
                         )["initial_stage_production_tons"].sum().reset_index()
     metal_content_df.rename(columns={"initial_stage_production_tons":"baci_metal_trade_tons"},inplace=True)
-    bgs_totals = pd.read_excel(
-                        os.path.join(
-                            processed_data_path,
-                            "baci","BGS_SnP_comparison.xlsx"),
-                        index_col=[0,1])
-    bgs_totals = bgs_totals.reset_index()
-    bgs_totals.rename(columns={"level_0":"reference_mineral","level_1":"export_country_code"},inplace=True)
-    bgs_totals["reference_mineral"] = bgs_totals["reference_mineral"].str.lower()
+
+    bgs_totals,bgs_tons_column = bgs_tonnage_estimates()
+    li_factor = 5.323
+    bgs_totals[
+        bgs_tons_column
+        ] = np.where(bgs_totals["reference_mineral"] == "lithium",
+            li_factor*bgs_totals[bgs_tons_column],
+            bgs_totals[bgs_tons_column])
 
     metal_content_df = pd.merge(
                             metal_content_df,
                             bgs_totals,
                             how="left",
                             on=["reference_mineral","export_country_code"]).fillna(0)
-    metal_content_df["production_to_trade_fraction"] = np.where(metal_content_df["BGS"] > 0,
-                                        metal_content_df["baci_metal_trade_tons"]/metal_content_df["BGS"],
+    metal_content_df["production_to_trade_fraction"] = np.where(metal_content_df[bgs_tons_column] > 0,
+                                        metal_content_df["baci_metal_trade_tons"]/metal_content_df[bgs_tons_column],
                                         0) 
     metal_content_df.to_csv(
                             os.path.join(
                                 results_folder,
-                                f"baci_ccg_country_metal_content_production_{baseline_year}.csv"),
+                                f"baci_ccg_country_metal_content_production_{baseline_year}_baseline.csv"),
                             index=False)
 
 if __name__ == '__main__':
