@@ -92,7 +92,7 @@ def main(config):
     with open("paramter_set.txt","w+") as f:
         for rf in reference_minerals:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
-                if year == baseline:
+                if year == baseline_year:
                     th = "none"
                     f.write(f"{rf},{year},{percentile},{th}\n")
                     num_blocks += 1
