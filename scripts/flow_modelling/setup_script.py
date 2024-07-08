@@ -89,7 +89,7 @@ def main(config):
 
     baseline_year = 2022
     num_blocks = 0
-    with open("paramter_set.txt","w+") as f:
+    with open("parameter_set.txt","w+") as f:
         for rf in reference_minerals:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
                 if year == baseline_year:
@@ -109,7 +109,7 @@ def main(config):
             "-j", str(num_blocks),
             "--colsep", ",",
             "-a",
-            "paramter_set.txt",
+            "parameter_set.txt",
             "python",
             "flow_allocation.py",
             "{}"

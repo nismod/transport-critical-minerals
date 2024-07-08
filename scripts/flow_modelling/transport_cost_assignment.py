@@ -402,27 +402,17 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
 
 def get_all_mines(mine_id_col="id"):
     # Mine locations in Africa with the mineral tonnages
-    all_mines = []
-    mines_df = gpd.read_file(
-                    os.path.join(
-                        processed_data_path,
-                        "minerals",
-                        "ccg_mines_est_production.gpkg"))
-    mines_crs = mines_df.crs
-    mines_df["geometry"] = mines_df.geometry.centroid
-    # mines_df = gpd.GeoDataFrame(mines_df,geometry="geometry",crs=mines_crs)
-    mines_df.rename(columns={"id":mine_id_col,"country_code":"iso3"},inplace=True)
-    all_mines.append(mines_df[[mine_id_col,"iso3","geometry"]])
-    
+    all_mines = []    
     rms = ["copper","cobalt","manganese","lithium","graphite","nickel"]
     for rm in rms:
-        for pct in [25,50,75]:
+        for pct in ["baseline","low","mid","high"]:
             mines_df = gpd.read_file(
                             os.path.join(
                                 processed_data_path,
                                 "minerals",
-                                "s_and_p_mines_estimates.gpkg"),
+                                "s_and_p_mines_current_and_future_estimates.gpkg"),
                             layer=f"{rm}_{pct}")
+            mines_crs = mines_df.crs
             mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
             all_mines.append(mines_df[[mine_id_col,"iso3","geometry"]])
 
@@ -430,6 +420,37 @@ def get_all_mines(mine_id_col="id"):
     all_mines = all_mines.drop_duplicates(subset=[mine_id_col],keep="first")
 
     return gpd.GeoDataFrame(all_mines,geometry="geometry",crs=mines_crs)
+
+# def get_all_mines(mine_id_col="id"):
+#     # Mine locations in Africa with the mineral tonnages
+#     all_mines = []
+#     mines_df = gpd.read_file(
+#                     os.path.join(
+#                         processed_data_path,
+#                         "minerals",
+#                         "ccg_mines_est_production.gpkg"))
+#     mines_crs = mines_df.crs
+#     mines_df["geometry"] = mines_df.geometry.centroid
+#     # mines_df = gpd.GeoDataFrame(mines_df,geometry="geometry",crs=mines_crs)
+#     mines_df.rename(columns={"id":mine_id_col,"country_code":"iso3"},inplace=True)
+#     all_mines.append(mines_df[[mine_id_col,"iso3","geometry"]])
+    
+#     rms = ["copper","cobalt","manganese","lithium","graphite","nickel"]
+#     for rm in rms:
+#         for pct in [25,50,75]:
+#             mines_df = gpd.read_file(
+#                             os.path.join(
+#                                 processed_data_path,
+#                                 "minerals",
+#                                 "s_and_p_mines_estimates.gpkg"),
+#                             layer=f"{rm}_{pct}")
+#             mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
+#             all_mines.append(mines_df[[mine_id_col,"iso3","geometry"]])
+
+#     all_mines = pd.concat(all_mines,axis=0,ignore_index=True)
+#     all_mines = all_mines.drop_duplicates(subset=[mine_id_col],keep="first")
+
+#     return gpd.GeoDataFrame(all_mines,geometry="geometry",crs=mines_crs)
 
 def add_geometries_to_flows(flows_dataframe,
                         merge_column="id",
