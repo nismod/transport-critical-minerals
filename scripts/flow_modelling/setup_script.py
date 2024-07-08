@@ -91,15 +91,14 @@ def main(config):
     num_blocks = 0
     with open("parameter_set.txt","w+") as f:
         for rf in reference_minerals:
+            num_blocks += 1
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
                 if year == baseline_year:
                     th = "none"
                     f.write(f"{rf},{year},{percentile},{th}\n")
-                    num_blocks += 1
                 else:
                     for th in tonnage_thresholds:
-                        f.write(f"{rf},{year},{percentile},{th}\n")
-                        num_blocks += 1                    
+                        f.write(f"{rf},{year},{percentile},{th}\n")                    
     f.close()
 
     """Next we call the flow analysis script and loop through the scenarios
