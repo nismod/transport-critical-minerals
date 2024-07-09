@@ -89,6 +89,7 @@ def main(config):
 
     baseline_year = 2022
     num_blocks = 0
+    reference_minerals = ["lithium"]
     with open("parameter_set.txt","w+") as f:
         for rf in reference_minerals:
             num_blocks += 1

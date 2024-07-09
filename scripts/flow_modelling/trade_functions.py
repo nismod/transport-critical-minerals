@@ -216,5 +216,11 @@ def bgs_tonnage_estimates():
         bgs_totals_by_mineral.append(df)
 
     bgs_totals_by_mineral = pd.concat(bgs_totals_by_mineral,axis=0,ignore_index=True)
+    bgs_totals_by_mineral[
+        "SP_BGS_max"
+        ] = np.where(bgs_totals_by_mineral["reference_mineral"] == "lithium",
+            5.323*bgs_totals_by_mineral["SP_BGS_max"],
+            bgs_totals_by_mineral["SP_BGS_max"]
+        )
     return bgs_totals_by_mineral, "SP_BGS_max"
 

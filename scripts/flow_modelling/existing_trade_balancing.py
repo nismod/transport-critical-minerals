@@ -406,12 +406,12 @@ def main(config):
     metal_content_df.rename(columns={"initial_stage_production_tons":"baci_metal_trade_tons"},inplace=True)
 
     bgs_totals,bgs_tons_column = bgs_tonnage_estimates()
-    li_factor = 5.323
-    bgs_totals[
-        bgs_tons_column
-        ] = np.where(bgs_totals["reference_mineral"] == "lithium",
-            li_factor*bgs_totals[bgs_tons_column],
-            bgs_totals[bgs_tons_column])
+    # li_factor = 5.323
+    # bgs_totals[
+    #     bgs_tons_column
+    #     ] = np.where(bgs_totals["reference_mineral"] == "lithium",
+    #         li_factor*bgs_totals[bgs_tons_column],
+    #         bgs_totals[bgs_tons_column])
 
     metal_content_df = pd.merge(
                             metal_content_df,

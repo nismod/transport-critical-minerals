@@ -124,7 +124,12 @@ def main(config):
                         ["reference_mineral",
                         "metal_content_factor"]],
                     how="left",on=["reference_mineral"])
-    trade_df["trade_quantity_tons"] = np.where(trade_df["refining_stage_cam"] == 1,
+    trade_df["trade_quantity_tons"] = np.where(
+    									(
+    										trade_df["refining_stage_cam"] == 1
+    									) & (
+    										trade_df["reference_mineral"] != "lithium"
+    									),
                                         trade_df["trade_quantity_tons"]/trade_df["metal_content_factor"],
                                         trade_df["trade_quantity_tons"])
     trade_df.drop("metal_content_factor",axis=1,inplace=True)
@@ -342,6 +347,7 @@ def main(config):
         "actual_export_tons"
         ] = t_df[["baci_tons",bgs_tons_column]].min(axis=1)
     print (t_df)
+    t_df.to_csv("global_trade_df.csv",index=False)
 
     t_df[
       "trade_production_metal_content_export_tons"
