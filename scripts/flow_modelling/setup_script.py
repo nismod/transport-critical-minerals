@@ -138,7 +138,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = True:
+    run_script = True
     if run_script is True:
         num_blocks = 0
         for idx, (year,percentile) in enumerate(year_percentile_combinations):
