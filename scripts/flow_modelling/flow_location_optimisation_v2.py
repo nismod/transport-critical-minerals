@@ -313,6 +313,7 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
         id_value = row.id
         s_df = initial_df[initial_df["path_index"].isin(pth_idx)]
         s_df["nidx"] = s_df.progress_apply(lambda x:x["node_path"].index(id_value),axis=1)
+        print (s_df)
         u_df.append(s_df[s_df["nidx"] == 0])
         s_df = s_df[s_df["nidx"] > 0]
         f_df = s_df.copy()
