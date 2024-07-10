@@ -533,7 +533,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         "export_country_code",
                         "initial_processing_stage",
                         "final_processing_stage",
-                        "initial_processing_location"
+                        "initial_processing_location",
                         "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
         df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor)
         all_flows.append(df)
