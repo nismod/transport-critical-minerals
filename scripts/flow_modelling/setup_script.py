@@ -27,200 +27,153 @@ def main(config):
                                     ]
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
-    
-    args = [
-            "python",
-            "s_and_p_mines.py"
-            ]
-    print ("* Clean the S&P mine data and store new mines")
-    print (args)
-    subprocess.run(args)
+    location_cases = ["country","region"]
+    optimisation_type = ["unconstrained","constrained"]
+    baseline_year = 2022
 
-    args = [
-            "python",
-            "baci_cleaning.py"
-            ]
-    print ("* Clean the BACI matrices in the baseline")
-    print (args)
-    subprocess.run(args)
+    run_script = False
+    if run_script is True:
+        args = [
+                "python",
+                "s_and_p_mines.py"
+                ]
+        print ("* Clean the S&P mine data and store new mines")
+        print (args)
+        subprocess.run(args)
 
-    args = [
-            "python",
-            "global_trade_balancing.py"
-            ]
-    print ("* Balance global trade matrices to match BGS values")
-    print (args)
-    subprocess.run(args)    
+        args = [
+                "python",
+                "baci_cleaning.py"
+                ]
+        print ("* Clean the BACI matrices in the baseline")
+        print (args)
+        subprocess.run(args)
 
-    args = [
-            "python",
-            "existing_trade_balancing.py"
-            ]
-    print ("* Start the creation of the high-level OD matrices in the baseline")
-    print (args)
-    subprocess.run(args)
+        args = [
+                "python",
+                "global_trade_balancing.py"
+                ]
+        print ("* Balance global trade matrices to match BGS values")
+        print (args)
+        subprocess.run(args)    
 
-    for th in tonnage_thresholds:
-        for idx, (year,percentile) in enumerate(year_percentile_combinations):
-            if year > 2022:
+        args = [
+                "python",
+                "existing_trade_balancing.py"
+                ]
+        print ("* Start the creation of the high-level OD matrices in the baseline")
+        print (args)
+        subprocess.run(args)
+
+        for th in tonnage_thresholds:
+            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                if year > 2022:
+                    args = [
+                        "python",
+                        "future_trade_balancing.py",
+                        f"{year}",
+                        f"{percentile}",
+                        f"{th}",
+                        ]
+                    print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
+                    print (args)
+                    subprocess.run(args)
+
+        for th in tonnage_thresholds:
+            for idx, (year,percentile) in enumerate(year_percentile_combinations):
                 args = [
                     "python",
-                    "future_trade_balancing.py",
+                    "mineral_node_ods.py",
                     f"{year}",
                     f"{percentile}",
                     f"{th}",
                     ]
-                print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
+                print (f"* Start the creation of the {year} {percentile} percentile node OD matrices under {th} limits")
                 print (args)
                 subprocess.run(args)
 
-    for th in tonnage_thresholds:
-        for idx, (year,percentile) in enumerate(year_percentile_combinations):
-            args = [
-                "python",
-                "mineral_node_ods.py",
-                f"{year}",
-                f"{percentile}",
-                f"{th}",
-                ]
-            print (f"* Start the creation of the {year} {percentile} percentile node OD matrices under {th} limits")
-            print (args)
-            subprocess.run(args)
+        num_blocks = 0
+        with open("parameter_set.txt","w+") as f:
+            for rf in reference_minerals:
+                num_blocks += 1
+                for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                    if year == baseline_year:
+                        th = "none"
+                        f.write(f"{rf},{year},{percentile},{th}\n")
+                    else:
+                        for th in tonnage_thresholds:
+                            f.write(f"{rf},{year},{percentile},{th}\n")                    
+        f.close()
 
-    baseline_year = 2022
-    num_blocks = 0
-    reference_minerals = ["lithium"]
-    with open("parameter_set.txt","w+") as f:
-        for rf in reference_minerals:
+        """Next we call the flow analysis script and loop through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "parameter_set.txt",
+                "python",
+                "flow_allocation.py",
+                "{}"
+                ]
+        print ("* Start the processing of flow allocation")
+        print (args)
+        subprocess.run(args)
+
+        """Next we aggregate the flows through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "paramter_set.txt",
+                "python",
+                "node_edge_flows.py",
+                "{}"
+                ]
+        print ("* Start the processing of flow allocation")
+        print (args)
+        subprocess.run(args)
+
+
+    run_script = True:
+    if run_script is True:
+        num_blocks = 0
+        for idx, (year,percentile) in enumerate(year_percentile_combinations):
             num_blocks += 1
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            with open("optimisation_set.txt","w+") as f:
                 if year == baseline_year:
                     th = "none"
-                    f.write(f"{rf},{year},{percentile},{th}\n")
+                    loc = "country"
+                    opt = "unconstrained"
+                    f.write(f"{year},{percentile},{th},{loc},{opt}\n")
                 else:
                     for th in tonnage_thresholds:
-                        f.write(f"{rf},{year},{percentile},{th}\n")                    
-    f.close()
+                        for loc in location_cases:
+                            for opt in optimisation_type:
+                                f.write(f"{year},{percentile},{th},{loc},{opt}\n")                    
+        f.close()
 
-    """Next we call the flow analysis script and loop through the scenarios
-    """
-    args = [
-            "parallel",
-            "-j", str(num_blocks),
-            "--colsep", ",",
-            "-a",
-            "parameter_set.txt",
-            "python",
-            "flow_allocation.py",
-            "{}"
-            ]
-    print ("* Start the processing of flow allocation")
-    print (args)
-    subprocess.run(args)
+        """Next we call the flow analysis script and loop through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "optimisation_set.txt",
+                "python",
+                "flow_location_optimisation_v2.py",
+                "{}"
+                ]
+        print ("* Start the processing of flow location optimisation")
+        print (args)
+        subprocess.run(args)
+                    
 
-    """Next we aggregate the flows through the scenarios
-    """
-    args = [
-            "parallel",
-            "-j", str(num_blocks),
-            "--colsep", ",",
-            "-a",
-            "paramter_set.txt",
-            "python",
-            "node_edge_flows.py",
-            "{}"
-            ]
-    print ("* Start the processing of flow allocation")
-    print (args)
-    subprocess.run(args)
-
-
-    # # for reference_mineral in reference_minerals:
-    # #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
-    # #         if year != 2022:
-    # #             args = [
-    # #                 "python",
-    # #                 "location_identification.py",
-    # #                 f"{reference_mineral}",
-    # #                 f"{year}",
-    # #                 f"{percentile}"
-    # #                 ]
-    # #             print ("* Start the creation of the flow flow allocation outputs")
-    # #             print (args)
-    # #             subprocess.run(args)
-    # for idx, (year,percentile) in enumerate(year_percentile_combinations):
-    #     if year == 2022:
-    #         args = [
-    #             "python",
-    #             "flow_locations_for_processing.py",
-    #             f"{year}",
-    #             f"{percentile}",
-    #             f"0",
-    #             ]
-    #         print (f"* Start the creation of processing locations")
-    #         print (args)
-    #         subprocess.run(args)
-
-    #         args = [
-    #             "python",
-    #             "flow_location_identification.py",
-    #             f"{year}",
-    #             f"{percentile}",
-    #             f"0",
-    #             ]
-    #         print (f"* Start the creation of energy locations")
-    #         print (args)
-    #         subprocess.run(args)
-    #     else:
-    #         for th in tonnage_thresholds:
-    #             args = [
-    #             "python",
-    #             "flow_locations_for_processing.py",
-    #             f"{year}",
-    #             f"{percentile}",
-    #             f"{th}",
-    #             ]
-    #             print (f"* Start the creation of processing locations")
-    #             print (args)
-    #             subprocess.run(args)
-    #             args = [
-    #                 "python",
-    #                 "flow_location_identification.py",
-    #                 f"{year}",
-    #                 f"{percentile}",
-    #                 f"{th}",
-    #                 ]
-    #             print (f"* Start the creation of energy locations")
-    #             print (args)
-    #             subprocess.run(args)
-
-    # for idx, (year,percentile) in enumerate(year_percentile_combinations):
-    #     if year > 2022:
-    #         for th in tonnage_thresholds:
-    #             args = [
-    #             "python",
-    #             "flow_location_optimisation.py",
-    #             f"{year}",
-    #             f"{percentile}",
-    #             f"{th}",
-    #             ]
-    #             print (f"* Start the creation of processing locations")
-    #             print (args)
-    #             subprocess.run(args)
-    #     else:
-    #         args = [
-    #         "python",
-    #         "flow_location_optimisation.py",
-    #         f"{year}",
-    #         f"{percentile}",
-    #         "0",
-    #         ]
-    #         print (f"* Start the creation of processing locations")
-    #         print (args)
-    #         subprocess.run(args)
-
-
-
+    
 if __name__ == '__main__':
     CONFIG = load_config()
     main(CONFIG)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-"""This code finds the route between mines (in Africa) and all ports (outside Africa) 
+"""This code finds the optimal locations of processing in Africa 
 """
 import sys
 import os
@@ -50,6 +50,57 @@ def find_processing_locations(x,all_columns,rm,tr,ogns,tc="initial_stage_product
         c = 1
 
     return c,r
+
+def filter_out_future_mines(od_dataframe,points_dataframe,
+                            mines_dataframe,year,
+                            criteria_columns,criteria_thresholds):
+    mines_dataframe = mines_dataframe[mines_dataframe[str(year)] > 0]
+    new_mines = mines_dataframe[mines_dataframe[f"future_new_mine_{year}"] == 1]["id"].values.tolist()
+    points_dataframe = points_dataframe[points_dataframe["id"].isin(new_mines)]
+    criteria_columns = [f"nearest_distance_to_{l}_km" for l in criteria_columns]
+    for idx, (c,v) in ennumerate(zip(criteria_columns,criteria_thresholds)):
+        points_dataframe = points_dataframe[points_dataframe[c] > v]
+
+    remaining_mines = points_dataframe["id"].values.tolist()
+    excluded_mines = list(set(new_mines) - set(remaining_mines))
+    if len(excluded_mines) > 0:
+        od_dataframe = od_dataframe[~od_dataframe["origin_id"].isin(excluded_mines)]
+        mines_dataframe = mines_dataframe[~mines_dataframe["id"].isin(excluded_mines)]
+
+    return od_dataframe,mines_dataframe
+
+def filter_out_offgrid_locations(points_dataframe,
+                            grid_column,grid_threshold,
+                            locations_include=["mine","city"]):
+    p_df = points_dataframe.copy()
+    p_df = p_df[
+                (
+                    ~p_df["mode"].isin(locations_include)
+                ) & (
+                    p_df[f"nearest_distance_to_{grid_column}_km"] > grid_threshold
+                )
+                ]
+
+    excluded_points = list(set(p_df["id"].values.tolist()))
+    if len(excluded_points) > 0:
+        points_dataframe = points_dataframe[~points_dataframe["id"].isin(excluded_points)]
+
+    return points_dataframe
+
+def filter_out_processing_locations(points_dataframe,
+                            criteria_columns,criteria_thresholds):
+    p_df = points_dataframe.copy()
+    all_points = set(points_dataframe["id"].values.tolist())
+    criteria_columns = [f"nearest_distance_to_{l}_km" for l in criteria_columns]
+    for idx, (c,v) in ennumerate(zip(criteria_columns,criteria_thresholds)):
+        p_df = p_df[p_df[c] > v]
+
+    remaining_points = set(p_df["id"].values.tolist())
+    excluded_points = list(all_points - remaining_points)
+    if len(excluded_points) > 0:
+        points_dataframe = points_dataframe[~points_dataframe["id"].isin(excluded_points)]
+
+    return points_dataframe
 
 def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral,additional_columns=[]):
     sum_dict = dict([(f,[]) for f in trade_ton_columns + additional_columns])
@@ -139,20 +190,34 @@ def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral,additiona
 
 #     return opt_list
 
-def find_optimal_locations(flow_dataframe,nodes_dataframe,iso_list,
+def find_optimal_locations(flow_dataframe,
+                            nodes_dataframe,
+                            iso_list,
                             initial_tons_column,
                             final_tons_column,
                             gcost_column,
                             distance_column,
                             time_column,
                             production_size,
-                            country_case):
+                            country_case,
+                            grid_column,
+                            grid_threshold,
+                            non_grid_columns,
+                            non_grid_thresholds,
+                            optimisation="constrained"):
     flow_dataframe = pd.merge(
                             flow_dataframe,
-                            nodes_dataframe[["id","iso3","mode"]],
+                            nodes_dataframe,
                             how="left",
                             on=["id"]
                             )
+    flow_dataframe = filter_out_offgrid_locations(flow_dataframe,
+                            grid_column,grid_threshold)
+
+    if optimisation == "constrained":
+        flow_dataframe = filter_out_processing_locations(flow_dataframe,
+                            non_grid_columns,non_grid_thresholds)
+
     if country_case == "country":
         flow_dataframe = flow_dataframe[flow_dataframe["export_country_code"] == flow_dataframe["iso3"]]
     else:
@@ -187,11 +252,54 @@ def find_optimal_locations(flow_dataframe,nodes_dataframe,iso_list,
 
         pth_idx = list(set(c_df_flows[c_df_flows["id"] == id_value]["path_index"].values.tolist()))
         optimal_locations["node_paths"] = pth_idx 
-        all_paths += pth_idx
         c_df_flows = c_df_flows[~c_df_flows["path_index"].isin(pth_idx)]
         opt_list.append(optimal_locations)
 
     return opt_list
+
+def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
+    m_df = df[
+                (
+                    df["initial_processing_location"] == "mine"
+                ) & (
+                    df["initial_processing_stage"] == 0.0
+                )
+            ]
+    m_df = m_df.groupby(
+                        [
+                        "reference_mineral",
+                        "export_country_code",
+                        "initial_processing_stage",
+                        "initial_processing_location"
+                        "origin_id"]
+                        ).agg(dict([(c,"sum") for c in ["initial_stage_production_tons"]])).reset_index() 
+    m_df = pd.merge(
+                m_df,
+                mines_df[["id",str(year)]],
+                how="left",left_on=["origin_id"],
+                right_on=["id"]).fillna(0)
+    m_df["initial_stage_production_tons"] = m_df[str(year)] - m_df["initial_stage_production_tons"]
+    m_df = m_df[m_df["initial_stage_production_tons"] > 0]
+    if len(m_df.index) > 0:
+        m_df["final_processing_stage"] = 1.0
+        m_df["final_stage_production_tons"] = m_df["initial_stage_production_tons"]/metal_factor
+        m_df.drop(["id",str(year)],axis=0,inplace=True)
+        df = pd.concat([df,m_df],axis=0,ignore_index=True)
+
+        sum_cols = ["initial_stage_production_tons","final_stage_production_tons"]
+        df = df.groupby(
+                        [
+                        "reference_mineral",
+                        "export_country_code",
+                        "initial_processing_stage",
+                        "final_processing_stage",
+                        "initial_processing_location"
+                        "origin_id"]
+                        ).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
+
+    return df
+
+
 
 def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
     u_df = []
@@ -212,6 +320,7 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
         f_df["import_country_code"] = row.iso3
         f_df["final_stage_production_tons"] = f_df["stage_1_tons"]
         f_df["final_processing_stage"] = 1.0
+        f_df["final_processing_location"] = "new processing"
         for m in modify_columns:
             if m in ["node_path","full_node_path"]:
                 f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]+1],axis=1)
@@ -222,6 +331,7 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
         s_df["export_country_code"] = row.iso3
         s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
         s_df["initial_processing_stage"] = 1.0
+        s_df["initial_processing_location"] = "new processing"
         for m in modify_columns:
             s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
 
@@ -235,18 +345,18 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
 
     return u_df
 
-def main(config,year,percentile,efficient_scale,country_case):
+def main(config,year,percentile,efficient_scale,country_case,constraint):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    results_folder = os.path.join(output_data_path,"flow_mapping")
+    input_folder = os.path.join(output_data_path,"flow_mapping")
+    results_folder = os.path.join(output_data_path,f"flow_optimisation_{country}_{constraint}")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
     """Step 1: Get the input datasets
     """
-    epsg_meters = 3395
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
     trade_ton_columns = [
                             "initial_stage_production_tons",
@@ -262,6 +372,14 @@ def main(config,year,percentile,efficient_scale,country_case):
                         "distance_km_path",
                         "time_hr"
                     ]
+    grid_column = "grid"
+    grid_threshold = 2.0
+    non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas"]
+    non_grid_thresholds = [0.0,0.0,0.0]
+    # filter_layers = ["grid","keybiodiversityareas","lastofwild","protectedareas"]
+    # filter_layers = [f"nearest_distance_to_{l}_km" for l in filter_layers]
+    # distance_thresholds = [2.0,0.0,0.0,0.0]
+    # layers_thresholds = list(zip(filter_layers,distance_thresholds))
 
     #  Get a number of input dataframes
     baseline_year = 2022
@@ -271,15 +389,21 @@ def main(config,year,percentile,efficient_scale,country_case):
         metal_content_factors_df, 
         ccg_countries, mine_city_stages, _
     ) = get_common_input_dataframes(data_type,year,baseline_year)
+    """Step 1: get all the relevant nodes and find their distances 
+                to grid and bio-diversity layers 
+    """
     nodes = add_geometries_to_flows([],
                                 modes=["rail","sea","road","mine","city"],
                                 layer_type="nodes",merge=False)
+    nodes = nodes[nodes["iso3"].isin(ccg_countries)]
+    nodes = get_distance_to_layer(nodes)
+
 
     all_flows = []
     for reference_mineral in reference_minerals:
         # Find year locations
         if year == 2022:
-            file_name = f"{reference_mineral}_flow_paths_{year}"
+            file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}"
             production_size = 0
         else:
             file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}"
@@ -300,8 +424,12 @@ def main(config,year,percentile,efficient_scale,country_case):
                         metal_content_factors_df["reference_mineral"] == reference_mineral
                         ]["metal_content_factor"].values[0]
 
+        mines_df = mine_id_col = "mine_id"
+        mines_df = get_mine_layer(reference_mineral,year,percentile,
+                            mine_id_col="id")
+
         od_df = pd.read_parquet(
-                        os.path.join(results_folder,
+                        os.path.join(input_folder,
                             f"{file_name}.parquet")
                         )
         od_df["path_index"] = od_df.index.values.tolist()
@@ -309,7 +437,13 @@ def main(config,year,percentile,efficient_scale,country_case):
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
         if year == 2022:
             df = od_df.copy()
+            del od_df
         else:
+            if constraint == "constrained":
+                od_df, mines_df = filter_out_future_mines(od_df,nodes,
+                                                mines_df,year,
+                                                non_grid_columns,
+                                                non_grid_thresholds)
             df = []
             for lt in location_types:
                 l_df = od_df[od_df["initial_processing_location"] == lt]
@@ -370,7 +504,12 @@ def main(config,year,percentile,efficient_scale,country_case):
                                     "gcosts","distance_km",
                                     "time_hr",
                                     production_size,
-                                    country_case)
+                                    country_case,
+                                    grid_column,
+                                    grid_threshold,
+                                    non_grid_columns,
+                                    non_grid_thresholds,
+                                    optimisation=constraint)
                     if len(optimal_df) > 0:
                         optimal_df = pd.DataFrame(optimal_df)
                         l_df = update_od_dataframe(l_df,optimal_df,metal_factor,modify_columns)
@@ -379,11 +518,12 @@ def main(config,year,percentile,efficient_scale,country_case):
 
             df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
 
-        df.to_parquet(
-            os.path.join(
-                results_folder,
-                f"{file_name}_modified_od_{country_case}.parquet"),
-            index=False)
+        if year > 2022:
+            df.to_parquet(
+                os.path.join(
+                    results_folder,
+                    f"{file_name}_modified_od_{country_case}.parquet"),
+                index=False)
 
         df = df.groupby(
                         [
@@ -391,7 +531,10 @@ def main(config,year,percentile,efficient_scale,country_case):
                         "export_country_code",
                         "initial_processing_stage",
                         "final_processing_stage",
+                        "initial_processing_location"
                         "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
+        df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor)
+        all_flows.append(df)
         flows_df = assign_node_flows(df,trade_ton_columns,reference_mineral)
         flows_df = pd.merge(flows_df,nodes,how="left",on=["id"])
         if year > 2022:
@@ -401,7 +544,7 @@ def main(config,year,percentile,efficient_scale,country_case):
                                 geometry="geometry",
                                 crs="EPSG:4326")
         if year == 2022:
-            layer_name = f"{reference_mineral}"
+            layer_name = f"{reference_mineral}_{percentile}"
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         
@@ -409,6 +552,17 @@ def main(config,year,percentile,efficient_scale,country_case):
                             f"processing_nodes_flows_{year}_{country_case}.gpkg"),
                             layer=layer_name,driver="GPKG")
 
+    all_flows = pd.concat(all_flows,axis=0,ignore_index=True)
+    if year == 2022:
+        file_name = f"location_totals_{year}_{percentile}"
+        production_size = 0
+    else:
+        file_name = f"location_totals_{year}_{percentile}_{efficient_scale}"
+    all_flows.to_csv(
+            os.path.join(
+                results_folder,
+                f"{file_name}_{country_case}_{constraint}.csv"),
+            index=False)
         
 
 
@@ -416,10 +570,11 @@ if __name__ == '__main__':
     CONFIG = load_config()
     try:
         year = int(sys.argv[1])
-        percentile = int(sys.argv[2])
+        percentile = str(sys.argv[2])
         efficient_scale = str(sys.argv[3])
         country_case = str(sys.argv[4])
+        constraint = str(sys.argv[5])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,year,percentile,efficient_scale,country_case)
+    main(CONFIG,year,percentile,efficient_scale,country_case,constraint)
