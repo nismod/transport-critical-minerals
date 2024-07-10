@@ -57,7 +57,7 @@ def filter_out_future_mines(od_dataframe,points_dataframe,
     mines_dataframe = mines_dataframe[mines_dataframe[str(year)] > 0]
     new_mines = mines_dataframe[mines_dataframe[f"future_new_mine_{year}"] == 1]["id"].values.tolist()
     points_dataframe = points_dataframe[points_dataframe["id"].isin(new_mines)]
-    criteria_columns = [f"nearest_distance_to_{l}_km" for l in criteria_columns]
+    criteria_columns = [f"distance_to_{l}_km" for l in criteria_columns]
     for idx, (c,v) in ennumerate(zip(criteria_columns,criteria_thresholds)):
         points_dataframe = points_dataframe[points_dataframe[c] > v]
 
@@ -77,7 +77,7 @@ def filter_out_offgrid_locations(points_dataframe,
                 (
                     ~p_df["mode"].isin(locations_include)
                 ) & (
-                    p_df[f"nearest_distance_to_{grid_column}_km"] > grid_threshold
+                    p_df[f"distance_to_{grid_column}_km"] > grid_threshold
                 )
                 ]
 
@@ -91,7 +91,7 @@ def filter_out_processing_locations(points_dataframe,
                             criteria_columns,criteria_thresholds):
     p_df = points_dataframe.copy()
     all_points = set(points_dataframe["id"].values.tolist())
-    criteria_columns = [f"nearest_distance_to_{l}_km" for l in criteria_columns]
+    criteria_columns = [f"distance_to_{l}_km" for l in criteria_columns]
     for idx, (c,v) in ennumerate(zip(criteria_columns,criteria_thresholds)):
         p_df = p_df[p_df[c] > v]
 
@@ -377,7 +377,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas"]
     non_grid_thresholds = [0.0,0.0,0.0]
     # filter_layers = ["grid","keybiodiversityareas","lastofwild","protectedareas"]
-    # filter_layers = [f"nearest_distance_to_{l}_km" for l in filter_layers]
+    # filter_layers = [f"distance_to_{l}_km" for l in filter_layers]
     # distance_thresholds = [2.0,0.0,0.0,0.0]
     # layers_thresholds = list(zip(filter_layers,distance_thresholds))
 
