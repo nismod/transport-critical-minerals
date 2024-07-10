@@ -443,6 +443,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         os.path.join(input_folder,
                             f"{file_name}.parquet")
                         )
+        print (reference_mineral)
+        print (od_df)
         od_df["path_index"] = od_df.index.values.tolist()
         od_df = od_df[od_df["trade_type"] != "Import"]
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
@@ -535,7 +537,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     results_folder,
                     f"{file_name}_modified_od_{country_case}.parquet"),
                 index=False)
-
+        print (df)
         df = df.groupby(
                         [
                         "reference_mineral",
