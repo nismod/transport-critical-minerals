@@ -370,7 +370,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         "full_edge_path",
                         "gcost_usd_tons_path",
                         "distance_km_path",
-                        "time_hr"
+                        "time_hr_path"
                     ]
     grid_column = "grid"
     grid_threshold = 2.0
