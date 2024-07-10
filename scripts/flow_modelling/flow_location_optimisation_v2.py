@@ -92,7 +92,7 @@ def filter_out_processing_locations(points_dataframe,
     p_df = points_dataframe.copy()
     all_points = set(points_dataframe["id"].values.tolist())
     criteria_columns = [f"distance_to_{l}_km" for l in criteria_columns]
-    for idx, (c,v) in ennumerate(zip(criteria_columns,criteria_thresholds)):
+    for idx, (c,v) in enumerate(zip(criteria_columns,criteria_thresholds)):
         p_df = p_df[p_df[c] > v]
 
     remaining_points = set(p_df["id"].values.tolist())
