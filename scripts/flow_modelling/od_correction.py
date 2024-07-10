@@ -70,19 +70,20 @@ def main(config):
                             os.path.join(input_folder,
                                 k)
                             )
-        mine_routes = pd.read_parquet(
-                            os.path.join(input_folder,
-                                f"{v}.parquet")
-                            )
         c_t_df.rename(columns={final_ton_column:"initial_tonnage"},inplace=True)
-        mine_routes = pd.merge(mine_routes,
-                        c_t_df[od_merge_columns + ["initial_tonnage"]],
-                        how="left",on=od_merge_columns)
-        mine_routes[initial_ton_column] = mine_routes[
-                                                initial_ton_column]*mine_routes[
-                                                    final_ton_column]/mine_routes["initial_tonnage"]
-        mine_routes.drop("initial_tonnage",axis=1,inplace=True)
-        mine_routes.to_parquet(os.path.join(results_folder,f"{v}.parquet"))
+        for i in v:
+            mine_routes = pd.read_parquet(
+                                os.path.join(input_folder,
+                                    f"{i}.parquet")
+                                )
+            mine_routes = pd.merge(mine_routes,
+                            c_t_df[od_merge_columns + ["initial_tonnage"]],
+                            how="left",on=od_merge_columns)
+            mine_routes[initial_ton_column] = mine_routes[
+                                                    initial_ton_column]*mine_routes[
+                                                        final_ton_column]/mine_routes["initial_tonnage"]
+            mine_routes.drop("initial_tonnage",axis=1,inplace=True)
+            mine_routes.to_parquet(os.path.join(results_folder,f"{i}.parquet"))
                     
 
     
