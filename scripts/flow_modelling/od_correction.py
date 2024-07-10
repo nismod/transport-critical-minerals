@@ -51,8 +51,6 @@ def main(config):
                     f"mining_city_node_level_ods_{year}_{percentile}_{th}.csv"
                     ].append(f"{reference_mineral}_flow_paths_{year}_{percentile}_{th}")
 
-    print (all_files)
-
     od_merge_columns = [
                         "origin_id",
                         "destination_id",
@@ -76,9 +74,11 @@ def main(config):
                                 os.path.join(input_folder,
                                     f"{i}.parquet")
                                 )
+            print (mine_routes)
             mine_routes = pd.merge(mine_routes,
                             c_t_df[od_merge_columns + ["initial_tonnage"]],
                             how="left",on=od_merge_columns)
+            print (mine_routes)
             mine_routes[initial_ton_column] = mine_routes[
                                                     initial_ton_column]*mine_routes[
                                                         final_ton_column]/mine_routes["initial_tonnage"]
