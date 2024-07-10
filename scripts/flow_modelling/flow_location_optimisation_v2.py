@@ -392,13 +392,23 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     """Step 1: get all the relevant nodes and find their distances 
                 to grid and bio-diversity layers 
     """
-    nodes = add_geometries_to_flows([],
-                                modes=["rail","sea","road","mine","city"],
-                                layer_type="nodes",merge=False)
-    nodes = nodes[nodes["iso3"].isin(ccg_countries)]
-    print (nodes)
-    nodes = get_distance_to_layer(nodes)
-    print (nodes)
+    node_location_path = os.path.join(
+                                    input_folder,
+                                    "nodes_with_location_identifiers.geoparquet"
+                                    )
+    if os.path.exists(node_location_path):
+        nodes = gpd.read_parquet(node_location_path)
+    else:
+        nodes = add_geometries_to_flows([],
+                                    modes=["rail","sea","road","mine","city"],
+                                    layer_type="nodes",merge=False)
+        nodes = nodes[nodes["iso3"].isin(ccg_countries)]
+        nodes = get_distance_to_layer(nodes)
+        nodes.to_parquet(
+                os.path.join(
+                    input_folder,
+                    "nodes_with_location_identifiers.geoparquet")
+                )
 
 
     all_flows = []
@@ -422,9 +432,9 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                         production_size_df[
                                             "reference_mineral"] == reference_mineral
                                             ][efficient_scale].values[0]
-            metal_factor = metal_content_factors_df[
-                        metal_content_factors_df["reference_mineral"] == reference_mineral
-                        ]["metal_content_factor"].values[0]
+        metal_factor = metal_content_factors_df[
+                    metal_content_factors_df["reference_mineral"] == reference_mineral
+                    ]["metal_content_factor"].values[0]
 
         mines_df = mine_id_col = "mine_id"
         mines_df = get_mine_layer(reference_mineral,year,percentile,
