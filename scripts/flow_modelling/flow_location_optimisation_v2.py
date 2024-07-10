@@ -230,7 +230,7 @@ def find_optimal_locations(flow_dataframe,
                 time_column
                 ]
     for c in columns:
-        flow_dataframe[{c}] = flow_dataframe.groupby(["id"])[c].transform('sum')
+        flow_dataframe[c] = flow_dataframe.groupby(["id"])[c].transform('sum')
     
     c_df_flows = flow_dataframe[
                         (
