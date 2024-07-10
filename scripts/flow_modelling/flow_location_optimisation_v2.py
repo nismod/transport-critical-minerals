@@ -242,7 +242,7 @@ def find_optimal_locations(flow_dataframe,
     while len(c_df_flows.index) > 0:
         optimal_locations = defaultdict()
         c_df_flows = c_df_flows.sort_values(
-                                    by=c,
+                                    by=columns,
                                     ascending=[False,False,True,True,True])
         id_value = c_df_flows["id"].values[0]
         optimal_locations["iso3"] = c_df_flows["iso3"].values[0]
