@@ -544,7 +544,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         "final_processing_stage",
                         "initial_processing_location",
                         "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
-        df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor)
+        # df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor)
         all_flows.append(df)
         flows_df = assign_node_flows(df,trade_ton_columns,reference_mineral)
         flows_df = pd.merge(flows_df,nodes,how="left",on=["id"])
