@@ -983,19 +983,23 @@ def get_distance_to_layer(
             pt_df = points_dataframe[points_dataframe["iso3"] == row.iso3]
             pt_df = pt_df.to_crs(epsg=row.projection_epsg)
 
-            dist_column_name = f"distance_to_{lyr['layer_type'].lower()}_meters"
+            dist_column_name = f"distance_to_{lyr['layer_type'].lower()}_km"
             closest_df = gpd.sjoin_nearest(
                                     pt_df[[points_id_column,"geometry"]],
                                     lyr_network[[lyr["layer_column"],"geometry"]],
                                     how="left",
-                                    distance_col=f"nearest_distance_to_{lyr['layer_type'].lower()}_km").reset_index()
+                                    distance_col=dist_column_name).reset_index()
             closest_df[dist_column_name] = 0.001*closest_df[dist_column_name]
             closest_df = closest_df.sort_values(by=dist_column_name,ascending=True)
             closest_df = closest_df.drop_duplicates(subset=[points_id_column],keep="first")
             if lyr["layer_type"] == "grid":
                 lyr_distance_df.append(closest_df[[points_id_column,dist_column_name]])
             else:
-                closest_df.rename(columns={lyr["layer_column"]:f"nearest_{lyr['layer_type'].lower()}_type"},inplace=True)
+                closest_df.rename(
+                                columns={
+                                        lyr["layer_column"]:f"nearest_{lyr['layer_type'].lower()}_type"
+                                        },
+                                inplace=True)
                 lyr_distance_df.append(
                             closest_df[[points_id_column,
                             f"nearest_{lyr['layer_type'].lower()}_type",
