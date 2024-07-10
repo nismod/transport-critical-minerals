@@ -356,6 +356,9 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
+    modified_paths_folder = os.path.join(results_folder,"modified_flow_od_paths")
+    if os.path.exists(modified_paths_folder) == False:
+        os.mkdir(modified_paths_folder)
     """Step 1: Get the input datasets
     """
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
@@ -448,6 +451,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         )
         od_df["path_index"] = od_df.index.values.tolist()
         od_df = od_df[od_df["trade_type"] != "Import"]
+        print (od_df)
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
         if year == 2022:
             df = od_df.copy()
@@ -533,10 +537,11 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
             df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
 
         if year > 2022:
+            print (df)
             df.to_parquet(
                 os.path.join(
-                    results_folder,
-                    f"{file_name}_modified_od_{country_case}.parquet"),
+                    modified_paths_folder,
+                    f"{file_name}.parquet"),
                 index=False)
         df = df.groupby(
                         [
