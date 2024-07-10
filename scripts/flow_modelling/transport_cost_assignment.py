@@ -519,6 +519,8 @@ def add_geometries_to_flows(flows_dataframe,
                     edges[merge_column].isin(flows_dataframe[merge_column].values.tolist())
                     ]
                 )
+        else:
+            flow_edges.append(edges)
 
     flow_edges = pd.concat(flow_edges,axis=0,ignore_index=True)
     if merge is True:
