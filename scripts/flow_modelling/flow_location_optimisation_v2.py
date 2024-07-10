@@ -410,7 +410,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     "nodes_with_location_identifiers.geoparquet")
                 )
 
-    print (nodes)
     all_flows = []
     for reference_mineral in reference_minerals:
         # Find year locations
@@ -440,11 +439,12 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                             mine_id_col="id")
 
         od_df = pd.read_parquet(
-                        os.path.join(input_folder,
-                            f"{file_name}.parquet")
+                        os.path.join(
+                            output_data_path,
+                            "flow_od_paths",
+                            f"{file_name}.parquet"
+                            )
                         )
-        print (reference_mineral)
-        print (od_df)
         od_df["path_index"] = od_df.index.values.tolist()
         od_df = od_df[od_df["trade_type"] != "Import"]
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
@@ -537,7 +537,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     results_folder,
                     f"{file_name}_modified_od_{country_case}.parquet"),
                 index=False)
-        print (df)
         df = df.groupby(
                         [
                         "reference_mineral",
