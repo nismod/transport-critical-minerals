@@ -509,16 +509,16 @@ def add_geometries_to_flows(flows_dataframe,
                 edges["infra"] = mode
 
         edges["mode"] = mode
-        print (edges)
         if layer_type == "edges":
             edges = edges[[merge_column,"from_id","to_id","mode","geometry"]]
         else:
             edges = edges[[merge_column,"iso3","infra","mode","geometry"]]
-        flow_edges.append(
-            edges[
-                edges[merge_column].isin(flows_dataframe[merge_column].values.tolist())
-                ]
-            )
+        if merge is True:
+            flow_edges.append(
+                edges[
+                    edges[merge_column].isin(flows_dataframe[merge_column].values.tolist())
+                    ]
+                )
 
     flow_edges = pd.concat(flow_edges,axis=0,ignore_index=True)
     if merge is True:
@@ -529,7 +529,10 @@ def add_geometries_to_flows(flows_dataframe,
                             ),
                         geometry="geometry",crs="EPSG:4326")
     else:
-        return flow_edges
+        return gpd.GeoDataFrame(
+                        flow_edges,
+                        geometry="geometry",
+                        crs="EPSG:4326")
 
 def add_node_degree_to_flows(nodes_flows_dataframe,mineral_class):
     edge_flows_df = gpd.read_file(os.path.join(output_data_path,

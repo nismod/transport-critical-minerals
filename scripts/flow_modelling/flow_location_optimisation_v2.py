@@ -396,7 +396,9 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                 modes=["rail","sea","road","mine","city"],
                                 layer_type="nodes",merge=False)
     nodes = nodes[nodes["iso3"].isin(ccg_countries)]
+    print (nodes)
     nodes = get_distance_to_layer(nodes)
+    print (nodes)
 
 
     all_flows = []
