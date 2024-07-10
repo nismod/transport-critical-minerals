@@ -313,31 +313,31 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
         id_value = row.id
         s_df = initial_df[initial_df["path_index"].isin(pth_idx)]
         s_df["nidx"] = s_df.progress_apply(lambda x:x["node_path"].index(id_value),axis=1)
-        print (s_df)
         u_df.append(s_df[s_df["nidx"] == 0])
         s_df = s_df[s_df["nidx"] > 0]
-        f_df = s_df.copy()
-        f_df["destination_id"] = id_value
-        f_df["import_country_code"] = row.iso3
-        f_df["final_stage_production_tons"] = f_df["stage_1_tons"]
-        f_df["final_processing_stage"] = 1.0
-        f_df["final_processing_location"] = "new processing"
-        for m in modify_columns:
-            if m in ["node_path","full_node_path"]:
-                f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]+1],axis=1)
-            else:        
-                f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]],axis=1)
-        
-        s_df["origin_id"] = id_value
-        s_df["export_country_code"] = row.iso3
-        s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
-        s_df["initial_processing_stage"] = 1.0
-        s_df["initial_processing_location"] = "new processing"
-        for m in modify_columns:
-            s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
+        if len(s_df.index) > 0:
+            f_df = s_df.copy()
+            f_df["destination_id"] = id_value
+            f_df["import_country_code"] = row.iso3
+            f_df["final_stage_production_tons"] = f_df["stage_1_tons"]
+            f_df["final_processing_stage"] = 1.0
+            f_df["final_processing_location"] = "new processing"
+            for m in modify_columns:
+                if m in ["node_path","full_node_path"]:
+                    f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]+1],axis=1)
+                else:        
+                    f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]],axis=1)
+            
+            s_df["origin_id"] = id_value
+            s_df["export_country_code"] = row.iso3
+            s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
+            s_df["initial_processing_stage"] = 1.0
+            s_df["initial_processing_location"] = "new processing"
+            for m in modify_columns:
+                s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
 
-        u_df.append(f_df)
-        u_df.append(s_df)
+            u_df.append(f_df)
+            u_df.append(s_df)
 
     modified_paths = list(set(modified_paths))
     u_df.append(initial_df[~initial_df["path_index"].isin(modified_paths)])
