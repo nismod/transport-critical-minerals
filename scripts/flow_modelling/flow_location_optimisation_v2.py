@@ -58,7 +58,7 @@ def filter_out_future_mines(od_dataframe,points_dataframe,
     new_mines = mines_dataframe[mines_dataframe[f"future_new_mine_{year}"] == 1]["id"].values.tolist()
     points_dataframe = points_dataframe[points_dataframe["id"].isin(new_mines)]
     criteria_columns = [f"distance_to_{l}_km" for l in criteria_columns]
-    for idx, (c,v) in ennumerate(zip(criteria_columns,criteria_thresholds)):
+    for idx, (c,v) in enumerate(zip(criteria_columns,criteria_thresholds)):
         points_dataframe = points_dataframe[points_dataframe[c] > v]
 
     remaining_mines = points_dataframe["id"].values.tolist()
@@ -451,7 +451,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         )
         od_df["path_index"] = od_df.index.values.tolist()
         od_df = od_df[od_df["trade_type"] != "Import"]
-        print (od_df)
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
         if year == 2022:
             df = od_df.copy()
@@ -537,7 +536,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
             df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
 
         if year > 2022:
-            print (df)
             df.to_parquet(
                 os.path.join(
                     modified_paths_folder,
