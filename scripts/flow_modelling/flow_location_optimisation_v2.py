@@ -283,7 +283,7 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
     if len(m_df.index) > 0:
         m_df["final_processing_stage"] = 1.0
         m_df["final_stage_production_tons"] = m_df["initial_stage_production_tons"]/metal_factor
-        m_df.drop(["id",str(year)],axis=0,inplace=True)
+        m_df.drop(["id",str(year)],axis=1,inplace=True)
         df = pd.concat([df,m_df],axis=0,ignore_index=True)
 
         sum_cols = ["initial_stage_production_tons","final_stage_production_tons"]
@@ -544,7 +544,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         "final_processing_stage",
                         "initial_processing_location",
                         "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
-        print (mines_df)
         df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor)
         all_flows.append(df)
         flows_df = assign_node_flows(df,trade_ton_columns,reference_mineral)
