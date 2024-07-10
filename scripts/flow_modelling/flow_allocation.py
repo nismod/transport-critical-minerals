@@ -47,6 +47,14 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                     "initial_stage_production_tons",    
                     "final_stage_production_tons"
                 ]
+    od_merge_columns = [
+                        "origin_id",
+                        "destination_id",
+                        "reference_mineral",
+                        "export_country_code",
+                        "import_country_code",
+                        "initial_processing_stage",
+                        "final_processing_stage"]
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
     """Step 1: Get the OD matrix
     """
@@ -120,8 +128,8 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     set_port_capacity = [("port137",0.27*1e6),("port784",0.0)]
     origin_id = "origin_id"
     destination_id = "destination_id"
-    trade_ton_column = "final_stage_production_tons"
-    trade_usd_column = "mine_output_thousandUSD"
+    final_ton_column = "final_stage_production_tons"
+    initial_ton_column = "initial_stage_production_tons"
     # combined_trade_df = pd.read_csv(os.path.join(
     #                                         results_folder,
     #                                         f"mining_city_node_level_ods_{year}.csv"))
@@ -199,14 +207,14 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     #             os.path.join(results_folder,f"{reference_mineral}.parquet"))
     if len(mine_routes) > 0:
         mine_routes = pd.concat(mine_routes,axis=0,ignore_index=True)
-        # c_t_df.rename(columns={trade_ton_column:"initial_tonnage"},inplace=True)
-        # mine_routes = pd.merge(mine_routes,
-        #                 c_t_df[[origin_id,destination_id,"initial_tonnage"]],
-        #                 how="left",on=[origin_id,destination_id])
-        # mine_routes[trade_usd_column] = mine_routes[
-        #                                             trade_usd_column]*mine_routes[
-        #                                             trade_ton_column]/mine_routes["initial_tonnage"]
-        # mine_routes.drop("initial_tonnage",axis=1,inplace=True)
+        c_t_df.rename(columns={final_ton_column:"initial_tonnage"},inplace=True)
+        mine_routes = pd.merge(mine_routes,
+                        c_t_df[od_merge_columns + ["initial_tonnage"]],
+                        how="left",on=od_merge_columns)
+        mine_routes[initial_ton_column] = mine_routes[
+                                                initial_ton_column]*mine_routes[
+                                                    final_ton_column]/mine_routes["initial_tonnage"]
+        mine_routes.drop("initial_tonnage",axis=1,inplace=True)
         # mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned.csv",index=False)
         # del c_t_df
 
