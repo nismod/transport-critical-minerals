@@ -436,7 +436,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     metal_content_factors_df["reference_mineral"] == reference_mineral
                     ]["metal_content_factor"].values[0]
 
-        mines_df = mine_id_col = "mine_id"
         mines_df = get_mine_layer(reference_mineral,year,percentile,
                             mine_id_col="id")
 
@@ -545,6 +544,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         "final_processing_stage",
                         "initial_processing_location",
                         "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
+        print (mines_df)
         df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor)
         all_flows.append(df)
         flows_df = assign_node_flows(df,trade_ton_columns,reference_mineral)
