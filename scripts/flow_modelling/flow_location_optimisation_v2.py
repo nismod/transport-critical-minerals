@@ -270,7 +270,7 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
                         "reference_mineral",
                         "export_country_code",
                         "initial_processing_stage",
-                        "initial_processing_location"
+                        "initial_processing_location",
                         "origin_id"]
                         ).agg(dict([(c,"sum") for c in ["initial_stage_production_tons"]])).reset_index() 
     m_df = pd.merge(
@@ -293,7 +293,7 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
                         "export_country_code",
                         "initial_processing_stage",
                         "final_processing_stage",
-                        "initial_processing_location"
+                        "initial_processing_location",
                         "origin_id"]
                         ).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
 
@@ -410,7 +410,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     "nodes_with_location_identifiers.geoparquet")
                 )
 
-
+    print (nodes)
     all_flows = []
     for reference_mineral in reference_minerals:
         # Find year locations
