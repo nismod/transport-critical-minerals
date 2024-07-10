@@ -141,9 +141,9 @@ def main(config):
     run_script = True
     if run_script is True:
         num_blocks = 0
-        for idx, (year,percentile) in enumerate(year_percentile_combinations):
-            num_blocks += 1
-            with open("optimisation_set.txt","w+") as f:
+        with open("optimisation_set.txt","w+") as f:
+            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                num_blocks += 1
                 if year == baseline_year:
                     th = "none"
                     loc = "country"
