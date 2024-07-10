@@ -342,7 +342,7 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
     modified_paths = list(set(modified_paths))
     u_df.append(initial_df[~initial_df["path_index"].isin(modified_paths)])
     u_df = pd.concat(u_df,axis=0,ignore_index=True).fillna(0)
-    u_df.drop(["stage_1_tons","nidx"],axis=1,ignore_index=True)
+    u_df.drop(["stage_1_tons","nidx"],axis=1,inplace=True)
 
     return u_df
 
