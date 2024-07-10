@@ -270,6 +270,23 @@ def main(config,
 
     combined_trade_df = pd.concat(combined_trade_df,axis=0,ignore_index=True)
     combined_trade_df = combined_trade_df[combined_trade_df["final_stage_production_tons"]>0]
+
+    od_merge_columns = [
+                        "origin_id",
+                        "destination_id",
+                        "reference_mineral",
+                        "export_country_code",
+                        "import_country_code",
+                        "import_continent",
+                        "export_continent",
+                        "trade_type",
+                        "initial_processing_stage",
+                        "final_processing_stage",
+                        "initial_processing_location",
+                        "final_processing_location"
+                        ]
+    sum_cols = [(c,"sum") for c in ["initial_stage_production_tons","final_stage_production_tons"]]
+    combined_trade_df = combined_trade_df.groupby(od_merge_columns).agg(dict(sum_cols)).reset_index()
     combined_trade_df.to_csv(os.path.join(
                             results_folder,
                             file_name_full),index=False)

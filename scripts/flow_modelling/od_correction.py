@@ -57,8 +57,13 @@ def main(config):
                         "reference_mineral",
                         "export_country_code",
                         "import_country_code",
+                        "import_continent",
+                        "export_continent",
+                        "trade_type",
                         "initial_processing_stage",
-                        "final_processing_stage"
+                        "final_processing_stage",
+                        "initial_processing_location",
+                        "final_processing_location"
                         ]
 
     final_ton_column = "final_stage_production_tons"
@@ -69,6 +74,7 @@ def main(config):
                                 k)
                             )
         c_t_df.rename(columns={final_ton_column:"initial_tonnage"},inplace=True)
+        c_t_df = c_t_df.groupby(od_merge_columns)["initial_tonnage"].sum().reset_index()
         for i in v:
             mine_routes = pd.read_parquet(
                                 os.path.join(input_folder,
