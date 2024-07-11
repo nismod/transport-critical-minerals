@@ -174,35 +174,21 @@ def main(config):
 
     run_script = True
     if run_script is True:
-        num_blocks = 0
-        with open("optimisation_set.txt","w+") as f:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
-                num_blocks += 1
-                if year == baseline_year:
-                    th = "none"
-                    loc = "country"
-                    opt = "unconstrained"
-                    f.write(f"{year},{percentile},{th},{loc},{opt}\n")
-                else:
-                    for th in tonnage_thresholds:
-                        for loc in location_cases:
-                            for opt in optimisation_type:
-                                f.write(f"{year},{percentile},{th},{loc},{opt}\n")                    
-        f.close()
-
-        args = [
-                "parallel",
-                "-j", str(num_blocks),
-                "--colsep", ",",
-                "-a",
-                "optimisation_set.txt",
-                "python",
-                "processing_locations_for_energy.py",
-                "{}"
-                ]
-        print ("* Start the processing of flow location optimisation")
-        print (args)
-        subprocess.run(args)                    
+        with open("optimisation_set.txt","r") as r:
+            for p in r:
+                pv = p.split(",")
+                args = [
+                        "python",
+                        "processing_locations_for_energy.py",
+                        f"{pv[0]}",
+                        f"{pv[1]}",
+                        f"{pv[2]}",
+                        f"{pv[3]}",
+                        f"{pv[4]}"
+                        ]
+                print ("* Start the processing of assembling locations for energy calculations")
+                print (args)
+                subprocess.run(args)                    
 
     
 if __name__ == '__main__':
