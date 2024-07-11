@@ -177,6 +177,7 @@ def main(config):
         with open("optimisation_set.txt","r") as r:
             for p in r:
                 pv = p.split(",")
+                opt = pv[4].strip('\n')
                 args = [
                         "python",
                         "processing_locations_for_energy.py",
@@ -184,7 +185,7 @@ def main(config):
                         f"{pv[1]}",
                         f"{pv[2]}",
                         f"{pv[3]}",
-                        f"{pv[4].strip('\n')}"
+                        f"{opt}"
                         ]
                 print ("* Start the processing of assembling locations for energy calculations")
                 print (args)
