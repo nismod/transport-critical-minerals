@@ -24,7 +24,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 
     input_folder = os.path.join(
                         output_data_path,
-                        "flow_mapping",
                         f"flow_optimisation_{country_case}_{constraint}"
                         )
     results_folder = os.path.join(output_data_path,"optimised_processing_locations")
