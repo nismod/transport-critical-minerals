@@ -415,6 +415,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 )
 
     all_flows = []
+    all_optimal_locations = []
     for reference_mineral in reference_minerals:
         # Find year locations
         if year == 2022:
@@ -529,6 +530,9 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                     optimisation=constraint)
                     if len(optimal_df) > 0:
                         optimal_df = pd.DataFrame(optimal_df)
+                        optimal_df["reference_mineral"] = reference_mineral
+                        optimal_df["production_size"] = production_size
+                        all_optimal_locations.append(optimal_df)
                         l_df = update_od_dataframe(l_df,optimal_df,metal_factor,modify_columns)
 
                 df.append(l_df)
@@ -580,6 +584,15 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 f"{file_name}_{country_case}_{constraint}.csv"),
             index=False)
         
+    if len(all_optimal_locations) > 0:
+        all_optimal_locations = pd.concat(all_optimal_locations,axis=0,ignore_index=True)
+        all_optimal_locations.drop("node_paths",axis=1,inplace=True)
+        all_optimal_locations.to_csv(
+                        os.path.join(
+                            results_folder,
+                            f"{file_name}_{country_case}_{constraint}_optimal_locations.csv"),
+                        index=False)
+
 
 
 if __name__ == '__main__':
