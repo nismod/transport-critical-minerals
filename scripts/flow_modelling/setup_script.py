@@ -184,7 +184,7 @@ def main(config):
                         f"{pv[1]}",
                         f"{pv[2]}",
                         f"{pv[3]}",
-                        f"{pv[4]}"
+                        f"{pv[4].strip('\n')}"
                         ]
                 print ("* Start the processing of assembling locations for energy calculations")
                 print (args)
