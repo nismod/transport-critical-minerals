@@ -4,16 +4,11 @@
 """
 import sys
 import os
-import re
-import json
 import pandas as pd
-import numpy as np
+import fiona
 pd.options.mode.copy_on_write = True
-import igraph as ig
 import geopandas as gpd
-from collections import defaultdict
 from utils import *
-from transport_cost_assignment import *
 from tqdm import tqdm
 tqdm.pandas()
     
@@ -54,23 +49,29 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         
-        flows_df = gpd.read_file(os.path.join(input_folder,
-                            f"processing_nodes_flows_{year}_{country_case}.gpkg"),
-                            layer=layer_name)
+        gpkg_file = os.path.join(
+                            input_folder,
+                            f"processing_nodes_flows_{year}_{country_case}.gpkg"
+                            )
+        layers = fiona.listlayers(gpkg_file)
+        if layer_name in layers:
+            flows_df = gpd.read_file(os.path.join(input_folder,
+                                f"processing_nodes_flows_{year}_{country_case}.gpkg"),
+                                layer=layer_name)
 
-        origin_cols = [c for c in flows_df.columns.values.tolist() if "_origin_" in c]
-        r_cols = list(set([o.split("_origin_")[0] for o in origin_cols]))
-        replace_r_cols = [f"{r}_in_{country_case}" for r in r_cols]
-        add_columns += replace_r_cols
-        flows_df.rename(columns=
-                dict(
-                        [
-                                (c,r) for i,(c,r) in enumerate(zip(r_cols,replace_r_cols))
-                        ]
-                    ),inplace=True
-                )
+            origin_cols = [c for c in flows_df.columns.values.tolist() if "_origin_" in c]
+            r_cols = list(set([o.split("_origin_")[0] for o in origin_cols]))
+            replace_r_cols = [f"{r}_in_{country_case}" for r in r_cols]
+            add_columns += replace_r_cols
+            flows_df.rename(columns=
+                    dict(
+                            [
+                                    (c,r) for i,(c,r) in enumerate(zip(r_cols,replace_r_cols))
+                            ]
+                        ),inplace=True
+                    )
 
-        all_flows.append(flows_df[[id_column] + replace_r_cols])
+            all_flows.append(flows_df[[id_column] + replace_r_cols])
 
     add_columns = list(set(add_columns))
     all_flows = pd.concat(all_flows,axis=0,ignore_index=True).fillna(0)
