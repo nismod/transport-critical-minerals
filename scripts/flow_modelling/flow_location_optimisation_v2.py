@@ -346,7 +346,16 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
             u_df.append(s_df)
 
     modified_paths = list(set(modified_paths))
-    u_df.append(initial_df[~initial_df["path_index"].isin(modified_paths)])
+    remaining_df = initial_df[~initial_df["path_index"].isin(modified_paths)]
+    remaining_df["final_stage_production_tons"
+        ] = np.where(remaining_df["final_processing_stage"] < remaining_df["mine_final_refined_stage"],
+                remaining_df["final_stage_production_tons"
+        ],remaining_df["stage_1_tons"
+        ])
+    remaining_df["final_processing_stage"
+        ] = np.where(remaining_df["final_processing_stage"] < remaining_df["mine_final_refined_stage"],
+                remaining_df["final_processing_stage"],1.0)
+    u_df.append(remaining_df)
     u_df = pd.concat(u_df,axis=0,ignore_index=True).fillna(0)
     u_df.drop(["stage_1_tons","nidx"],axis=1,inplace=True)
 
@@ -419,7 +428,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     input_folder,
                     "nodes_with_location_identifiers.geoparquet")
                 )
-
+    nodes["mode"] = np.where(nodes["mode"] == "city","city_process",nodes["mode"])
     all_flows = []
     all_optimal_locations = []
     for reference_mineral in reference_minerals:
