@@ -229,31 +229,37 @@ def find_optimal_locations(flow_dataframe,
                 distance_column,
                 time_column
                 ]
-    for c in columns:
-        flow_dataframe[c] = flow_dataframe.groupby(["id"])[c].transform('sum')
+    # for c in columns:
+    #     flow_dataframe[c] = flow_dataframe.groupby(["id"])[c].transform('sum')
     
-    c_df_flows = flow_dataframe[
-                        (
-                            flow_dataframe["initial_processing_stage"] == 0
-                        ) & (
-                            flow_dataframe[initial_tons_column] >= production_size
-                        )]
+    # c_df_flows = flow_dataframe[
+    #                     (
+    #                         flow_dataframe["initial_processing_stage"] == 0
+    #                     ) & (
+    #                         flow_dataframe[initial_tons_column] >= production_size
+    #                     )]
     opt_list = []
+    c_df_flows = flow_dataframe[flow_dataframe["initial_processing_stage"] == 0]
     while len(c_df_flows.index) > 0:
         optimal_locations = defaultdict()
-        c_df_flows = c_df_flows.sort_values(
-                                    by=columns,
-                                    ascending=[False,False,True,True,True])
-        id_value = c_df_flows["id"].values[0]
-        optimal_locations["iso3"] = c_df_flows["iso3"].values[0]
-        optimal_locations["id"] = id_value
         for c in columns:
-            optimal_locations[c] = c_df_flows[c].values[0]
+            c_df_flows[f"total_{c}"] = c_df_flows.groupby(["id"])[c].transform('sum')
+        c_df_flows = c_df_flows[c_df_flows[f"total_{initial_tons_column}"] >= production_size]
+        if len(c_df_flows.index) > 0:
+            c_df_flows = c_df_flows.sort_values(
+                                        by=[f"total_{c}" for c in columns],
+                                        ascending=[False,False,True,True,True])
+            id_value = c_df_flows["id"].values[0]
+            optimal_locations["iso3"] = c_df_flows["iso3"].values[0]
+            optimal_locations["id"] = id_value
+            optimal_locations["processing_location"] = c_df_flows["mode"].values[0]
+            for c in columns:
+                optimal_locations[f"total_{c}"] = c_df_flows[f"total_{c}"].values[0]
 
-        pth_idx = list(set(c_df_flows[c_df_flows["id"] == id_value]["path_index"].values.tolist()))
-        optimal_locations["node_paths"] = pth_idx 
-        c_df_flows = c_df_flows[~c_df_flows["path_index"].isin(pth_idx)]
-        opt_list.append(optimal_locations)
+            pth_idx = list(set(c_df_flows[c_df_flows["id"] == id_value]["path_index"].values.tolist()))
+            optimal_locations["node_paths"] = pth_idx 
+            c_df_flows = c_df_flows[~c_df_flows["path_index"].isin(pth_idx)]
+            opt_list.append(optimal_locations)
 
     return opt_list
 
@@ -321,7 +327,7 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
             f_df["import_country_code"] = row.iso3
             f_df["final_stage_production_tons"] = f_df["stage_1_tons"]
             f_df["final_processing_stage"] = 1.0
-            f_df["final_processing_location"] = "new processing"
+            f_df["final_processing_location"] = row.processing_location
             for m in modify_columns:
                 if m in ["node_path","full_node_path"]:
                     f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]+1],axis=1)
@@ -332,7 +338,7 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
             s_df["export_country_code"] = row.iso3
             s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
             s_df["initial_processing_stage"] = 1.0
-            s_df["initial_processing_location"] = "new processing"
+            s_df["initial_processing_location"] = row.processing_location
             for m in modify_columns:
                 s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
 
