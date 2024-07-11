@@ -138,7 +138,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
@@ -171,7 +171,38 @@ def main(config):
         print ("* Start the processing of flow location optimisation")
         print (args)
         subprocess.run(args)
-                    
+
+    run_script = True
+    if run_script is True:
+        num_blocks = 0
+        with open("optimisation_set.txt","w+") as f:
+            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                num_blocks += 1
+                if year == baseline_year:
+                    th = "none"
+                    loc = "country"
+                    opt = "unconstrained"
+                    f.write(f"{year},{percentile},{th},{loc},{opt}\n")
+                else:
+                    for th in tonnage_thresholds:
+                        for loc in location_cases:
+                            for opt in optimisation_type:
+                                f.write(f"{year},{percentile},{th},{loc},{opt}\n")                    
+        f.close()
+
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "optimisation_set.txt",
+                "python",
+                "processing_locations_for_energy.py",
+                "{}"
+                ]
+        print ("* Start the processing of flow location optimisation")
+        print (args)
+        subprocess.run(args)                    
 
     
 if __name__ == '__main__':
