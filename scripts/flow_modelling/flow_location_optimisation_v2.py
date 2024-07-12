@@ -325,8 +325,15 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
             f_df = s_df.copy()
             f_df["destination_id"] = id_value
             f_df["import_country_code"] = row.iso3
-            f_df["final_stage_production_tons"] = f_df["stage_1_tons"]
-            f_df["final_processing_stage"] = 1.0
+            f_df["final_stage_production_tons"
+                ] = np.where(f_df["final_processing_stage"] < f_df["mine_final_refined_stage"],
+                        f_df["final_stage_production_tons"],
+                        f_df["stage_1_tons"]
+                        )
+            f_df["final_processing_stage"
+                ] = np.where(f_df["final_processing_stage"] < f_df["mine_final_refined_stage"],
+                        f_df["final_processing_stage"],1.0
+                        )
             f_df["final_processing_location"] = row.processing_location
             for m in modify_columns:
                 if m in ["node_path","full_node_path"]:
@@ -336,9 +343,25 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
             
             s_df["origin_id"] = id_value
             s_df["export_country_code"] = row.iso3
-            s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
-            s_df["initial_processing_stage"] = 1.0
+            # s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
+            # s_df["initial_processing_stage"] = 1.0
+
+            s_df["initial_stage_production_tons"
+                ] = np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
+                        s_df["final_stage_production_tons"],
+                        s_df["stage_1_tons"]
+                        )
+            s_df["initial_processing_stage"
+                ] = np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
+                        s_df["final_processing_stage"],1.0
+                        )
             s_df["initial_processing_location"] = row.processing_location
+            s_df["final_stage_production_tons"
+                ] =  np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
+                        s_df["final_stage_production_tons"]/s_df["stage_factor"],
+                        s_df["final_stage_production_tons"]
+                        )
+            s_df["final_processing_stage"] = s_df["mine_final_refined_stage"]
             for m in modify_columns:
                 s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
 
@@ -349,9 +372,9 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
     remaining_df = initial_df[~initial_df["path_index"].isin(modified_paths)]
     remaining_df["final_stage_production_tons"
         ] = np.where(remaining_df["final_processing_stage"] < remaining_df["mine_final_refined_stage"],
-                remaining_df["final_stage_production_tons"
-        ],remaining_df["stage_1_tons"
-        ])
+                remaining_df["final_stage_production_tons"],
+                remaining_df["stage_1_tons"]
+                )
     remaining_df["final_processing_stage"
         ] = np.where(remaining_df["final_processing_stage"] < remaining_df["mine_final_refined_stage"],
                 remaining_df["final_processing_stage"],1.0)
@@ -370,6 +393,10 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     results_folder = os.path.join(output_data_path,f"flow_optimisation_{country_case}_{constraint}")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
+
+    flows_folder = os.path.join(results_folder,"processed_flows")
+    if os.path.exists(flows_folder) == False:
+        os.mkdir(flows_folder)
 
     modified_paths_folder = os.path.join(results_folder,"modified_flow_od_paths")
     if os.path.exists(modified_paths_folder) == False:
@@ -468,6 +495,12 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         od_df["path_index"] = od_df.index.values.tolist()
         od_df = od_df[od_df["trade_type"] != "Import"]
         od_df = pd.merge(od_df,mine_city_stages,how="left",on=["reference_mineral"])
+        od_df["stage_factor"] = od_df.progress_apply(
+                                lambda x:get_mine_conversion_factors(
+                                    metal_content_factors_df,
+                                    pr_conv_factors_df,
+                                    reference_mineral,x["final_processing_stage"],
+                                    x["mine_final_refined_stage"]),axis=1)
         if year == 2022:
             df = od_df.copy()
             del od_df
@@ -583,9 +616,11 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         
-        flows_df.to_file(os.path.join(results_folder,
-                            f"processing_nodes_flows_{year}_{country_case}.gpkg"),
-                            layer=layer_name,driver="GPKG")
+        # flows_df.to_file(os.path.join(results_folder,
+        #                     f"processing_nodes_flows_{year}_{country_case}.gpkg"),
+        #                     layer=layer_name,driver="GPKG")
+        flows_df.to_parquet(os.path.join(flows_folder,
+                            f"{layer_name}_{year}_{country_case}.geoparquet"))
 
     all_flows = pd.concat(all_flows,axis=0,ignore_index=True)
     if year == 2022:
