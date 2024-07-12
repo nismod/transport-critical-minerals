@@ -138,7 +138,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
