@@ -213,7 +213,7 @@ def main(config):
         num_blocks = 0
         with open("flow_set.txt","w+") as f:
             for rf in reference_minerals:
-                num_blocks += 1
+                num_blocks += 2
                 for idx, (year,percentile) in enumerate(year_percentile_combinations):
                     if year == baseline_year:
                         th = "none"
