@@ -132,7 +132,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         )
             sum_cols = trade_ton_columns + ["total_gcosts"]
             if od_type == "export":
-                df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor,sum_cols)
+                df = add_mines_remaining_tonnages(od_df,mines_df,year,metal_factor,sum_cols)
                 df = df.groupby(
                                 [
                                 "reference_mineral",
