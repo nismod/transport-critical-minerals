@@ -25,12 +25,16 @@ def find_country_edges(edges,network_edges):
     result = sorted(set(edges) & set(network_edges), key=lambda i: weights[i])
     return result
 
-def main(config,reference_mineral,year,percentile,efficient_scale):
+def main(config,reference_mineral,year,percentile,efficient_scale,country_case,constraint):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    results_folder = os.path.join(output_data_path,"flow_mapping")
+    modified_paths_folder = os.path.join(
+                                output_data_path,
+                                f"flow_optimisation_{country_case}_{constraint}",
+                                "modified_flow_od_paths")
+    results_folder = os.path.join(output_data_path,"node_edge_flows")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
@@ -40,8 +44,17 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                             "initial_stage_production_tons",
                             "final_stage_production_tons"
                         ]
-    if year > 2022:
-        file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet"
+    if year == 2022:
+        file_path = os.path.join(
+                        output_data_path,
+                        "flow_od_paths",
+                        f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet")
+        production_size = 0
+    else:
+        file_path = os.path.join(
+                        modified_paths_folder,
+                        f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet")
+
         # Read data on production scales
         production_size_df = pd.read_excel(
                                     os.path.join(
@@ -55,13 +68,8 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                                     production_size_df[
                                         "reference_mineral"] == reference_mineral
                                         ][efficient_scale].values[0]
-    else:
-        file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet"
-        production_size = 0
-    od_df = pd.read_parquet(
-                        os.path.join(results_folder,
-                            file_name)
-                        )
+    
+    od_df = pd.read_parquet(file_path)
     od_df = od_df[od_df["trade_type"] != "Import"]
     origin_isos = list(set(od_df["export_country_code"].values.tolist()))
     stages = list(
@@ -148,9 +156,11 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
             layer_name = f"{reference_mineral}_{percentile}"
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
-        flows_df.to_file(os.path.join(results_folder,
-                            f"{path_type}_flows_{year}.gpkg"),
-                            layer=layer_name,driver="GPKG")
+        # flows_df.to_file(os.path.join(results_folder,
+        #                     f"{path_type}_flows_{year}_{country_case}_{constraint}.gpkg"),
+        #                     layer=layer_name,driver="GPKG")
+        flows_df.to_parquet(os.path.join(results_folder,
+                            f"{path_type}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"))
 
 
 if __name__ == '__main__':
@@ -160,7 +170,9 @@ if __name__ == '__main__':
         year = int(sys.argv[2])
         percentile = str(sys.argv[3])
         efficient_scale = str(sys.argv[4])
+        country_case = str(sys.argv[5])
+        constraint = str(sys.argv[6])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,reference_mineral,year,percentile,efficient_scale)
+    main(CONFIG,reference_mineral,year,percentile,efficient_scale,country_case,constraint)

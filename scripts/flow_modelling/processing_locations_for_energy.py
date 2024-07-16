@@ -21,6 +21,11 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         output_data_path,
                         f"flow_optimisation_{country_case}_{constraint}"
                         )
+    flows_folder = os.path.join(
+                        output_data_path,
+                        f"flow_optimisation_{country_case}_{constraint}",
+                        "processed_flows")
+
     results_folder = os.path.join(output_data_path,"optimised_processing_locations")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
@@ -49,15 +54,19 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         
-        gpkg_file = os.path.join(
-                            input_folder,
-                            f"processing_nodes_flows_{year}_{country_case}.gpkg"
-                            )
-        layers = fiona.listlayers(gpkg_file)
-        if layer_name in layers:
-            flows_df = gpd.read_file(os.path.join(input_folder,
-                                f"processing_nodes_flows_{year}_{country_case}.gpkg"),
-                                layer=layer_name)
+        # gpkg_file = os.path.join(
+        #                     input_folder,
+        #                     f"processing_nodes_flows_{year}_{country_case}.gpkg"
+        #                     )
+        # layers = fiona.listlayers(gpkg_file)
+        # if layer_name in layers:
+            # flows_df = gpd.read_file(os.path.join(input_folder,
+            #                     f"processing_nodes_flows_{year}_{country_case}.gpkg"),
+            #                     layer=layer_name)
+        pq_file = os.path.join(flows_folder,
+                            f"{layer_name}_{year}_{country_case}.geoparquet")
+        if os.path.exists(pq_file):
+            flows_df = gpd.read_parquet(pq_file)
 
             origin_cols = [c for c in flows_df.columns.values.tolist() if "_origin_" in c]
             r_cols = list(set([o.split("_origin_")[0] for o in origin_cols]))

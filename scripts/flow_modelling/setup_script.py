@@ -121,22 +121,6 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-        """Next we aggregate the flows through the scenarios
-        """
-        args = [
-                "parallel",
-                "-j", str(num_blocks),
-                "--colsep", ",",
-                "-a",
-                "paramter_set.txt",
-                "python",
-                "node_edge_flows.py",
-                "{}"
-                ]
-        print ("* Start the processing of flow allocation")
-        print (args)
-        subprocess.run(args)
-
 
     run_script = False
     if run_script is True:
@@ -191,7 +175,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -210,7 +194,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for lc in location_cases:
             for opt in optimisation_type:
@@ -222,7 +206,42 @@ def main(config):
                         ]
                 print ("* Start the processing of tonnage summaries into excel")
                 print (args)
-                subprocess.run(args)                    
+                subprocess.run(args)   
+
+    run_script = True
+    if run_script is True:
+        num_blocks = 0
+        with open("flow_set.txt","w+") as f:
+            for rf in reference_minerals:
+                num_blocks += 1
+                for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                    if year == baseline_year:
+                        th = "none"
+                        loc = "country"
+                        opt = "unconstrained"
+                        f.write(f"{rf},{year},{percentile},{th},{loc},{opt}\n")
+                    else:
+                        for th in tonnage_thresholds:
+                            for loc in location_cases:
+                                for opt in optimisation_type:
+                                    f.write(f"{rf},{year},{percentile},{th},{loc},{opt}\n")                    
+        f.close()
+
+        """Next we aggregate the flows through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "flow_set.txt",
+                "python",
+                "node_edge_flows.py",
+                "{}"
+                ]
+        print ("* Start the processing of node edge flow allocation")
+        print (args)
+        subprocess.run(args)                 
 
     
 if __name__ == '__main__':
