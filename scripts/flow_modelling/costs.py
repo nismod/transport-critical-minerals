@@ -143,7 +143,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                 ]).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
                 df.rename(columns={"export_country_code":"iso3"},inplace=True)
             else:
-                df = df.groupby(
+                df = od_df.groupby(
                                 [
                                 "reference_mineral",
                                 "import_country_code",
