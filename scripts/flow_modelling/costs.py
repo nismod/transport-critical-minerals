@@ -123,6 +123,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         export_df = export_df[export_df["trade_type"] != "Import"]
         import_df = import_df[import_df["trade_type"] == "Import"]
         for idx, (od_type,od_df) in enumerate(zip(["export","import"],[export_df,import_df])):
+            print (od_df)
             od_df["total_gcosts"] = od_df.progress_apply(lambda x:sum(x["gcost_usd_tons_path"]),axis=1)
             od_df["trade_type"
                 ] = np.where(
