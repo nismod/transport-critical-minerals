@@ -132,26 +132,26 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         )
             sum_cols = trade_ton_columns + ["total_gcosts"]
             if od_type == "export":
-            	df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor,sum_cols)
-	            df = df.groupby(
-	                            [
-	                            "reference_mineral",
-	                            "export_country_code",
-	                            "initial_processing_stage",
-	                            "final_processing_stage",
-	                            "trade_type"
-	                            ]).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
-	            df.rename(columns={"export_country_code":"iso3"},inplace=True)
-	        else:
-	        	df = df.groupby(
-	                            [
-	                            "reference_mineral",
-	                            "import_country_code",
-	                            "initial_processing_stage",
-	                            "final_processing_stage",
-	                            "trade_type"
-	                            ]).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
-	            df.rename(columns={"import_country_code":"iso3"},inplace=True)
+                df = add_mines_remaining_tonnages(df,mines_df,year,metal_factor,sum_cols)
+                df = df.groupby(
+                                [
+                                "reference_mineral",
+                                "export_country_code",
+                                "initial_processing_stage",
+                                "final_processing_stage",
+                                "trade_type"
+                                ]).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
+                df.rename(columns={"export_country_code":"iso3"},inplace=True)
+            else:
+                df = df.groupby(
+                                [
+                                "reference_mineral",
+                                "import_country_code",
+                                "initial_processing_stage",
+                                "final_processing_stage",
+                                "trade_type"
+                                ]).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
+                df.rename(columns={"import_country_code":"iso3"},inplace=True)
 
             all_flows.append(df)
 
