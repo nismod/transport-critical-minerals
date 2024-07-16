@@ -172,7 +172,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -188,6 +188,25 @@ def main(config):
                         f"{opt}"
                         ]
                 print ("* Start the processing of assembling locations for energy calculations")
+                print (args)
+                subprocess.run(args)  
+
+    run_script = True
+    if run_script is True:
+        with open("optimisation_set.txt","r") as r:
+            for p in r:
+                pv = p.split(",")
+                opt = pv[4].strip('\n')
+                args = [
+                        "python",
+                        "costs.py",
+                        f"{pv[0]}",
+                        f"{pv[1]}",
+                        f"{pv[2]}",
+                        f"{pv[3]}",
+                        f"{opt}"
+                        ]
+                print ("* Start the processing of tonnage summaries")
                 print (args)
                 subprocess.run(args)                    
 
