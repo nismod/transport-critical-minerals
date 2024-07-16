@@ -18,7 +18,7 @@ from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
-def add_mines_remaining_tonnages(df,mines_df,year,metal_factor,sum_cols):
+def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
     m_df = df[
                 (
                     df["initial_processing_location"] == "mine"
@@ -48,17 +48,6 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor,sum_cols):
         m_df["import_country_code"] = m_df["export_country_code"]
         m_df.drop(["id",str(year)],axis=1,inplace=True)
         df = pd.concat([df,m_df],axis=0,ignore_index=True)
-
-        # sum_cols = ["initial_stage_production_tons","final_stage_production_tons"]
-        # df = df.groupby(
-        #                 [
-        #                 "reference_mineral",
-        #                 "export_country_code",
-        #                 "initial_processing_stage",
-        #                 "final_processing_stage",
-        #                 "initial_processing_location",
-        #                 "origin_id"]
-        #                 ).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
 
     return df
 
@@ -123,16 +112,17 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         import_df = import_df[import_df["trade_type"] == "Import"]
         for idx, (od_type,od_df) in enumerate(zip(["export","import"],[export_df,import_df])):
             if len(od_df.index) > 0:
-                od_df["total_gcosts"] = od_df.progress_apply(lambda x:sum(x["gcost_usd_tons_path"]),axis=1)
+                od_df["total_gcosts_per_tons"] = od_df.progress_apply(lambda x:sum(x["gcost_usd_tons_path"]),axis=1)
+                od_df["total_gcosts"] = od_df["total_gcosts_per_tons"]*od_df["final_stage_production_tons"]
                 od_df["trade_type"
                     ] = np.where(
                             od_df["export_country_code"] == od_df["import_country_code"],
                             "Domestic",
                             od_df["trade_type"]
                             )
-                sum_cols = trade_ton_columns + ["total_gcosts"]
+                sum_cols = trade_ton_columns + ["total_gcosts_per_tons","total_gcosts"]
                 if od_type == "export":
-                    df = add_mines_remaining_tonnages(od_df,mines_df,year,metal_factor,sum_cols)
+                    df = add_mines_remaining_tonnages(od_df,mines_df,year,metal_factor)
                     df = df.groupby(
                                     [
                                     "reference_mineral",
@@ -156,6 +146,12 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 all_flows.append(df)
 
     all_flows = pd.concat(all_flows,axis=0,ignore_index=True)
+    all_flows["average_gcost_per_tons"
+        ] = np.where(
+                all_flows["final_stage_production_tons"] > 0,
+                all_flows["total_gcosts"]/all_flows["final_stage_production_tons"],
+                0
+                )
     if year == 2022:
         file_name = f"location_totals_{year}_{percentile}"
         production_size = 0
