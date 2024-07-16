@@ -43,6 +43,13 @@ def main(config,country_case,constraint):
     initial_tons_column = "initial_stage_production_tons"
     final_tons_column = "final_stage_production_tons"    
 
+    output_file = os.path.join(
+                        results_folder,
+                        "transport_tonnage_totals_by_stage.xlsx")
+    if os.path.isfile(output_file) is True:
+        writer = pd.ExcelWriter(output_file,mode='a',if_sheet_exists='replace')
+    else:
+        writer = pd.ExcelWriter(output_file)
     
     """Step 1: get all the relevant nodes and find their distances 
                 to grid and bio-diversity layers 
@@ -100,11 +107,8 @@ def main(config,country_case,constraint):
                     ).agg(dict([(c,"sum") for c in all_layers])).reset_index()
 
     all_dfs = all_dfs.set_index(["reference_mineral","iso3","processing_stage"])
-    all_dfs.to_excel(
-            os.path.join(
-                results_folder,
-                "transport_tonnage_totals_by_stage.xlsx"),
-            sheet_name =f"{country_case}_{constraint}")
+    all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
+    writer.close()
 
 
 if __name__ == '__main__':
