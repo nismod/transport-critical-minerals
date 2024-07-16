@@ -18,7 +18,7 @@ from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
-def main(config,year,percentile,efficient_scale,country_case,constraint):
+def main(config,country_case,constraint):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
