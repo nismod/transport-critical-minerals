@@ -191,7 +191,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -199,7 +199,7 @@ def main(config):
                 opt = pv[4].strip('\n')
                 args = [
                         "python",
-                        "costs.py",
+                        "country_totals_tons_and_costs.py",
                         f"{pv[0]}",
                         f"{pv[1]}",
                         f"{pv[2]}",
@@ -207,6 +207,20 @@ def main(config):
                         f"{opt}"
                         ]
                 print ("* Start the processing of tonnage summaries")
+                print (args)
+                subprocess.run(args)
+
+    run_script = True
+    if run_script is True:
+        for lc in location_cases:
+            for opt in optimisation_type:
+                args = [
+                        "python",
+                        "combined_tonnages.py",
+                        f"{lc}",
+                        f"{opt}"
+                        ]
+                print ("* Start the processing of tonnage summaries into excel")
                 print (args)
                 subprocess.run(args)                    
 

@@ -93,7 +93,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 to grid and bio-diversity layers 
     """
     all_flows = []
-    all_optimal_locations = []
     for reference_mineral in reference_minerals:
         # Find year locations
         if year == 2022:
