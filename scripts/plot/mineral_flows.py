@@ -179,6 +179,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     plt.tight_layout()
     
     scenario = list(zip(*scenario))
+    print  (scenario)
     st = ""
     for sc in scenario:
         st += "_".join(list(set(sc)))
