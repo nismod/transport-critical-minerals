@@ -113,7 +113,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         titles = ["Links annual output (tons)","Locations annual output (tons)","Location type"]
         legend_handles.append(plt.plot([],[],
                                         color="none",
-                                        label="$\\bf{Links annual output (tons)}$")[0])
+                                        label="$\\bf{Links \, annual \, output \,(tons)}$")[0])
         ax, legend = line_map_plotting_colors_width(ax,edf,flow_column,
                                             1.0,
                                             f"{reference_mineral.title()} Annual output (tons)",
@@ -126,7 +126,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         legend_handles += legend
         legend_handles.append(plt.plot([],[],
                                         color="none",
-                                        label="$\\bf{Locations annual output (tons)}$")[0])
+                                        label="$\\bf{Locations \, annual \, output \, (tons)}$")[0])
         ax, legend = point_map_plotting_colors_width(
                                     ax,
                                     ndf,
@@ -149,7 +149,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         legend_handles += legend
         legend_handles.append(plt.plot([],[],
                                         color="none",
-                                        label="$\\bf{Location type}$")[0])
+                                        label="$\\bf{Location \,types}$")[0])
         for idx,(l,nc) in enumerate(zip(processing_types,mp["node_colors"])):
             legend_handles.append(mpatches.Patch(color=nc,
                                             label=l))
@@ -160,11 +160,11 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             frameon=False)
 
         ## Move titles to the left 
-        for item, label in zip(leg.legend_handles, leg.texts):
-            if label._text in titles:
-                width=item.get_window_extent(fig.canvas.get_renderer()).width
-                label.set_ha('left')
-                label.set_position((-4*width,0))
+        # for item, label in zip(leg.legend_handles, leg.texts):
+        #     if label._text in titles:
+        #         width=item.get_window_extent(fig.canvas.get_renderer()).width
+        #         label.set_ha('left')
+        #         label.set_position((-4*width,0))
 
     
     plt.tight_layout()
