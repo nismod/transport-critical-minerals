@@ -162,11 +162,11 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         # Move titles to the left 
         for item, label in zip(leg.legend_handles, leg.texts):
             if label._text in titles:
-                width=item.get_window_extent(fig.canvas.get_renderer()).width
+                width = item.get_window_extent(fig.canvas.get_renderer()).width
                 label.set_ha('left')
-                label.set_position((-50*width,0))
+                label.set_position((-200*width,0))
 
-    
+        ax.set_title(f"{reference_mineral.title()} {y} - {p.title()}", fontsize=9)
     plt.tight_layout()
     save_fig(os.path.join(figures,f"{reference_mineral}_scenarios.png"))
     plt.close()
