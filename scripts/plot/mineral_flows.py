@@ -122,7 +122,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                             line_steps = 5,
                                             width_step = 0.08,
                                             interpolation='fisher-jenks')
-        legend_handles.append(legend)
+        legend_handles += legend
         ax, legend = point_map_plotting_colors_width(
                                     ax,
                                     ndf,
@@ -141,6 +141,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                     legend_weight=2.0,
                                     no_value_label="No output",
                                     )
+        legend_handles += legend
         leg = ax.legend(
             handles=legend_handles, 
             fontsize=9, 
