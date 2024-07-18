@@ -118,9 +118,9 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                             1.0,
                                             f"{reference_mineral.title()} Annual output (tons)",
                                             "flows",
-                                            line_colors = 5*[mp["edge_color"]],
+                                            line_colors = 6*[mp["edge_color"]],
                                             no_value_color = '#969696',
-                                            line_steps = 5,
+                                            line_steps = 6,
                                             width_step = 0.08,
                                             interpolation='fisher-jenks')
         legend_handles += legend
@@ -137,7 +137,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                     point_colors=mp["node_colors"],
                                     point_labels=processing_types,
                                     point_zorder=[20,21,22,23],
-                                    point_steps=5,
+                                    point_steps=6,
                                     width_step = 40.0,
                                     interpolation = 'fisher-jenks',
                                     legend_label="Annual output (tons)",
@@ -166,7 +166,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                 label.set_ha('left')
                 label.set_position((-200*width,0))
 
-        ax.set_title(f"{reference_mineral.title()} {y} - {p.title()}", fontsize=9)
+        ax.set_title(f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario", fontsize=14)
     plt.tight_layout()
     save_fig(os.path.join(figures,f"{reference_mineral}_scenarios.png"))
     plt.close()
