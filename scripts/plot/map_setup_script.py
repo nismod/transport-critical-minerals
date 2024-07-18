@@ -62,25 +62,28 @@ def main(config):
             for rf in reference_minerals:
                 num_blocks += 2
                 for row in future_scenarios:
-                    st = ",".join([str(r) for r in row])
-                    f.write(f"{rf},{st}\n")                
+                    st = f"{rf},"
+                    for r in row[:-1]:
+                        st += f"{r},"
+                    st += f"{row[-1]}\n"
+                    f.write(st)                
         f.close()
 
-        """Next we aggregate the flows through the scenarios
-        """
-        args = [
-                "parallel",
-                "-j", str(num_blocks),
-                "--colsep", ",",
-                "-a",
-                "flow_set.txt",
-                "python",
-                "mineral_flows.py",
-                "{}"
-                ]
-        print ("* Start the processing of plotting flows")
-        print (args)
-        subprocess.run(args)                 
+        # """Next we aggregate the flows through the scenarios
+        # """
+        # args = [
+        #         "parallel",
+        #         "-j", str(num_blocks),
+        #         "--colsep", ",",
+        #         "-a",
+        #         "flow_set.txt",
+        #         "python",
+        #         "mineral_flows.py",
+        #         "{}"
+        #         ]
+        # print ("* Start the processing of plotting flows")
+        # print (args)
+        # subprocess.run(args)                 
 
     
 if __name__ == '__main__':
