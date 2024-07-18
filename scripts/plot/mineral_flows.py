@@ -40,8 +40,8 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     processing_colors = [""]
 
     combinations = list(zip(years,percentiles,efficient_scales,country_cases,constraints))
-    nodes_df = []
-    edges_df = []
+    nodes_dfs = []
+    edges_dfs = []
     nodes_range = []
     edges_range = []
     for idx, (y,p,e,cnt,con) in enumerate(combinations):
