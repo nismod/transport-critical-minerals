@@ -74,11 +74,11 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                 f"node_locations_for_energy_conversion_{cnt}_{con}.gpkg"),
                             layer=layer_name)
         nodes_flows_df = nodes_flows_df[~nodes_flows_df.geometry.isna()]
-        nodes_range += nodes_flows_df[flow_column].values.tolist()
         nodes_flows_df["processing_type"
             ] = nodes_flows_df.progress_apply(lambda x:assign_processing_type(x),axis=1)
         fcols = [c for c in nodes_flows_df.columns.values.tolist() if {flow_column} in c]
         nodes_flows_df[flow_column] = nodes_flows_df[fcols].sum(axis=1)
+        nodes_range += nodes_flows_df[flow_column].values.tolist()
         
         edges_dfs.append(edges_flows_df)
         nodes_dfs.append(nodes_flows_df)
