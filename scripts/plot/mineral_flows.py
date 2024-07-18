@@ -51,7 +51,6 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             layer_name = f"{reference_mineral}_{p}_{e}"
         edges_flows_df = gpd.read_parquet(os.path.join(flow_data_folder,
                             f"edges_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
-        print (edges_flows_df)
         edges_flows_df = edges_flows_df[~edges_flows_df.geometry.isna()]
         print (edges_flows_df)
         nodes_flows_df = gpd.read_parquet(os.path.join(flow_data_folder,
@@ -64,6 +63,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                 ) | (
                                     edges_flows_df["to_id"].isin(nodes)
                                 )]
+        print (edges_flows_df)
         del nodes
         edges_range += edges_flows_df[flow_column].values.tolist()   
         if y == 2022:
