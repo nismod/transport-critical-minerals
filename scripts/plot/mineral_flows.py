@@ -101,6 +101,8 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                     dpi=500)
     ax_plots = ax_plots.flatten()
     for idx, (y,p,e,cnt,con,ndf,edf) in enumerate(combinations):
+        print (edf)
+        print (ndf)
         ax = plot_ccg_basemap(ax_plots[idx])
         ax = line_map_plotting_colors_width(ax,edf,flow_column,
                                             1.0,
