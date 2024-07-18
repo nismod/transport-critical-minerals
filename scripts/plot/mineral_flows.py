@@ -136,7 +136,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                     point_categories=processing_types,
                                     point_colors=mp["node_colors"],
                                     point_labels=processing_types,
-                                    point_zorder=[10,11,12,13],
+                                    point_zorder=[20,21,22,23],
                                     point_steps=5,
                                     width_step = 40.0,
                                     interpolation = 'fisher-jenks',
@@ -159,12 +159,12 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             loc='lower right',
             frameon=False)
 
-        ## Move titles to the left 
-        # for item, label in zip(leg.legend_handles, leg.texts):
-        #     if label._text in titles:
-        #         width=item.get_window_extent(fig.canvas.get_renderer()).width
-        #         label.set_ha('left')
-        #         label.set_position((-4*width,0))
+        # Move titles to the left 
+        for item, label in zip(leg.legend_handles, leg.texts):
+            if label._text in titles:
+                width=item.get_window_extent(fig.canvas.get_renderer()).width
+                label.set_ha('left')
+                label.set_position((-10*width,0))
 
     
     plt.tight_layout()

@@ -284,7 +284,7 @@ def plot_ccg_basemap(ax,scalebar_location=(0.12,0.05),
     bounds = ccg_map_df.geometry.total_bounds # this gives your boundaries of the map as (xmin,ymin,xmax,ymax)
     xmin = bounds[0]
     xmax = bounds[2]
-    ymin = bounds[1]
+    ymin = bounds[1] - 5.0
     ymax = bounds[3] - 9.0
 
     ax = get_axes(ax,extent = (xmin,xmax,ymin,ymax),epsg=4326) # extent requires (xmin,xmax,ymin,ymax) you might have to adjust the offsets a bit manually as I have done here by +/-0.1
@@ -443,7 +443,7 @@ def create_figure_legend(divisor,significance,
     significance_ndigits = find_significant_digits(divisor,significance,width_by_range)
     for (i, ((nmin, nmax), width)) in enumerate(width_by_range.items()):
         value_template = '{:,.' + str(significance_ndigits) + \
-            'f}-{:,.' + str(significance_ndigits) + 'f}'
+            'f} - {:,.' + str(significance_ndigits) + 'f}'
         label = value_template.format(
             round(nmin/divisor, significance_ndigits), round(nmax/divisor, significance_ndigits))
 
