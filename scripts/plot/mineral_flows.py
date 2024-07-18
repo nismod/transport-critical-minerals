@@ -34,7 +34,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         
     mp = mineral_properties()[reference_mineral]
     flow_column = "final_stage_production_tons"
-    ccg_countries = pd.read_csv(os.path.join(data_path,"admin_boundaries","ccg_country_codes.csv"))
+    ccg_countries = pd.read_csv(os.path.join(processed_data_path,"admin_boundaries","ccg_country_codes.csv"))
     ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
     processing_types = ["Mine","Existing processing location","New processing location"]
     processing_colors = [""]
