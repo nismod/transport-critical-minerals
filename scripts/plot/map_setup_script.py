@@ -62,9 +62,9 @@ def main(config):
             for rf in reference_minerals:
                 num_blocks += 2
                 for row in future_scenarios:
-                    st = f"{rf},"
+                    st = f"{rf};"
                     for r in row[:-1]:
-                        st += f"{r},"
+                        st += f"{r};"
                     st += f"{row[-1]}\n"
                     f.write(st)                
         f.close()
@@ -74,7 +74,7 @@ def main(config):
         args = [
                 "parallel",
                 "-j", str(num_blocks),
-                "--colsep", ",",
+                "--colsep", ";",
                 "-a",
                 "flow_set.txt",
                 "python",
