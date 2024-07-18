@@ -139,9 +139,9 @@ if __name__ == '__main__':
         years = ast.literal_eval(str(sys.argv[2]))
         percentiles = ast.literal_eval(str(sys.argv[3]))
         efficient_scales = ast.literal_eval(str(sys.argv[4]))
-        country_case = str(sys.argv[5])
-        constraint = str(sys.argv[6])
+        country_cases = str(sys.argv[5])
+        constraints = str(sys.argv[6])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,reference_mineral,years,percentiles,efficient_scales,country_case,constraint)
+    main(CONFIG,reference_mineral,years,percentiles,efficient_scales,country_cases,constraints)
