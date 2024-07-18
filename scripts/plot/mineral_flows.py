@@ -110,10 +110,10 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     for idx, (y,p,e,cnt,con,ndf,edf) in enumerate(combinations):
         ax = plot_ccg_basemap(ax_plots[idx])
         legend_handles = []
-        titles = ["Links annual output (tons)","Locations annual output (tons)"]
+        titles = ["Links annual output (tons)","Locations annual output (tons)","Location type"]
         legend_handles.append(plt.plot([],[],
                                         color="none",
-                                        label="Links annual output (tons)")[0])
+                                        label="$\\bf{Links annual output (tons)}$")[0])
         ax, legend = line_map_plotting_colors_width(ax,edf,flow_column,
                                             1.0,
                                             f"{reference_mineral.title()} Annual output (tons)",
@@ -126,7 +126,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         legend_handles += legend
         legend_handles.append(plt.plot([],[],
                                         color="none",
-                                        label="Locations annual output (tons)")[0])
+                                        label="$\\bf{Locations annual output (tons)}$")[0])
         ax, legend = point_map_plotting_colors_width(
                                     ax,
                                     ndf,
@@ -145,11 +145,18 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                     legend_weight=2.0,
                                     no_value_label="No output",
                                     )
+
         legend_handles += legend
+        legend_handles.append(plt.plot([],[],
+                                        color="none",
+                                        label="$\\bf{Location type}$")[0])
+        for idx,(l,nc) in enumerate(zip(processing_types,mp["node_colors"])):
+            legend_handles.append(mpatches.Patch(color=nc,
+                                            label=l))
         leg = ax.legend(
             handles=legend_handles, 
-            fontsize=9, 
-            loc='lower left',
+            fontsize=10, 
+            loc='lower right',
             frameon=False)
 
         ## Move titles to the left 

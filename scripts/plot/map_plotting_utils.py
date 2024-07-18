@@ -442,8 +442,8 @@ def create_figure_legend(divisor,significance,
     legend_handles = []
     significance_ndigits = find_significant_digits(divisor,significance,width_by_range)
     for (i, ((nmin, nmax), width)) in enumerate(width_by_range.items()):
-        value_template = '{:.' + str(significance_ndigits) + \
-            'f}-{:.' + str(significance_ndigits) + 'f}'
+        value_template = '{:,.' + str(significance_ndigits) + \
+            'f}-{:,.' + str(significance_ndigits) + 'f}'
         label = value_template.format(
             round(nmin/divisor, significance_ndigits), round(nmax/divisor, significance_ndigits))
 
