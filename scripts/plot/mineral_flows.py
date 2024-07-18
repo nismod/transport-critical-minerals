@@ -135,7 +135,8 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        print (sys.argv)
+        print (sys.argv[1])
+        print (str(sys.argv[3]))
         reference_mineral = str(sys.argv[1])
         years = ast.literal_eval(str(sys.argv[2]))
         percentiles = ast.literal_eval(str(sys.argv[3]))
