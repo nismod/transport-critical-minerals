@@ -180,7 +180,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     for sc in scenario:
         st += f"_{'_'.join(list(set(sc)))}"
 
-    save_fig(os.path.join(figures,f"{reference_mineral}_{st}_scenarios.png"))
+    save_fig(os.path.join(figures,f"{reference_mineral}{st}_scenarios.png"))
     plt.close()
 
 
