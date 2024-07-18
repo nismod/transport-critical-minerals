@@ -168,9 +168,11 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             if label._text in titles:
                 width = item.get_window_extent(fig.canvas.get_renderer()).width
                 label.set_ha('left')
-                label.set_position((-2000*width,0))
+                label.set_position((-4.0*width,0))
 
-        ax.set_title(f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario$", fontsize=14)
+        ax.set_title(
+            f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario \, - \, {cnt} \, {con}$", 
+            fontsize=12)
     plt.tight_layout()
     save_fig(os.path.join(figures,f"{reference_mineral}_scenarios.png"))
     plt.close()
