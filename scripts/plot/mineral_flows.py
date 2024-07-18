@@ -9,7 +9,7 @@ import numpy as np
 pd.options.mode.copy_on_write = True
 import geopandas as gpd
 from map_plotting_utils import *
-from mineral_properties import *
+from mapping_properties import *
 from tqdm import tqdm
 tqdm.pandas()
 def assign_processing_type(x):
