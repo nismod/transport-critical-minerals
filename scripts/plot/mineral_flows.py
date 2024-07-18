@@ -164,7 +164,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             if label._text in titles:
                 width=item.get_window_extent(fig.canvas.get_renderer()).width
                 label.set_ha('left')
-                label.set_position((-10*width,0))
+                label.set_position((-50*width,0))
 
     
     plt.tight_layout()
