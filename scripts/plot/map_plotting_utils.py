@@ -656,11 +656,11 @@ def line_map_plotting_colors_width(ax,df,df_column,
     if plot_title:
         ax.set_title(plot_title, fontsize=9)
     print ('* Plotting ',plot_title)
-    first_legend = ax.legend(handles=legend_handles,fontsize=11,title=legend_label,title_fontsize=12,loc='lower left')
-    # print (styles)
-    ax.add_artist(first_legend)
-    legend_from_style_spec(ax, styles,fontsize=12,loc='upper right')
-    return ax
+    # first_legend = ax.legend(handles=legend_handles,fontsize=11,title=legend_label,title_fontsize=12,loc='lower left')
+    # # print (styles)
+    # ax.add_artist(first_legend)
+    # legend_from_style_spec(ax, styles,fontsize=12,loc='upper right')
+    return ax, legend_handles
 
 def point_map_plotting_color_width(ax,df,df_column,
                 weights,marker,divisor,
@@ -844,12 +844,12 @@ def point_map_plotting_colors_width(ax,df,column,
     #                     width_by_range,
     #                     max_weight,
     #                     'marker',point_colors,10,marker=marker)
-    if plot_title:
-        plt.title(plot_title, fontsize=12)
-    first_legend = ax.legend(handles=legend_handles,fontsize=legend_size,
-                            title=legend_label,title_fontsize=legend_size,
-                            loc='upper right')
-    ax.add_artist(first_legend).set_zorder(20)
+    # if plot_title:
+    #     plt.title(plot_title, fontsize=12)
+    # first_legend = ax.legend(handles=legend_handles,fontsize=legend_size,
+    #                         title=legend_label,title_fontsize=legend_size,
+    #                         loc='upper right')
+    # ax.add_artist(first_legend).set_zorder(20)
     print ('* Plotting ',plot_title)
     # legend_from_style_spec(ax, styles,fontsize=legend_size,loc='lower left')
-    return ax
+    return ax, legend_handles

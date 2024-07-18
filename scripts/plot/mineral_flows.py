@@ -104,21 +104,26 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     ax_proj = get_projection(epsg=4326)
     fig, ax_plots = plt.subplots(1,len(years),
                     subplot_kw={'projection': ax_proj},
-                    figsize=(24,12),
+                    figsize=(20,10),
                     dpi=500)
     ax_plots = ax_plots.flatten()
     for idx, (y,p,e,cnt,con,ndf,edf) in enumerate(combinations):
         ax = plot_ccg_basemap(ax_plots[idx])
-        ax = line_map_plotting_colors_width(ax,edf,flow_column,
+        legend_handles = []
+        legend_handles.append(plt.plot([],[],
+                                        color="none",
+                                        label=f"{reference_mineral.title()} Annual output (tons)")[0])
+        ax, legend = line_map_plotting_colors_width(ax,edf,flow_column,
                                             1.0,
                                             f"{reference_mineral.title()} Annual output (tons)",
                                             "flows",
-                                            line_colors = 8*[mp["edge_color"]],
+                                            line_colors = 5*[mp["edge_color"]],
                                             no_value_color = '#969696',
-                                            line_steps = 8,
+                                            line_steps = 5,
                                             width_step = 0.08,
                                             interpolation='fisher-jenks')
-        ax = point_map_plotting_colors_width(
+        legend_handles.append(legend)
+        ax, legend = point_map_plotting_colors_width(
                                     ax,
                                     ndf,
                                     flow_column,
@@ -127,8 +132,8 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                     point_categories=processing_types,
                                     point_colors=mp["node_colors"],
                                     point_labels=processing_types,
-                                    point_zorder=[6,7,8,9],
-                                    point_steps=8,
+                                    point_zorder=[10,11,12,13],
+                                    point_steps=5,
                                     width_step = 40.0,
                                     interpolation = 'fisher-jenks',
                                     legend_label="Annual output (tons)",
@@ -136,6 +141,18 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                     legend_weight=2.0,
                                     no_value_label="No output",
                                     )
+        leg = ax.legend(
+            handles=legend_handles, 
+            fontsize=9, 
+            loc='lower left',
+            frameon=False)
+
+        ## Move titles to the left 
+        for item, label in zip(leg.legend_handles, leg.texts):
+            if label._text  in [infra_title,sdg_title]:
+                width=item.get_window_extent(fig.canvas.get_renderer()).width
+                label.set_ha('left')
+                label.set_position((-4*width,0))
 
     
     plt.tight_layout()
