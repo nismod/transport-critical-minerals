@@ -69,21 +69,21 @@ def main(config):
                     f.write(st)                
         f.close()
 
-        # """Next we aggregate the flows through the scenarios
-        # """
-        # args = [
-        #         "parallel",
-        #         "-j", str(num_blocks),
-        #         "--colsep", ",",
-        #         "-a",
-        #         "flow_set.txt",
-        #         "python",
-        #         "mineral_flows.py",
-        #         "{}"
-        #         ]
-        # print ("* Start the processing of plotting flows")
-        # print (args)
-        # subprocess.run(args)                 
+        """Next we aggregate the flows through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "flow_set.txt",
+                "python",
+                "mineral_flows.py",
+                "{}"
+                ]
+        print ("* Start the processing of plotting flows")
+        print (args)
+        subprocess.run(args)                 
 
     
 if __name__ == '__main__':
