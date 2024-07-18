@@ -585,7 +585,10 @@ def point_map_plotting(ax,df,df_column,
     return ax
 
 def line_map_plotting_colors_width(ax,df,df_column,
-                        divisor,legend_label,value_label,
+                        weights,
+                        divisor,
+                        legend_label,
+                        value_label,
                         line_colors = ['#c6dbef','#6baed6','#2171b5','#08306b'],
                         no_value_color = '#969696',
                         line_steps = 4,
@@ -596,10 +599,10 @@ def line_map_plotting_colors_width(ax,df,df_column,
     column = df_column
     all_colors = [no_value_color] + line_colors
     line_geoms_by_category = {'{}'.format(j):[] for j in range(len(all_colors))}
-    weights = [
-        getattr(record,column)
-        for record in df.itertuples() if getattr(record,column) > 0
-    ]
+    # weights = [
+    #     getattr(record,column)
+    #     for record in df.itertuples() if getattr(record,column) > 0
+    # ]
     # weights = [
     #     getattr(record,column)
     #     for record in df.itertuples()

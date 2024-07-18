@@ -114,10 +114,14 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         legend_handles.append(plt.plot([],[],
                                         color="none",
                                         label="$\\bf{Links \, annual \, output \,(tons)}$")[0])
-        ax, legend = line_map_plotting_colors_width(ax,edf,flow_column,
+        ax, legend = line_map_plotting_colors_width(
+                                            ax,
+                                            edf,
+                                            flow_column,
+                                            edges_range,
                                             1.0,
-                                            f"{reference_mineral.title()} Annual output (tons)",
-                                            "flows",
+                                            "None",
+                                            "None",
                                             line_colors = 6*[mp["edge_color"]],
                                             no_value_color = '#969696',
                                             line_steps = 6,
@@ -164,7 +168,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             if label._text in titles:
                 width = item.get_window_extent(fig.canvas.get_renderer()).width
                 label.set_ha('left')
-                label.set_position((-200*width,0))
+                label.set_position((-2000*width,0))
 
         ax.set_title(f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario$", fontsize=14)
     plt.tight_layout()
