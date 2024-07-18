@@ -178,7 +178,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     scenario = [[p for p in percentiles if p != "baseline"],country_cases,constraints]
     st = ""
     for sc in scenario:
-        st += "_".join(list(set(sc)))
+        st += f"_{'_'.join(list(set(sc)))}"
 
     save_fig(os.path.join(figures,f"{reference_mineral}_{st}_scenarios.png"))
     plt.close()
