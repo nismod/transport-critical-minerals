@@ -65,9 +65,9 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         del nodes
         edges_range += edges_flows_df[flow_column].values.tolist()   
         if y == 2022:
-            layer_name = f"{year}_{p}"
+            layer_name = f"{y}_{p}"
         else:
-            layer_name = f"{year}_{p}_{e}"          
+            layer_name = f"{y}_{p}_{e}"          
         nodes_flows_df = gpd.read_file(
                             os.path.join(
                                 node_data_folder,
