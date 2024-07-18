@@ -187,9 +187,9 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                         country_cases,
                         constraints
                     ]
-        st = "_"
+        st = ""
         for sc in scenario:
-            st += '_'.join(list(set(map(str,sc))))
+            st += "_" + '_'.join(list(set(map(str,sc))))
             print (st)
 
         save_fig(os.path.join(figures,f"{reference_mineral}{st}_scenarios.png"))
