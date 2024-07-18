@@ -54,7 +54,13 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         edges_flows_df = edges_flows_df[~edges_flows_df.geometry.isna()]
         nodes_flows_df = gpd.read_parquet(os.path.join(flow_data_folder,
                             f"nodes_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
-        nodes = nodes_flows_df[nodes_flows_df["iso3"].isin(ccg_isos)]["id"].values.tolist()
+        nodes = nodes_flows_df[
+                        (
+                            nodes_flows_df["iso3"].isin(ccg_isos)
+                        ) & (
+                            nodes_flows_df["mode"].isin(["road","rail"])
+                        )
+                        ]["id"].values.tolist()
         del nodes_flows_df
         edges_flows_df = edges_flows_df[
                                 (
