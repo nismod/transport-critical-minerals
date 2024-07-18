@@ -107,7 +107,10 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                     figsize=(20,10),
                     dpi=500)
     ax_plots = ax_plots.flatten()
+    scenario = []
     for idx, (y,p,e,cnt,con,ndf,edf) in enumerate(combinations):
+        if y > 2022:
+            scenario.append((p,cnt,con))
         ax = plot_ccg_basemap(ax_plots[idx])
         legend_handles = []
         titles = ["Links annual output (tons)","Locations annual output (tons)","Location type"]
@@ -171,10 +174,16 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                 label.set_position((-4.0*width,0))
 
         ax.set_title(
-            f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario \, - \, {cnt} \, {con}$", 
+            f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario \, - \, {cnt.title()} \, {con}$", 
             fontsize=12)
     plt.tight_layout()
-    save_fig(os.path.join(figures,f"{reference_mineral}_scenarios.png"))
+    
+    scenario = list(zip(*scenario))
+    st = ""
+    for sc in scenario:
+        st += "_".join(list(set(sc)))
+
+    save_fig(os.path.join(figures,f"{reference_mineral}_{sc}_scenarios.png"))
     plt.close()
 
 
