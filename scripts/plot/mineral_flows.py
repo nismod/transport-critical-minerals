@@ -110,9 +110,10 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     for idx, (y,p,e,cnt,con,ndf,edf) in enumerate(combinations):
         ax = plot_ccg_basemap(ax_plots[idx])
         legend_handles = []
+        titles = ["Links annual output (tons)","Locations annual output (tons)"]
         legend_handles.append(plt.plot([],[],
                                         color="none",
-                                        label=f"{reference_mineral.title()} Annual output (tons)")[0])
+                                        label="Links annual output (tons)")[0])
         ax, legend = line_map_plotting_colors_width(ax,edf,flow_column,
                                             1.0,
                                             f"{reference_mineral.title()} Annual output (tons)",
@@ -123,6 +124,9 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                             width_step = 0.08,
                                             interpolation='fisher-jenks')
         legend_handles += legend
+        legend_handles.append(plt.plot([],[],
+                                        color="none",
+                                        label="Locations annual output (tons)")[0])
         ax, legend = point_map_plotting_colors_width(
                                     ax,
                                     ndf,
@@ -150,7 +154,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
 
         ## Move titles to the left 
         for item, label in zip(leg.legend_handles, leg.texts):
-            if label._text  in [infra_title,sdg_title]:
+            if label._text in titles:
                 width=item.get_window_extent(fig.canvas.get_renderer()).width
                 label.set_ha('left')
                 label.set_position((-4*width,0))
