@@ -78,6 +78,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             ] = nodes_flows_df.progress_apply(lambda x:assign_processing_type(x),axis=1)
         fcols = [c for c in nodes_flows_df.columns.values.tolist() if flow_column in c]
         nodes_flows_df[flow_column] = nodes_flows_df[fcols].sum(axis=1)
+        nodes_flows_df = nodes_flows_df[nodes_flows_df[flow_column]>0]
         nodes_range += nodes_flows_df[flow_column].values.tolist()
 
         edges_dfs.append(edges_flows_df)
@@ -101,8 +102,6 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                     dpi=500)
     ax_plots = ax_plots.flatten()
     for idx, (y,p,e,cnt,con,ndf,edf) in enumerate(combinations):
-        print (edf)
-        print (ndf)
         ax = plot_ccg_basemap(ax_plots[idx])
         ax = line_map_plotting_colors_width(ax,edf,flow_column,
                                             1.0,
