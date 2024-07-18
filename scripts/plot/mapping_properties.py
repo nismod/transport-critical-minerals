@@ -39,3 +39,4 @@ def mineral_properties():
     									"edge_color":"#525252"
     								},
     					}
+   	return mineral_properties
