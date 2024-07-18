@@ -51,7 +51,9 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             layer_name = f"{reference_mineral}_{p}_{e}"
         edges_flows_df = gpd.read_parquet(os.path.join(flow_data_folder,
                             f"edges_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
+        print (edges_flows_df)
         edges_flows_df = edges_flows_df[~edges_flows_df.geometry.isna()]
+        print (edges_flows_df)
         nodes_flows_df = gpd.read_parquet(os.path.join(flow_data_folder,
                             f"nodes_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
         nodes = nodes_flows_df[nodes_flows_df["iso3"].isin(ccg_countries)]["id"].values.tolist()
