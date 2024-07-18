@@ -166,7 +166,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                 label.set_ha('left')
                 label.set_position((-200*width,0))
 
-        ax.set_title(f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario", fontsize=14)
+        ax.set_title(f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario$", fontsize=14)
     plt.tight_layout()
     save_fig(os.path.join(figures,f"{reference_mineral}_scenarios.png"))
     plt.close()
