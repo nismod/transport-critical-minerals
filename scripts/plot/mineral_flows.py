@@ -33,7 +33,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     node_data_folder = os.path.join(output_data_path,"optimised_processing_locations")
         
     mp = mineral_properties()[reference_mineral]
-    flow_column = "final_stage_production_tons"
+    flow_column = f"{reference_mineral}_final_stage_production_tons"
     ccg_countries = pd.read_csv(os.path.join(processed_data_path,"admin_boundaries","ccg_country_codes.csv"))
     ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
     processing_types = ["Mine","Existing processing location","New processing location"]
@@ -73,7 +73,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         nodes_range += nodes_flows_df[flow_column].values.tolist()
         nodes_flows_df["processing_type"
             ] = nodes_flows_df.progress_apply(lambda x:assign_processing_type(x),axis=1)
-        fcols = [c for c in nodes_flows_df.columns.values.tolist() if f"{reference_mineral}_{flow_column}" in c]
+        fcols = [c for c in nodes_flows_df.columns.values.tolist() if {flow_column} in c]
         nodes_flows_df[flow_column] = nodes_flows_df[fcols].sum(axis=1)
         
         edges_dfs.append(edges_flows_df)
