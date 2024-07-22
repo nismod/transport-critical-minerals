@@ -95,7 +95,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         flows_gdf = gpd.read_parquet(
                             os.path.join(
-                                results_folder,
+                                input_folder,
                                 f"edges_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"))
         for row in country_codes_and_projections.itertuples():
             boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
