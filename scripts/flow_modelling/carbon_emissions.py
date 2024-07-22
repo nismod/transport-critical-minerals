@@ -108,6 +108,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 df["ton_km"] = df[f"{reference_mineral}_{trade_ton_column}"]*df["length_km"]
                 df = df.groupby(["iso3","mode"]).agg(dict(sum_cols)).reset_index()
                 all_flows.append(df)
+            print (f"Done with {row.iso3} for {reference_mineral}")
 
     all_flows = pd.concat(all_flows,axis=0,ignore_index=True)
     all_flows = pd.merge(all_flows,carbon_emission_df,how="left",on=["mode"]).fillna(0)
