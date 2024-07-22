@@ -86,8 +86,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     global_boundaries = global_boundaries[global_boundaries["ISO_A3"].isin(countries)]
     
     all_flows = []
-    sum_cols = [(c,"sum") for c in [f"{reference_mineral}_{trade_ton_column}","length_km","ton_km"]]
     for reference_mineral in reference_minerals:
+        sum_cols = [(c,"sum") for c in [f"{reference_mineral}_{trade_ton_column}","length_km","ton_km"]]
         # Find year locations
         if year == 2022:
             layer_name = f"{reference_mineral}_{percentile}"
