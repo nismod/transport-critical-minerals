@@ -103,6 +103,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 
             if len(df.index) > 0:
                 df = df.to_crs(epsg=row.projection_epsg)
+                df["iso3"] = row.iso3
                 df["length_km"] = 0.001*df.geometry.length
                 df["ton_km"] = df[f"{reference_mineral}_{trade_ton_column}"]*df["length_km"]
                 df = df.groupby(["iso3","mode"]).agg(dict(sum_cols)).reset_index()
