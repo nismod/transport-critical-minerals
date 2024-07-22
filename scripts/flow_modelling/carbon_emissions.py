@@ -86,7 +86,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     global_boundaries = global_boundaries[global_boundaries["ISO_A3"].isin(countries)]
     
     all_flows = []
-    sum_cols = [(c,"sum") for c in [trade_ton_column,"length_km","ton_km"]]
+    sum_cols = [(c,"sum") for c in ["ton_km"]]
     for reference_mineral in reference_minerals:
         # Find year locations
         if year == 2022:
@@ -116,7 +116,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     all_flows = pd.concat(all_flows,axis=0,ignore_index=True)
     all_flows = pd.merge(all_flows,carbon_emission_df,how="left",on=["mode"]).fillna(0)
     all_flows["tonsCO2eq"] = 0.001*(
-    							all_flows["ton_km"]/all_flows["veh_wt_tons"]
+    							all_flows["ton_km"]/(all_flows["veh_wt_tons"]*all_flows["load_factor"])
     							)*(0.01*all_flows["spec_energ_consump"]*all_flows["Density_kg"])
     if year == 2022:
         file_name = f"carbon_emission_totals_{year}_{percentile}"
