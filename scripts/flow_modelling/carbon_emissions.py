@@ -86,7 +86,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     global_boundaries = global_boundaries[global_boundaries["ISO_A3"].isin(countries)]
     
     all_flows = []
-    sum_cols = [(c,"sum") for c in [trade_ton_column,"length_km","ton_km"]]
+    sum_cols = [(c,"sum") for c in [f"{reference_mineral}_{trade_ton_column}","length_km","ton_km"]]
     for reference_mineral in reference_minerals:
         # Find year locations
         if year == 2022:
@@ -104,7 +104,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
             if len(df.index) > 0:
                 df = df.to_crs(epsg=row.projection_epsg)
                 df["length_km"] = 0.001*df.geometry.length
-                df["ton_km"] = df[trade_ton_column]*df["length_km"]
+                df["ton_km"] = df[f"{reference_mineral}_{trade_ton_column}"]*df["length_km"]
                 df = df.groupby(["iso3","mode"]).agg(dict(sum_cols)).reset_index()
                 all_flows.append(df)
 
