@@ -247,6 +247,7 @@ def main(config):
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
+        num_blocks = 12
         args = [
                 "parallel",
                 "-j", str(num_blocks),
