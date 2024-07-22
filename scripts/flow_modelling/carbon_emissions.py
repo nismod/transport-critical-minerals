@@ -86,8 +86,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     global_boundaries = global_boundaries[global_boundaries["ISO_A3"].isin(countries)]
     
     all_flows = []
+    sum_cols = [(c,"sum") for c in [trade_ton_column,"length_km","ton_km"]]
     for reference_mineral in reference_minerals:
-        sum_cols = [(c,"sum") for c in [f"{reference_mineral}_{trade_ton_column}","length_km","ton_km"]]
         # Find year locations
         if year == 2022:
             layer_name = f"{reference_mineral}_{percentile}"
@@ -97,16 +97,19 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                             os.path.join(
                                 input_folder,
                                 f"edges_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"))
+        flows_gdf = flows_gdf[flows_gdf["mode"].isin(["road","rail"])]
         for row in country_codes_and_projections.itertuples():
             boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
             df = gpd.clip(flows_gdf,boundary_df)
 
             if len(df.index) > 0:
                 df = df.to_crs(epsg=row.projection_epsg)
+                df.rename(columns={f"{reference_mineral}_{trade_ton_column}":trade_ton_column},inplace=True)
+                df["reference_mineral"] = reference_mineral
                 df["iso3"] = row.iso3
                 df["length_km"] = 0.001*df.geometry.length
                 df["ton_km"] = df[f"{reference_mineral}_{trade_ton_column}"]*df["length_km"]
-                df = df.groupby(["iso3","mode"]).agg(dict(sum_cols)).reset_index()
+                df = df.groupby(["reference_mineral","iso3","mode"]).agg(dict(sum_cols)).reset_index()
                 all_flows.append(df)
             print (f"Done with {row.iso3} for {reference_mineral}")
 
