@@ -419,8 +419,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         "time_hr_path"
                     ]
     grid_column = "grid"
-    grid_threshold = 2.0
-    non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas"]
+    grid_threshold = 5.0
+    non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas","waterstress"]
     non_grid_thresholds = [0.0,0.0,0.0]
     # filter_layers = ["grid","keybiodiversityareas","lastofwild","protectedareas"]
     # filter_layers = [f"distance_to_{l}_km" for l in filter_layers]

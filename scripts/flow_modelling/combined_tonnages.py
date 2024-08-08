@@ -26,7 +26,7 @@ def main(config,country_case,constraint):
     tons_input_folder = os.path.join(output_data_path,"tonnage_summaries")
     carbon_input_folder = os.path.join(output_data_path,"carbon_emissions_summaries")
 
-    results_folder = os.path.join(output_data_path,"transport_summaries")
+    results_folder = os.path.join(output_data_path,"result_summaries")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
@@ -74,26 +74,26 @@ def main(config,country_case,constraint):
     price_costs_df = []
     index_cols = ["year","reference_mineral","processing_stage"]
     for y in years:
-    	pdf = price_df[["reference_mineral","processing_stage",y]]
-    	pdf["year"] = y
-    	pdf.rename(columns={y:"price_usd_per_tonne"},inplace=True)
+        pdf = price_df[["reference_mineral","processing_stage",y]]
+        pdf["year"] = y
+        pdf.rename(columns={y:"price_usd_per_tonne"},inplace=True)
 
-    	cdf = capex_df[["reference_mineral","processing_stage",y]]
-    	cdf["year"] = y
-    	cdf.rename(columns={y:"capex_usd_per_tonne"},inplace=True)
+        cdf = capex_df[["reference_mineral","processing_stage",y]]
+        cdf["year"] = y
+        cdf.rename(columns={y:"capex_usd_per_tonne"},inplace=True)
 
-    	odf = opex_df[["reference_mineral","processing_stage",y]]
-    	odf["year"] = y
-    	odf.rename(columns={y:"opex_usd_per_tonne"},inplace=True)
+        odf = opex_df[["reference_mineral","processing_stage",y]]
+        odf["year"] = y
+        odf.rename(columns={y:"opex_usd_per_tonne"},inplace=True)
 
-    	pc_df = pd.concat(
-    					[
-    						pdf.set_index(index_cols),
-    						cdf.set_index(index_cols),
-    						odf.set_index(index_cols)
-    					],
-    					axis=1)
-    	price_costs_df.append(pc_df.reset_index())
+        pc_df = pd.concat(
+                        [
+                            pdf.set_index(index_cols),
+                            cdf.set_index(index_cols),
+                            odf.set_index(index_cols)
+                        ],
+                        axis=1)
+        price_costs_df.append(pc_df.reset_index())
 
     price_costs_df = pd.concat(price_costs_df,axis=0,ignore_index=True)
     print (price_costs_df)
@@ -218,13 +218,13 @@ def main(config,country_case,constraint):
     all_dfs["opex_usd"] = all_dfs["production_tonnes"]*all_dfs["opex_usd_per_tonne"]
     all_dfs["production_cost_usd"] = all_dfs["capex_usd"] + all_dfs["opex_usd"]
     for idx,(p,r) in enumerate(zip(["price","capex","opex"],["revenue","capex","opex"])):
-    	all_dfs[
-    		f"{p}_usd_per_tonne"
-    		] = np.where(
-    				all_dfs[f"{r}_usd"] > 0,
-    				all_dfs[f"{p}_usd_per_tonne"],
-    				0
-    		)
+        all_dfs[
+            f"{p}_usd_per_tonne"
+            ] = np.where(
+                    all_dfs[f"{r}_usd"] > 0,
+                    all_dfs[f"{p}_usd_per_tonne"],
+                    0
+            )
     all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3","processing_stage"])
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()

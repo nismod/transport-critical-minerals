@@ -34,8 +34,8 @@ def main(config):
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    input_folder = os.path.join(output_data_path,"country_summaries")
-    results_folder = os.path.join(output_data_path,"country_summaries")
+    input_folder = os.path.join(output_data_path,"result_summaries")
+    results_folder = os.path.join(output_data_path,"result_summaries")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
@@ -53,7 +53,7 @@ def main(config):
                     "Critical Minerals Results Indicators Mock-Up Final.xlsx"),
                 sheet_name="colors",index_col=[0])
     writer = pd.ExcelWriter(os.path.join(
-                                results,
+                                results_folder,
                                 "Test.xlsx")) 
     df.style.apply(
         lambda x:find_cell(x,col_one,cols,cdf),axis=1

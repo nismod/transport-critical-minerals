@@ -951,17 +951,26 @@ def get_distance_to_layer(
                         {
                             "layer_type":"KeyBiodiversityAreas",
                             "layer_file":"Environmental datasets/KeyBiodiversityAreas/Africa_KBA/Africa_KBA.shp",
+                            "layer_name":None,
                             "layer_column":"intname"
                         },
                         {
                             "layer_type":"LastOfWild",
                             "layer_file":"Environmental datasets/LastOfWildSouthernAfrica/low_southern_africa.shp",
+                            "layer_name":None,
                             "layer_column":"biome"
                         },
                         {
                             "layer_type":"ProtectedAreas",
                             "layer_file":"Environmental datasets/ProtectedAreasSouthernAfrica/protected_areas_southern_africa.shp",
+                            "layer_name":None,
                             "layer_column":"DESIG_ENG"
+                        },
+                        {
+                            "layer_type":"Waterstress",
+                            "layer_file":"water_stress/water_stress_data.gpkg",
+                            "layer_name":"future_annual",
+                            "layer_column":"bau30_ws_x_l"
                         },
             ]
 
@@ -970,8 +979,13 @@ def get_distance_to_layer(
         if lyr["layer_type"] == "grid":
             layer_gdf = get_electricity_grid_lines()
         else:
-            layer_gdf = gpd.read_file(os.path.join(processed_data_path,lyr["layer_file"]))
+            layer_gdf = gpd.read_file(
+                            os.path.join(
+                                processed_data_path,lyr["layer_file"]),
+                            layer=lyr["layer_name"])
             layer_gdf = layer_gdf.to_crs(epsg=global_epsg)
+            if lyr["layer_type"] == "Waterstress":
+                layer_gdf = layer_gdf[layer_gdf["bau30_ws_x_c"].isin([-1,3,4])]
 
         lyr_distance_df = []
         for row in country_codes_and_projections.itertuples():

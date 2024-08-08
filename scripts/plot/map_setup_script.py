@@ -55,7 +55,7 @@ def main(config):
                 fsc.append((y,s,p,c,o))
             future_scenarios.append(list(map(list,zip(*fsc))))
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("flow_set.txt","w+") as f:
@@ -79,6 +79,36 @@ def main(config):
                 "flow_set.txt",
                 "python",
                 "mineral_flows.py",
+                "{}"
+                ]
+        print ("* Start the processing of plotting flows")
+        print (args)
+        subprocess.run(args)
+
+    run_script = True
+    if run_script is True:
+        num_blocks = 0
+        with open("flow_set.txt","w+") as f:
+            for rf in reference_minerals:
+                num_blocks += 2
+                for row in future_scenarios:
+                    st = f"{rf};"
+                    for r in row[:-1]:
+                        st += f"{r};"
+                    st += f"{row[-1]}\n"
+                    f.write(st)                
+        f.close()
+
+        """Next we aggregate the flows through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ";",
+                "-a",
+                "flow_set.txt",
+                "python",
+                "zambia_mineral_flows.py",
                 "{}"
                 ]
         print ("* Start the processing of plotting flows")

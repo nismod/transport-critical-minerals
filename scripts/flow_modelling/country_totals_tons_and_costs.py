@@ -57,7 +57,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     output_data_path = config['paths']['results']
 
     input_folder = os.path.join(output_data_path,f"flow_optimisation_{country_case}_{constraint}")
-    results_folder = os.path.join(output_data_path,"country_summaries")
+    results_folder = os.path.join(output_data_path,"tonnage_summaries")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 

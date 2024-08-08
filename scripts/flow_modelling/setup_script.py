@@ -196,20 +196,6 @@ def main(config):
 
     run_script = False
     if run_script is True:
-        for lc in location_cases:
-            for opt in optimisation_type:
-                args = [
-                        "python",
-                        "combined_tonnages.py",
-                        f"{lc}",
-                        f"{opt}"
-                        ]
-                print ("* Start the processing of tonnage summaries into excel")
-                print (args)
-                subprocess.run(args)   
-
-    run_script = False
-    if run_script is True:
         num_blocks = 0
         with open("flow_set.txt","w+") as f:
             for rf in reference_minerals:
@@ -243,7 +229,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -261,6 +247,20 @@ def main(config):
         print ("* Start the processing of flow location optimisation")
         print (args)
         subprocess.run(args)
+
+    run_script = True
+    if run_script is True:
+        for lc in location_cases:
+            for opt in optimisation_type:
+                args = [
+                        "python",
+                        "combined_tonnages.py",
+                        f"{lc}",
+                        f"{opt}"
+                        ]
+                print ("* Start the processing of tonnage summaries into excel")
+                print (args)
+                subprocess.run(args)   
     
 if __name__ == '__main__':
     CONFIG = load_config()

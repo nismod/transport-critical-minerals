@@ -317,6 +317,77 @@ def plot_ccg_basemap(ax,scalebar_location=(0.12,0.05),
                     scalebar_distance=100,zorder=20)
     return ax
 
+def plot_ccg_country_basemap(ax,
+                        country_isos,
+                        boundary_isos=[],
+                        scalebar_location=(0.12,0.05),
+                        arrow_location=(0.06,0.08),
+                        scalebar_distance=100,
+                        label_size=6.0):
+    data_path = load_config()['paths']['data']
+    global_map_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
+                                    "ne_10m_admin_1_states_provinces",
+                                    "ne_10m_admin_1_states_provinces.shp"))
+    country_map_df = global_map_df[global_map_df["adm0_a3"].isin(country_isos)]
+    country_map_df = country_map_df[["adm0_a3","name","geometry"]]
+    ccg_isos = country_map_df["name"].values.tolist()
+    del global_map_df
+
+    if len(boundary_isos) > 0:
+        global_map_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
+                                    "ne_10m_admin_0_countries",
+                                    "ne_10m_admin_0_countries.shp"))
+        boundary_map_df = global_map_df[global_map_df["ADM0_A3_US"].isin(boundary_isos)]
+        boundary_map_df.rename(columns={"ADM0_A3_US":"adm0_a3","NAME":"name"},inplace=True)
+        boundary_map_df = boundary_map_df[["adm0_a3","name","geometry"]]
+
+
+    ccg_map_df = gpd.GeoDataFrame(
+                            pd.concat([country_map_df,boundary_map_df],axis=0,ignore_index=True),
+                            geometry="geometry",
+                            crs=country_map_df.crs)
+
+    global_lake_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
+                                    "ne_10m_lakes",
+                                    "ne_10m_lakes.shp"))
+
+    proj = ccrs.PlateCarree() # See more on projections here: https://scitools.org.uk/cartopy/docs/v0.15/crs/projections.html#cartopy-projections
+    bounds = country_map_df.geometry.total_bounds # this gives your boundaries of the map as (xmin,ymin,xmax,ymax)
+    xmin = bounds[0] - 2.0
+    xmax = bounds[2] + 0.5
+    ymin = bounds[1] - 0.5
+    ymax = bounds[3] + 3.0
+
+    ax = get_axes(ax,extent = (xmin,xmax,ymin,ymax),epsg=4326) # extent requires (xmin,xmax,ymin,ymax) you might have to adjust the offsets a bit manually as I have done here by +/-0.1
+    ax.set_facecolor("#c6e0ff")
+    
+    for ccg_country in ccg_map_df.itertuples():
+        iso = getattr(ccg_country,"name")
+        if iso in ccg_isos:
+            facecolor = "#d9d9d9"
+        else:
+            facecolor = "#e0e0e0"
+        ax.add_geometries(
+            [ccg_country.geometry],
+            crs=ccrs.PlateCarree(),
+            edgecolor="white",
+            facecolor=facecolor,
+            zorder=2)
+    plot_basemap_labels(ax,
+                labels=ccg_map_df,
+                label_column="name",label_size=10)
+    for lake in global_lake_df.itertuples():
+        ax.add_geometries(
+            [lake.geometry],
+            crs=ccrs.PlateCarree(),
+            edgecolor="#c6e0ff",
+            facecolor="#c6e0ff",
+            zorder=3)
+    scale_bar_and_direction(ax,arrow_location=arrow_location,
+                    scalebar_location=scalebar_location,
+                    scalebar_distance=100,zorder=20)
+    return ax
+
 def plot_point_assets(ax,nodes,colors,size,marker,zorder,label):
     proj_lat_lon = ccrs.PlateCarree()
     ax.scatter(
