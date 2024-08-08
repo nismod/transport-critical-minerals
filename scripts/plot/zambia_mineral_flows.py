@@ -144,8 +144,8 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                                     "None",
                                                     line_colors = 6*[mp["edge_color"]],
                                                     no_value_color = '#969696',
-                                                    line_steps = 6,
-                                                    width_step = 0.02,
+                                                    line_steps = 8,
+                                                    width_step = 0.01,
                                                     interpolation='fisher-jenks')
                 legend_handles += legend
 
