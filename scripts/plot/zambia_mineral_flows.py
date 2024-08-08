@@ -111,8 +111,8 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     if make_plot is True:
         combinations = new_combinations.copy()
         titles = [
-                    "$\\bf{Links \, annual \, output \,(tons)}$",
-                    "$\\bf{Locations \, annual \, output \, (tons)}$",
+                    "$\\bf{Links \, annual \, output \,(tonnes)}$",
+                    "$\\bf{Locations \, annual \, output \, (tonnes)}$",
                     "$\\bf{Location \,types}$"
                 ]
         ax_proj = get_projection(epsg=4326)
@@ -196,7 +196,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                 if label._text in include_titles:
                     width = item.get_window_extent(fig.canvas.get_renderer()).width
                     label.set_ha('left')
-                    label.set_position((-4.0*width,0))
+                    label.set_position((-10.0*width,0))
 
             ax.set_title(
                 f"$\\bf {reference_mineral.title()}: \, {y} \, - \, {p.title()} \, scenario \, - \, {cnt.title()} \, {con}$", 
