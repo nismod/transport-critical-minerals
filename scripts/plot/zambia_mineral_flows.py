@@ -118,8 +118,8 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         ax_proj = get_projection(epsg=4326)
         if len(combinations) == 3:
                 figsize = (24,8)
-            else:
-                figsize = (24,12)
+        else:
+            figsize = (24,12)
         fig, ax_plots = plt.subplots(1,len(combinations),
                         subplot_kw={'projection': ax_proj},
                         figsize=figsize,
