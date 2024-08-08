@@ -142,10 +142,10 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                                                     1.0,
                                                     "None",
                                                     "None",
-                                                    line_colors = 9*[mp["edge_color"]],
+                                                    line_colors = 10*[mp["edge_color"]],
                                                     no_value_color = '#969696',
-                                                    line_steps = 9,
-                                                    width_step = 0.01,
+                                                    line_steps = 10,
+                                                    width_step = 0.008,
                                                     interpolation='fisher-jenks')
                 legend_handles += legend
 
