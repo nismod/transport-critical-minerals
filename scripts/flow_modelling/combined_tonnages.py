@@ -176,7 +176,7 @@ def main(config,country_case,constraint):
                 """Transport costs
                 """
                 tr_df = t_df[t_df["trade_type"].isin(["Export","Domestic"])]
-            elif pt = "import_ccg":
+            elif pt == "import_ccg":
                 p_df = t_df[t_df["trade_type"] == "Import_CCG"]
                 tr_df = p_df.copy()
             else:
