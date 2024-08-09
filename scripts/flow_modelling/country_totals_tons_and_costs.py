@@ -109,7 +109,20 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         import_df = pd.read_parquet(import_file_path)
 
         export_df = export_df[export_df["trade_type"] != "Import"]
-        import_df = import_df[import_df["trade_type"] == "Import"]
+        # import_df = import_df[import_df["trade_type"] == "Import"]
+        import_df = import_df[
+                                (
+                                    import_df["export_country_code"] != import_df["import_country_code"]
+                                ) & (
+                                    import_df["import_country_code"].isin(ccg_countries)
+                                )
+                            ]
+        import_df["trade_type"
+            ] = np.where(
+                    import_df["export_country_code"].isin(ccg_countries),
+                    "Import_CCG",
+                    "Import_NonCCG"
+                    )
         for idx, (od_type,od_df) in enumerate(zip(["export","import"],[export_df,import_df])):
             if len(od_df.index) > 0:
                 od_df["total_gcosts_per_tons"] = od_df.progress_apply(lambda x:sum(x["gcost_usd_tons_path"]),axis=1)

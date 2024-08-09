@@ -44,7 +44,7 @@ def main(config,country_case,constraint):
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
     initial_tons_column = "initial_stage_production_tons"
     final_tons_column = "final_stage_production_tons" 
-    tonnage_types = ["production","export"] 
+    tonnage_types = ["production","export","import"] 
     cost_column = "total_gcosts" 
     carbon_column = "tonsCO2eq"
     cost_sum_dict = [(final_tons_column,"sum"),(cost_column,"sum")]
@@ -139,6 +139,7 @@ def main(config,country_case,constraint):
     all_sums = [
                 "production_tonnes",
                 "export_tonnes",
+                "import_tonnes",
                 "total_transport_cost_usd",
                 "average_transport_cost_usd_per_tonne",
                 carbon_column
@@ -152,34 +153,22 @@ def main(config,country_case,constraint):
         for pt in tonnage_types:
             if pt == "production":
                 p_df = t_df[t_df["trade_type"] != "Import"]
-                m_df = t_df[t_df["trade_type"].isin(["Export","Domestic"])]
-                m_df = m_df.groupby(
-                            ["reference_mineral","iso3","final_processing_stage"]
-                            ).agg(dict(cost_sum_dict)).reset_index()
-                m_df["average_transport_cost_usd_per_tonne"
-                    ] = m_df[cost_column]/m_df[final_tons_column]
-                m_df.rename(
+                metal_df = p_df[p_df["initial_processing_stage"] == 0]
+                metal_df = metal_df.groupby(
+                                ["reference_mineral","iso3","initial_processing_stage"]
+                                )[initial_tons_column].sum().reset_index()
+                metal_df.rename(
                             columns={
-                                    "final_processing_stage":"processing_stage",
-                                    cost_column:"total_transport_cost_usd"},
+                                    "initial_processing_stage":"processing_stage",
+                                    initial_tons_column:f"{pt}_tonnes"},
                             inplace=True)
-                m_df.drop(final_tons_column,axis=1,inplace=True)
-                m_df["scenario"] = l
-                m_df["year"] = y
-                all_dfs.append(m_df)
-            else:
+                metal_df["scenario"] = l
+                metal_df["year"] = y
+                all_dfs.append(metal_df)
+            elif pt == "export":
                 p_df = t_df[t_df["trade_type"] == "Export"]
-
-
-            metal_df = p_df[p_df["initial_processing_stage"] == 0]
-            metal_df = metal_df.groupby(
-                            ["reference_mineral","iso3","initial_processing_stage"]
-                            )[initial_tons_column].sum().reset_index()
-            metal_df.rename(
-                        columns={
-                                "initial_processing_stage":"processing_stage",
-                                initial_tons_column:f"{pt}_tonnes"},
-                        inplace=True)
+            else:
+                p_df = t_df[t_df["trade_type"] == "Import"]
 
             non_metal_df = p_df.groupby(
                             ["reference_mineral","iso3","final_processing_stage"]
@@ -193,9 +182,25 @@ def main(config,country_case,constraint):
             metal_df["year"] = y
             non_metal_df["scenario"] = l
             non_metal_df["year"] = y
-            all_dfs.append(metal_df)
             all_dfs.append(non_metal_df)
-
+        
+        """Transport costs
+        """
+        m_df = t_df[t_df["trade_type"].isin(["Export","Domestic"])]
+        m_df = m_df.groupby(
+                    ["reference_mineral","iso3","final_processing_stage"]
+                    ).agg(dict(cost_sum_dict)).reset_index()
+        m_df["average_transport_cost_usd_per_tonne"
+            ] = m_df[cost_column]/m_df[final_tons_column]
+        m_df.rename(
+                    columns={
+                            "final_processing_stage":"processing_stage",
+                            cost_column:"total_transport_cost_usd"},
+                    inplace=True)
+        m_df.drop(final_tons_column,axis=1,inplace=True)
+        m_df["scenario"] = l
+        m_df["year"] = y
+        all_dfs.append(m_df)
         c_df = pd.read_csv(
                 os.path.join(
                     carbon_input_folder,

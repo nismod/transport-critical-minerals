@@ -137,7 +137,7 @@ def main(config):
             ]
     column_titles = [
                         "production volume (tonnes)",
-                        "export volumn (tonnes)",
+                        "export volume (tonnes)",
                         "transport costs (USD)",
                         "transport carbon emissions (tonsCO2eq)",
                         "revenue (USD)",
