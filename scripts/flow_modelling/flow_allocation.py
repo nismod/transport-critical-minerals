@@ -182,14 +182,14 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     #             f"global_network_{year}.parquet"),
     #             index=False)
 
-    network_graph[trade_ton_column] = 0
+    network_graph[final_ton_column] = 0
     mine_routes, unassinged_routes, network_graph = od_flow_allocation_capacity_constrained(
                                         c_t_df,network_graph,
-                                        trade_ton_column,"gcost_usd_tons",
+                                        final_ton_column,"gcost_usd_tons",
                                         "distance_km","time_hr","land_border_cost_usd_tons",
                                         "id",origin_id,
                                         destination_id)
-    network_graph = network_graph[network_graph[trade_ton_column] > 0]
+    network_graph = network_graph[network_graph[final_ton_column] > 0]
     network_graph.to_csv(os.path.join(results_folder,
                 f"{reference_mineral}_total_flows_{year}_{percentile}.csv"),
                 index=False)
@@ -219,7 +219,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
         # mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned.csv",index=False)
         # del c_t_df
 
-        # print (mine_routes[[origin_id,destination_id,trade_ton_column,"gcost_usd_tons"]])
+        # print (mine_routes[[origin_id,destination_id,final_ton_column,"gcost_usd_tons"]])
         if "geometry" in mine_routes.columns.values.tolist():
             mine_routes.drop("geometry",axis=1,inplace=True)
         # mine_routes = add_node_paths(mine_routes,network_graph,"id","edge_path")
@@ -261,7 +261,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                 os.path.join(results_folder,file_name),
                 index=False)
 
-        #         for flow_column in [trade_ton_column,trade_usd_column]:
+        #         for flow_column in [final_ton_column,trade_usd_column]:
         #             for refined_type in list(set(mine_routes["final_refined_stage"].values.tolist())):
         #                 for path_type in ["full_edge_path","full_node_path"]:
         #                     f_df = get_flow_on_edges(
@@ -285,11 +285,11 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
         #             flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
         #         flows_df = flows_df.groupby(["id"]).agg(
         #                     dict(
-        #                            [(f"{reference_mineral}_{flow_column}","sum") for flow_column in [trade_ton_column,trade_usd_column]] + [(ft,"sum") for ft in flow_column_types]
+        #                            [(f"{reference_mineral}_{flow_column}","sum") for flow_column in [final_ton_column,trade_usd_column]] + [(ft,"sum") for ft in flow_column_types]
         #                         )
         #                     ).reset_index()
 
-        #         # for flow_column in [trade_ton_column,trade_usd_column]:
+        #         # for flow_column in [final_ton_column,trade_usd_column]:
         #         #     # flows_df[
         #         #     #         f"{reference_mineral}_{flow_column}"
         #         #     #         ] = flows_df[
