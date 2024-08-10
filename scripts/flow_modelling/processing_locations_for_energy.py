@@ -40,7 +40,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     """
     node_location_path = os.path.join(
                                     output_data_path,
-                                    "flow_mapping",
+                                    "location_filters",
                                     "nodes_with_location_identifiers.geoparquet"
                                     )
     nodes = gpd.read_parquet(node_location_path)
