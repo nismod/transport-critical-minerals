@@ -27,15 +27,12 @@ def main(config):
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
-    #  Get a number of input dataframes
-    baseline_year = 2022
-    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
-    (
-        pr_conv_factors_df, 
-        metal_content_factors_df, 
-        ccg_countries, mine_city_stages, _
-    ) = get_common_input_dataframes(data_type,year,baseline_year)
-    
+    # Read the finalised version of the BACI trade data
+    ccg_countries = pd.read_csv(
+                        os.path.join(processed_data_path,
+                                "baci","ccg_country_codes.csv"))
+    ccg_countries = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
+
     nodes = add_geometries_to_flows([],
                                 modes=["rail","sea","road","mine","city"],
                                 layer_type="nodes",merge=False)
