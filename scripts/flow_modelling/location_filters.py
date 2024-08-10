@@ -43,6 +43,12 @@ def main(config):
                 results_folder,
                 "nodes_with_location_identifiers.geoparquet")
             )
+    nodes.to_file(
+            os.path.join(
+                results_folder,
+                "nodes_with_location_identifiers.gpkg"),
+            driver="GPKG"
+            )
 
 
 
