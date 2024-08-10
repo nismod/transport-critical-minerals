@@ -26,7 +26,7 @@ def main(config,
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    results_folder = os.path.join(output_data_path,"flow_mapping")
+    results_folder = os.path.join(output_data_path,"flow_node_ods")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 

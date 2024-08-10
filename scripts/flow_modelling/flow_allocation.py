@@ -22,7 +22,8 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    results_folder = os.path.join(output_data_path,"flow_mapping")
+    input_folder = os.path.join(output_data_path,"flow_node_ods")
+    results_folder = os.path.join(output_data_path,"flow_od_paths")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
@@ -69,7 +70,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     # print (od_file_name)
 
     combined_trade_df = pd.read_csv(os.path.join(
-                                results_folder,
+                                input_folder,
                                 od_file_name),dtype=data_type)
     od_locations = list(
                         set(
@@ -176,7 +177,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                             port_to_land_capacity=export_port_ids,
                             distance_threshold=1500
                             )
-    print (network_graph)
+    # print (network_graph)
     # network_graph.to_parquet(os.path.join(results_folder,
     #             f"global_network_{year}.parquet"),
     #             index=False)

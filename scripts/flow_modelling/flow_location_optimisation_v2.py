@@ -389,7 +389,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    input_folder = os.path.join(output_data_path,"flow_mapping")
+    input_folder = os.path.join(output_data_path,"flow_od_paths")
     results_folder = os.path.join(output_data_path,f"flow_optimisation_{country_case}_{constraint}")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
@@ -421,7 +421,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     grid_column = "grid"
     grid_threshold = 5.0
     non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas","waterstress"]
-    non_grid_thresholds = [0.0,0.0,0.0]
+    non_grid_thresholds = [0.0,0.0,0.0,0.0]
     # filter_layers = ["grid","keybiodiversityareas","lastofwild","protectedareas"]
     # filter_layers = [f"distance_to_{l}_km" for l in filter_layers]
     # distance_thresholds = [2.0,0.0,0.0,0.0]
@@ -439,22 +439,11 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 to grid and bio-diversity layers 
     """
     node_location_path = os.path.join(
-                                    input_folder,
+                                    output_data_path,
+                                    "location_filters",
                                     "nodes_with_location_identifiers.geoparquet"
                                     )
-    if os.path.exists(node_location_path):
-        nodes = gpd.read_parquet(node_location_path)
-    else:
-        nodes = add_geometries_to_flows([],
-                                    modes=["rail","sea","road","mine","city"],
-                                    layer_type="nodes",merge=False)
-        nodes = nodes[nodes["iso3"].isin(ccg_countries)]
-        nodes = get_distance_to_layer(nodes)
-        nodes.to_parquet(
-                os.path.join(
-                    input_folder,
-                    "nodes_with_location_identifiers.geoparquet")
-                )
+    nodes = gpd.read_parquet(node_location_path)
     nodes["mode"] = np.where(nodes["mode"] == "city","city_process",nodes["mode"])
     all_flows = []
     all_optimal_locations = []
