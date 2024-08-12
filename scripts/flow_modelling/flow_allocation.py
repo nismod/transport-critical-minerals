@@ -225,9 +225,9 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
         mine_routes[initial_ton_column] = mine_routes[
                                                 initial_ton_column]*mine_routes[
                                                     final_ton_column]/mine_routes["initial_tonnage"]
+        mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned_2.csv",index=False)                                            
         mine_routes.drop("initial_tonnage",axis=1,inplace=True)
         # del c_t_df
-        mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned_2.csv",index=False)
         # print (mine_routes[[origin_id,destination_id,final_ton_column,"gcost_usd_tons"]])
         if "geometry" in mine_routes.columns.values.tolist():
             mine_routes.drop("geometry",axis=1,inplace=True)
