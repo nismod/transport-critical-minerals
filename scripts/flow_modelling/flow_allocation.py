@@ -54,8 +54,14 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                         "reference_mineral",
                         "export_country_code",
                         "import_country_code",
+                        "export_continent",
+                        "import_continent",
+                        "trade_type",
                         "initial_processing_stage",
-                        "final_processing_stage"]
+                        "final_processing_stage",
+                        "initial_processing_location",
+                        "final_processing_location",
+                        ]
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
     """Step 1: Get the OD matrix
     """
@@ -221,7 +227,7 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
                                                     final_ton_column]/mine_routes["initial_tonnage"]
         mine_routes.drop("initial_tonnage",axis=1,inplace=True)
         # del c_t_df
-
+        mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned_2.csv",index=False)
         # print (mine_routes[[origin_id,destination_id,final_ton_column,"gcost_usd_tons"]])
         if "geometry" in mine_routes.columns.values.tolist():
             mine_routes.drop("geometry",axis=1,inplace=True)
