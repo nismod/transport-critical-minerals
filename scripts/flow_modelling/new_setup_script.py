@@ -175,7 +175,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -270,7 +270,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for lc in location_cases:
             for opt in optimisation_type:

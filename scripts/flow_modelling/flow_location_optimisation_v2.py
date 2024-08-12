@@ -499,6 +499,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                                 mines_df,year,
                                                 non_grid_columns,
                                                 non_grid_thresholds)
+                print (od_df)
             df = []
             for lt in location_types:
                 l_df = od_df[od_df["initial_processing_location"] == lt]
@@ -575,6 +576,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 df.append(l_df)
 
             df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
+            print (l_df)
 
         if year > 2022:
             df.to_parquet(
