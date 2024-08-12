@@ -106,7 +106,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -138,7 +138,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
@@ -175,7 +175,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -194,7 +194,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = False
+    run_script = True
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -213,7 +213,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("flow_set.txt","w+") as f:
@@ -251,7 +251,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
