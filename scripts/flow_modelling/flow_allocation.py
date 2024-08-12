@@ -208,15 +208,18 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
     #             os.path.join(results_folder,f"{reference_mineral}.parquet"))
     if len(mine_routes) > 0:
         mine_routes = pd.concat(mine_routes,axis=0,ignore_index=True)
+        print (mine_routes)
+        mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned.csv",index=False)
         c_t_df.rename(columns={final_ton_column:"initial_tonnage"},inplace=True)
         mine_routes = pd.merge(mine_routes,
                         c_t_df[od_merge_columns + ["initial_tonnage"]],
                         how="left",on=od_merge_columns)
+        print (mine_routes)
+        mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned_2.csv",index=False)
         mine_routes[initial_ton_column] = mine_routes[
                                                 initial_ton_column]*mine_routes[
                                                     final_ton_column]/mine_routes["initial_tonnage"]
         mine_routes.drop("initial_tonnage",axis=1,inplace=True)
-        # mine_routes[c_t_df.columns.values.tolist()].to_csv("copper_ods_assigned.csv",index=False)
         # del c_t_df
 
         # print (mine_routes[[origin_id,destination_id,final_ton_column,"gcost_usd_tons"]])
