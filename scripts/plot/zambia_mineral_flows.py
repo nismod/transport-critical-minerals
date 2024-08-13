@@ -76,10 +76,11 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
                             )
                             ]
             nodes = nodes_flows_df["id"].values.tolist()
-            del nodes_flows_df
+            # del nodes_flows_df
             if len(nodes) > 0:
                 nodes_flows_df.to_parquet(os.path.join(flow_outputs,
                                 f"nodes_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
+                del nodes_flows_df
                 edges_flows_df = edges_flows_df[
                                         (
                                             edges_flows_df["from_id"].isin(nodes)
