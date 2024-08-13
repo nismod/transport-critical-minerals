@@ -115,6 +115,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                     import_df["export_country_code"] != import_df["import_country_code"]
                                 ) & (
                                     import_df["import_country_code"].isin(ccg_countries)
+                                ) & (
+                                    import_df["final_processing_location"] != "city_demand"
                                 )
                             ]
         import_df["trade_type"
