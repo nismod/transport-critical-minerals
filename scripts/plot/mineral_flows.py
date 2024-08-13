@@ -26,7 +26,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     figure_path = config['paths']['figures']
 
 
-    figures = os.path.join(figure_path,"regional_figures","flow_figures")
+    figures = os.path.join(figure_path,"regional_figures")
     if os.path.exists(figures) is False:
         os.mkdir(figures)
 
