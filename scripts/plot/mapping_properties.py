@@ -19,7 +19,7 @@ def mineral_properties():
                                         "mine_color":"#023858",
                                         "node_colors":["#023858","#0570b0","#74a9cf"],
                                         "edge_color":"#525252",
-                                        "stages":[1.0,3.0,5.0],
+                                        "stages":[1.0,4.1,5.0],
                                         "stage_colors":["#023858","#0570b0","#74a9cf"]
                                     },
                             "manganese":{

@@ -141,7 +141,7 @@ def main(config):
     columns = [
                 "production_tonnes", 
                 "export_tonnes",
-                "total_transport_cost_usd", 
+                "export_transport_cost_usd", 
                 "tonsCO2eq",
                 "revenue_usd",
                 "production_cost_usd"

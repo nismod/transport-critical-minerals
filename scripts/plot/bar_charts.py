@@ -66,12 +66,13 @@ def plot_clustered_stacked(fig,axe,
         bar_colors = list(islice(cycle(bar_colors), None, len(df)))
         # bar_colors = list(zip(bar_colors["stages"],bar_colors["stage_colors"]))
         axe = df.plot(kind="bar",
-                      linewidth=0,
+                      linewidth=1.0,
                       stacked=True,
                       ax=axe,
                       legend=False,
                       grid=False,
                       color = bar_colors,
+                      edgecolor = 'white',
                       **kwargs)  # make bar plots
 
     h,l = axe.get_legend_handles_labels() # get the handles we want to modify
@@ -105,7 +106,7 @@ def plot_clustered_stacked(fig,axe,
                                     label="$\\bf Scenarios$")[0])
     
     for idx in range(len(labels)):
-        legend_handles.append(mpatches.Patch(facecolor="#f7fcb9",
+        legend_handles.append(mpatches.Patch(facecolor="black",edgecolor='white',
                                         label=labels[idx],hatch=H*idx))
     leg = axe.legend(
                 handles=legend_handles, 
@@ -124,25 +125,34 @@ def plot_clustered_stacked(fig,axe,
 def main(config):
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
-    figures_data_path = config['paths']['figures']
+    figure_path = config['paths']['figures']
+
+    figures = os.path.join(figure_path,"regional_figures")
+    if os.path.exists(figures) is False:
+        os.mkdir(figures)
+
+    figures = os.path.join(figure_path,"regional_figures","bar_plots")
+    if os.path.exists(figures) is False:
+        os.mkdir(figures)
 
     multiply_factor = 1.0
     columns = [
                 "production_tonnes", 
                 "export_tonnes",
-                "total_transport_cost_usd", 
+                "export_transport_cost_usd", 
                 "tonsCO2eq",
                 "revenue_usd",
                 "production_cost_usd"
             ]
     column_titles = [
-                        "production volume (tonnes)",
-                        "export volume (tonnes)",
-                        "transport costs (USD)",
-                        "transport carbon emissions (tonsCO2eq)",
-                        "revenue (USD)",
-                        "production costs (USD)"
+                        "production volume (000' tonnes)",
+                        "export volume (000' tonnes)",
+                        "transport costs (million USD)",
+                        "transport carbon emissions (000' tonsCO2eq)",
+                        "revenue (million USD)",
+                        "production costs (million USD)"
                     ]
+    multiply_factors = [1.0e-3,1.0e-3,1.0e-6,1e-3,1.0e-6,1.0e-6]
     column_titles = [f"Annual {c}" for c in column_titles]
     scenarios_descriptions = [
                                 {
@@ -184,7 +194,7 @@ def main(config):
             sc_n = sd["scenario_name"]
             scenarios = sd["scenarios"]
             sc_l = sd["scenario_labels"]
-            results_folder = os.path.join(figures_data_path,f"{sc_n}_{sc_t}")
+            results_folder = os.path.join(figures,f"{sc_n}_{sc_t}")
             if os.path.exists(results_folder) == False:
                 os.mkdir(results_folder)
             data_df = pd.read_excel(
@@ -207,7 +217,7 @@ def main(config):
 
             reference_minerals = list(set(data_df["reference_mineral"].values.tolist()))
             all_properties = mineral_properties()
-            for cdx,(col,col_t) in enumerate(zip(columns,column_titles)):
+            for cdx,(col,col_t,m_t) in enumerate(zip(columns,column_titles,multiply_factors)):
                 for rf in reference_minerals:
                     df = data_df[(data_df["reference_mineral"] == rf) & (data_df["processing_stage"] > 0)]
                     stages = sorted(list(set(df["processing_stage"].values.tolist())))
@@ -221,6 +231,7 @@ def main(config):
                         # xvals = 2*(np.arange(0,len(countries)) + f)
                         for st in stages:
                             s_df = df[(df["processing_stage"] == st) & (df["scenario"] == sc)]
+                            s_df[col] = m_t*s_df[col]
                             s_df.rename(columns={col:f"Stage {st}"},inplace=True)
                             m_df = pd.merge(m_df,s_df[["iso3",f"Stage {st}"]],how="left",on=["iso3"]).fillna(0)
                         dfall.append(m_df.set_index(["iso3"]))
@@ -290,14 +301,15 @@ def main(config):
                                             title=f"{sc_n} scenario")
                 plt.grid()
                 plt.tight_layout()
-                save_fig(os.path.join(figures_data_path,
+                save_fig(os.path.join(figures,
                             f"{ptype}_{sc_t}.png"))
                 plt.close()
 
     """Delta tonnage unconstrained and constrained
     """
-    make_plot = False
+    make_plot = True
     if make_plot is True:
+        multiply_factor = 1.0e-3
         results_file = os.path.join(output_data_path,
                                 "result_summaries",
                                 "transport_totals_by_stage.xlsx")
@@ -317,6 +329,7 @@ def main(config):
                 m_df = pd.DataFrame(sorted(list(set(df["iso3"].values.tolist()))),columns=["iso3"])
                 df = df[(df["scenario"] == scenario) & (df["processing_stage"] == 0)]
                 df = df.groupby(index_cols)[tons_column].sum().reset_index()
+                df[tons_column] = multiply_factor*df[tons_column]
                 df = (df.set_index(["iso3"]).pivot(
                                         columns="reference_mineral"
                                         )[tons_column].reset_index().rename_axis(None, axis=1)).fillna(0)
@@ -332,11 +345,11 @@ def main(config):
         ax = plot_clustered_stacked(
                                 fig,ax,dfs,reference_mineral_colors,
                                 labels=["MN 2030 unconstrained","MN 2030 constrained","MN 2040 unconstrained","MN 2040 constrained"],
-                                ylabel="Annual metal content produced (tonnes)", 
+                                ylabel="Annual metal content produced (000' tonnes)", 
                                 title=f"MN scenarios - metal content production")
         plt.grid()
         plt.tight_layout()
-        save_fig(os.path.join(figures_data_path,
+        save_fig(os.path.join(figures,
                     f"MN_scenarios_unconstrained_constrained_side_by_side.png"))
         plt.close()
 
@@ -344,11 +357,11 @@ def main(config):
         ax = plot_clustered_stacked(
                                 fig,ax,delta_df,reference_mineral_colors,
                                 labels=["2030 difference", "2040 difference"],
-                                ylabel="Difference in annual metal content produced (tonnes)", 
-                                title=f"MN 2030 scenario - Unconstrained minus Constrained production of metal content")
+                                ylabel="Difference in annual metal content produced (000' tonnes)", 
+                                title=f"MN 2030 and 2040 scenarios - Unconstrained minus Constrained production of metal content")
         plt.grid()
         plt.tight_layout()
-        save_fig(os.path.join(figures_data_path,
+        save_fig(os.path.join(figures,
                     f"MN_scenarios_unconstrained_constrained_delta.png"))
         plt.close()
 
@@ -356,13 +369,19 @@ def main(config):
     """
     make_plot = True
     if make_plot is True:
+        multiply_factor = 1.0e-3
         results_file = os.path.join(output_data_path,
                                 "result_summaries",
                                 "transport_totals_by_stage.xlsx")
         constraints = ["country_unconstrained","region_unconstrained"]
         reference_mineral_colors = ["#f46d43","#fdae61","#fee08b","#c2a5cf","#66c2a5","#3288bd"]
         reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
-        scenarios = ["2030_mid_min_threshold_metal_tons","2040_mid_min_threshold_metal_tons"]
+        scenarios = [
+                        "2030_mid_min_threshold_metal_tons",
+                        "2030_mid_max_threshold_metal_tons",
+                        "2040_mid_min_threshold_metal_tons",
+                        "2040_mid_max_threshold_metal_tons"
+                    ]
         col = "export_tonnes"
         index_cols = ["reference_mineral","iso3"]
         all_properties = mineral_properties()
@@ -379,28 +398,30 @@ def main(config):
                     df = df.reset_index()
                     countries = sorted(list(set(df["iso3"].values.tolist())))
                     df = df[(df["scenario"] == scenario) & (df["processing_stage"] > 0) & (df["reference_mineral"] == rf)]  
-                    # stages = sorted(list(set(df["processing_stage"].values.tolist())))
-                    # stage_colors = all_properties[rf]["stage_colors"][:len(stages)]
-                    m_df = pd.DataFrame(countries,columns=["iso3"])
-                    # xvals = 2*(np.arange(0,len(countries)) + f)
-                    for st in stages:
-                        s_df = df[df["processing_stage"] == st]
-                        if len(s_df.index) > 0:
-                            s_df.rename(columns={col:f"Stage {st}"},inplace=True)
-                            m_df = pd.merge(m_df,s_df[["iso3",f"Stage {st}"]],how="left",on=["iso3"]).fillna(0)
-                        else:
-                            m_df[f"Stage {st}"] = 0
-                    dfall.append(m_df.set_index(["iso3"]))
+                    if len(df.index) > 0:
+                         # stages = sorted(list(set(df["processing_stage"].values.tolist())))
+                        # stage_colors = all_properties[rf]["stage_colors"][:len(stages)]
+                        m_df = pd.DataFrame(countries,columns=["iso3"])
+                        # xvals = 2*(np.arange(0,len(countries)) + f)
+                        for st in stages:
+                            s_df = df[df["processing_stage"] == st]
+                            if len(s_df.index) > 0:
+                                s_df[col] = multiply_factor*s_df[col]
+                                s_df.rename(columns={col:f"Stage {st}"},inplace=True)
+                                m_df = pd.merge(m_df,s_df[["iso3",f"Stage {st}"]],how="left",on=["iso3"]).fillna(0)
+                            else:
+                                m_df[f"Stage {st}"] = 0
+                        dfall.append(m_df.set_index(["iso3"]))
                     
             fig, ax = plt.subplots(1,1,figsize=(18,9),dpi=500)   
             ax = plot_clustered_stacked(
                                         fig,ax,dfall,stage_colors,
                                         labels=["MN 2030","MR 2030","MN 2040","MR 2040"],
-                                        ylabel="Annual export volumes (tonnes)", 
+                                        ylabel="Annual export volumes (000' tonnes)", 
                                         title=f"{rf.title()} MN and MR scenario comparisons")
             plt.grid()
             plt.tight_layout()
-            save_fig(os.path.join(figures_data_path,
+            save_fig(os.path.join(figures,
                         f"{rf}_MN_MR_comparisions_side_by_side.png"))
             plt.close()
 

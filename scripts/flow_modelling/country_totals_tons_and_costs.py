@@ -45,6 +45,7 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
         m_df["final_processing_stage"] = 1.0
         m_df["final_stage_production_tons"] = m_df["initial_stage_production_tons"]/metal_factor
         m_df["trade_type"] = "Other"
+        m_df["final_processing_location"] = "city_demand"
         m_df["import_country_code"] = m_df["export_country_code"]
         m_df.drop(["id",str(year)],axis=1,inplace=True)
         df = pd.concat([df,m_df],axis=0,ignore_index=True)
@@ -110,13 +111,20 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 
         export_df = export_df[export_df["trade_type"] != "Import"]
         # import_df = import_df[import_df["trade_type"] == "Import"]
+        # import_df = import_df[
+        #                         (
+        #                             import_df["export_country_code"] != import_df["import_country_code"]
+        #                         ) & (
+        #                             import_df["import_country_code"].isin(ccg_countries)
+        #                         ) & (
+        #                             import_df["final_processing_location"] != "city_demand"
+        #                         )
+        #                     ]
         import_df = import_df[
                                 (
                                     import_df["export_country_code"] != import_df["import_country_code"]
                                 ) & (
                                     import_df["import_country_code"].isin(ccg_countries)
-                                ) & (
-                                    import_df["final_processing_location"] != "city_demand"
                                 )
                             ]
         import_df["trade_type"
@@ -144,6 +152,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                     "export_country_code",
                                     "initial_processing_stage",
                                     "final_processing_stage",
+                                    "initial_processing_location",
+                                    "final_processing_location",
                                     "trade_type"
                                     ]).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
                     df.rename(columns={"export_country_code":"iso3"},inplace=True)
@@ -154,6 +164,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                     "import_country_code",
                                     "initial_processing_stage",
                                     "final_processing_stage",
+                                    "initial_processing_location",
+                                    "final_processing_location",
                                     "trade_type"
                                     ]).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
                     df.rename(columns={"import_country_code":"iso3"},inplace=True)

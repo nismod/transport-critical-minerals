@@ -321,6 +321,8 @@ def main(config,country_case,constraint):
     all_dfs["stage1_production_cost_usd"
         ] = all_dfs["stage_1_production_for_export_tonnes"]*(
             all_dfs["capex_usd_per_tonne"] + all_dfs["opex_usd_per_tonne"])
+    all_dfs["stage1_production_cost_usd_opex_only"
+        ] = all_dfs["stage_1_production_for_export_tonnes"]*all_dfs["opex_usd_per_tonne"]
     for idx,(p,r) in enumerate(zip(["price","capex","opex"],["revenue","capex","opex"])):
         all_dfs[
             f"{p}_usd_per_tonne"
@@ -333,12 +335,13 @@ def main(config,country_case,constraint):
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()
 
-    all_sums = ["revenue_usd","stage1_production_cost_usd","expenditure_usd"]
+    all_sums = ["revenue_usd","stage1_production_cost_usd","stage1_production_cost_usd_opex_only","expenditure_usd"]
     all_dfs = all_dfs.reset_index()
     all_dfs = all_dfs.groupby(
                 ["year","scenario","reference_mineral","iso3"]
                 ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
     all_dfs["value_added_usd"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd"] - all_dfs["expenditure_usd"]
+    all_dfs["value_added_usd_opex_only"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd_opex_only"] - all_dfs["expenditure_usd"]
     all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3"])
     all_dfs.to_excel(writer_t,sheet_name=f"{country_case}_{constraint}")
     writer_t.close()

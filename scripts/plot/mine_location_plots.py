@@ -19,7 +19,14 @@ def main(config):
     output_path = config['paths']['results']
     figure_path = config['paths']['figures']
 
-    figures = os.path.join(figure_path)
+    figures = os.path.join(figure_path,"regional_figures")
+    if os.path.exists(figures) is False:
+        os.mkdir(figures)
+
+    figures = os.path.join(figure_path,"regional_figures","mine_and_processing_locations")
+    if os.path.exists(figures) is False:
+        os.mkdir(figures)
+
     reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
     reference_minerals_columns = [f"{rf}_initial_stage_production_tons_0.0_in_country" for rf in reference_minerals]
     'copper_initial_stage_production_tons_0.0_in_country'
@@ -37,7 +44,7 @@ def main(config):
     plot_mine_sites = True
     if plot_mine_sites is True:
         scenarios = ["country_unconstrained","country_constrained"]
-        layers = ["2022_baseline","2030_mid_max_threshold_metal_tons","2040_mid_max_threshold_metal_tons"]
+        layers = ["2022_baseline","2030_mid_min_threshold_metal_tons","2040_mid_min_threshold_metal_tons"]
         layers_names = ["2022 SQ","2030 MN (or MR)","2040 MN (or MR)"]
         # scenarios = ["country_unconstrained"]
         # layers = ["2022_baseline"]

@@ -34,7 +34,13 @@ def main(config):
     output_path = config['paths']['results']
     figure_path = config['paths']['figures']
 
-    figures = os.path.join(figure_path)
+    figures = os.path.join(figure_path,"regional_figures")
+    if os.path.exists(figures) is False:
+        os.mkdir(figures)
+
+    figures = os.path.join(figure_path,"regional_figures","mine_and_processing_locations")
+    if os.path.exists(figures) is False:
+        os.mkdir(figures)
     reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
     # reference_minerals_columns = [f"{rf}_initial_stage_production_tons_0.0_in_country" for rf in reference_minerals]
     # reference_mineral_colors = [
@@ -135,7 +141,7 @@ def main(config):
                                                 label="$\\bf{Processing \, annual \, output \,(tonnes)}$")[0])
                 if sc == "country_unconstrained":
                     leg_size = 11
-                    pts = 15
+                    pts = 11
                 else:
                     leg_size = 12
                     pts = 11
