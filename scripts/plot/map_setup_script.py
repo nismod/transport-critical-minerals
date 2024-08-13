@@ -55,7 +55,7 @@ def main(config):
                 fsc.append((y,s,p,c,o))
             future_scenarios.append(list(map(list,zip(*fsc))))
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("flow_set.txt","w+") as f:
@@ -85,7 +85,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("flow_set.txt","w+") as f:
