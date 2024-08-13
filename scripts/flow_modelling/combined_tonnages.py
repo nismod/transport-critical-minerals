@@ -18,6 +18,16 @@ from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
+def get_stage_one_conversion_factors(x,pcf_df,cf_column="aggregate_ratio"):
+    ref_min = x["reference_mineral"]
+    exp_st = x["final_processing_stage"]
+    cf_df = pcf_df[pcf_df["reference_mineral"] == ref_min]
+    cf_val = cf_df[cf_df["final_refined_stage"] == str(exp_st).replace(".0","")
+                    ][cf_column].values[0]/cf_df[
+                    cf_df["final_refined_stage"] == '1'
+                    ][cf_column].values[0]
+    return cf_val
+
 def main(config,country_case,constraint):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
@@ -54,7 +64,7 @@ def main(config,country_case,constraint):
     baseline_year = 2022
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
     (
-        _, 
+        pr_conv_factors_df, 
         metal_content_factors_df, 
         _, _, _
     ) = get_common_input_dataframes(data_type,baseline_year,baseline_year)
@@ -200,28 +210,41 @@ def main(config,country_case,constraint):
                     metal_df["scenario"] = l
                     metal_df["year"] = y
                     all_dfs.append(metal_df)
-                    st_1_df = t_df[
-                                    (
-                                        t_df["trade_type"].isin(["Export"])
-                                    ) & (
-                                        t_df["initial_processing_stage"] == 1.0
-                                    )
-                                    ] 
+                    st_1_df = t_df[t_df["trade_type"].isin(["Export"])] 
+                    st_1_df["stage_one_factor"] = st_1_df.progress_apply(
+                                lambda x:get_stage_one_conversion_factors(x,pr_conv_factors_df),
+                                axis=1)
+                    st_1_df["stage_1_production_for_export_tonnes"
+                        ] = st_1_df[final_tons_column]*st_1_df["stage_one_factor"]
                     st_1_df = st_1_df.groupby(
-                                    ["reference_mineral","iso3","initial_processing_stage"]
-                                    )[initial_tons_column].sum().reset_index()
-                    st_1_df.rename(
-                                columns={
-                                        "initial_processing_stage":"processing_stage",
-                                        initial_tons_column:"stage_1_production_for_export_tonnes",
-                                        },
-                                inplace=True)
+                                    ["reference_mineral","iso3"]
+                                    )["stage_1_production_for_export_tonnes"].sum().reset_index()
+                    st_1_df["processing_stage"] = 1.0
+                    st_1_df["scenario"] = l
+                    st_1_df["year"] = y
+
+                    # st_1_df = t_df[
+                    #                 (
+                    #                     t_df["trade_type"].isin(["Export","Domestic"])
+                    #                 ) & (
+                    #                     t_df["initial_processing_stage"] == 0.0
+                    #                 )
+                    #                 ] 
+                    # st_1_df = st_1_df.groupby(
+                    #                 ["reference_mineral","iso3","initial_processing_stage"]
+                    #                 )[initial_tons_column].sum().reset_index()
+                    # st_1_df.rename(
+                    #             columns={
+                    #                     "initial_processing_stage":"processing_stage",
+                    #                     initial_tons_column:"stage_1_production_for_export_tonnes",
+                    #                     },
+                    #             inplace=True)
                     # st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["reference_mineral"])
                     # st_1_df["stage_1_production_for_export_tonnes"
                     #     ] = st_1_df[initial_tons_column]/st_1_df["metal_content_factor"]
                     # st_1_df["initial_processing_stage"] = 1.0
-                    st_1_df["scenario"] = l
-                    st_1_df["year"] = y
+                    # st_1_df["scenario"] = l
+                    # st_1_df["year"] = y
                     # st_1_df.rename(
                     #             columns={
                     #                     "initial_processing_stage":"processing_stage"
