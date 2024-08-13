@@ -35,6 +35,10 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     if os.path.exists(figures) is False:
         os.mkdir(figures)
 
+    flow_outputs = os.path.join(output_data_path,f"{'_'.join(country_codes)}_node_edge_flows")
+    if os.path.exists(flow_outputs) is False:
+        os.mkdir(flow_outputs)
+
     flow_data_folder = os.path.join(output_data_path,"node_edge_flows")
     node_data_folder = os.path.join(output_data_path,"optimised_processing_locations")
     make_plot = True
@@ -64,21 +68,26 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             edges_flows_df = edges_flows_df[~edges_flows_df.geometry.isna()]
             nodes_flows_df = gpd.read_parquet(os.path.join(flow_data_folder,
                                 f"nodes_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
-            nodes = nodes_flows_df[
+            nodes_flows_df = nodes_flows_df[
                             (
                                 nodes_flows_df["iso3"].isin(country_codes)
                             ) & (
                                 nodes_flows_df["mode"].isin(["road","rail"])
                             )
-                            ]["id"].values.tolist()
+                            ]
+            nodes = nodes_flows_df["id"].values.tolist()
             del nodes_flows_df
             if len(nodes) > 0:
+                nodes_flows_df.to_parquet(os.path.join(flow_outputs,
+                                f"nodes_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
                 edges_flows_df = edges_flows_df[
                                         (
                                             edges_flows_df["from_id"].isin(nodes)
                                         ) | (
                                             edges_flows_df["to_id"].isin(nodes)
                                         )]
+                edges_flows_df.to_parquet(os.path.join(flow_outputs,
+                                f"edges_flows_{layer_name}_{y}_{cnt}_{con}.geoparquet"))
                 del nodes
                 edges_range += edges_flows_df[flow_column].values.tolist()   
                 if y == 2022:
