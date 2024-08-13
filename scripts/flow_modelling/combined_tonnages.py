@@ -202,18 +202,24 @@ def main(config,country_case,constraint):
                     all_dfs.append(metal_df)
                     st_1_df = t_df[
                                     (
-                                        t_df["trade_type"].isin(["Export","Domestic"])
+                                        t_df["trade_type"].isin(["Export"])
                                     ) & (
-                                        t_df["initial_processing_stage"] == 0
+                                        t_df["initial_processing_stage"] == 1.0
                                     )
                                     ] 
                     st_1_df = st_1_df.groupby(
                                     ["reference_mineral","iso3","initial_processing_stage"]
                                     )[initial_tons_column].sum().reset_index()
-                    st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["reference_mineral"])
-                    st_1_df["stage_1_production_for_export_tonnes"
-                        ] = st_1_df[initial_tons_column]/st_1_df["metal_content_factor"]
-                    st_1_df["initial_processing_stage"] = 1.0
+                    st_1_df.rename(
+                                columns={
+                                        "initial_processing_stage":"processing_stage",
+                                        initial_tons_column:"stage_1_production_for_export_tonnes",
+                                        },
+                                inplace=True)
+                    # st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["reference_mineral"])
+                    # st_1_df["stage_1_production_for_export_tonnes"
+                    #     ] = st_1_df[initial_tons_column]/st_1_df["metal_content_factor"]
+                    # st_1_df["initial_processing_stage"] = 1.0
                     st_1_df["scenario"] = l
                     st_1_df["year"] = y
                     st_1_df.rename(
