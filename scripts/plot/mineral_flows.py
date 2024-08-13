@@ -25,9 +25,15 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
     output_data_path = config['paths']['results']
     figure_path = config['paths']['figures']
 
-    figures = os.path.join(figure_path)
-    if os.path.exists(figures) == False:
+
+    figures = os.path.join(figure_path,"regional_figures","flow_figures")
+    if os.path.exists(figures) is False:
         os.mkdir(figures)
+
+    figures = os.path.join(figure_path,"regional_figures","flow_figures")
+    if os.path.exists(figures) is False:
+        os.mkdir(figures)
+
 
     flow_data_folder = os.path.join(output_data_path,"node_edge_flows")
     node_data_folder = os.path.join(output_data_path,"optimised_processing_locations")
@@ -116,10 +122,10 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
         for idx, (y,p,e,cnt,con,ndf,edf) in enumerate(combinations):
             ax = plot_ccg_basemap(ax_plots[idx])
             legend_handles = []
-            titles = ["Links annual output (tons)","Locations annual output (tons)","Location type"]
+            titles = ["Links annual output (tonnes)","Locations annual output (tonnes)","Location type"]
             legend_handles.append(plt.plot([],[],
                                             color="none",
-                                            label="$\\bf{Links \, annual \, output \,(tons)}$")[0])
+                                            label="$\\bf{Links \, annual \, output \,(tonnes)}$")[0])
             ax, legend = line_map_plotting_colors_width(
                                                 ax,
                                                 edf,
@@ -136,7 +142,7 @@ def main(config,reference_mineral,years,percentiles,efficient_scales,country_cas
             legend_handles += legend
             legend_handles.append(plt.plot([],[],
                                             color="none",
-                                            label="$\\bf{Locations \, annual \, output \, (tons)}$")[0])
+                                            label="$\\bf{Locations \, annual \, output \, (tonnes)}$")[0])
             ax, legend = point_map_plotting_colors_width(
                                         ax,
                                         ndf,
