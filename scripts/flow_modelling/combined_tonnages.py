@@ -222,12 +222,12 @@ def main(config,country_case,constraint):
                     # st_1_df["initial_processing_stage"] = 1.0
                     st_1_df["scenario"] = l
                     st_1_df["year"] = y
-                    st_1_df.rename(
-                                columns={
-                                        "initial_processing_stage":"processing_stage"
-                                        },
-                                inplace=True)
-                    st_1_df.drop(initial_tons_column,axis=1,inplace=True)
+                    # st_1_df.rename(
+                    #             columns={
+                    #                     "initial_processing_stage":"processing_stage"
+                    #                     },
+                    #             inplace=True)
+                    # st_1_df.drop(initial_tons_column,axis=1,inplace=True)
                     all_dfs.append(st_1_df)
                 elif pt == "export":
                     p_df = t_df[t_df["trade_type"] == "Export"]
