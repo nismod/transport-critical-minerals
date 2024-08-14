@@ -193,7 +193,7 @@ def main(config,country_case,constraint):
     #             ]
     all_sums = [
                 "production_tonnes",
-                "stage_1_production_for_export_tonnes",
+                "stage_1_production_for_value_added_export_tonnes",
                 "export_tonnes",
                 "import_tonnes",
                 "export_transport_cost_usd",
