@@ -247,6 +247,8 @@ def main(config,country_case,constraint):
                                         t_df["trade_type"] == tt
                                     ) & (
                                         t_df["initial_processing_stage"] == 0
+                                    ) & (
+                                        t_df["final_processing_stage"] > 1.0
                                     )
                                     ] 
                         else:
@@ -266,11 +268,11 @@ def main(config,country_case,constraint):
                         st_1_df.rename(
                                     columns={
                                             "initial_processing_stage":"processing_stage",
-                                            initial_tons_column:"stage_1_production_for_export_tonnes"},
+                                            initial_tons_column:"stage_1_production_for_value_added_export_tonnes"},
                                     inplace=True)
                         st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["reference_mineral"])
-                        st_1_df["stage_1_production_for_export_tonnes"
-                            ] = st_1_df["stage_1_production_for_export_tonnes"]/st_1_df["metal_content_factor"]
+                        st_1_df["stage_1_production_for_value_added_export_tonnes"
+                            ] = st_1_df["stage_1_production_for_value_added_export_tonnes"]/st_1_df["metal_content_factor"]
                         st_1_df["processing_stage"] = 1.0
                         st_1_df.drop("metal_content_factor",axis=1,inplace=True)
                         st_1_export_df.append(st_1_df)
@@ -345,10 +347,10 @@ def main(config,country_case,constraint):
     all_dfs["opex_usd"] = all_dfs["production_tonnes"]*all_dfs["opex_usd_per_tonne"]
     all_dfs["production_cost_usd"] = all_dfs["capex_usd"] + all_dfs["opex_usd"]
     all_dfs["stage1_production_cost_usd"
-        ] = all_dfs["stage_1_production_for_export_tonnes"]*(
+        ] = all_dfs["stage_1_production_for_value_added_export_tonnes"]*(
             all_dfs["capex_usd_per_tonne"] + all_dfs["opex_usd_per_tonne"])
     all_dfs["stage1_production_cost_usd_opex_only"
-        ] = all_dfs["stage_1_production_for_export_tonnes"]*all_dfs["opex_usd_per_tonne"]
+        ] = all_dfs["stage_1_production_for_value_added_export_tonnes"]*all_dfs["opex_usd_per_tonne"]
     for idx,(p,r) in enumerate(zip(["price","capex","opex"],["revenue","capex","opex"])):
         all_dfs[
             f"{p}_usd_per_tonne"
