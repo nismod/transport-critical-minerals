@@ -198,6 +198,8 @@ def main(config,country_case,constraint):
             for pt in tonnage_types:
                 if pt == "production":
                     p_df = t_df[~t_df["trade_type"].isin(["Import_CCG","Import_NonCCG"])]
+                    """Total metal and stage 1 production - including export + domestic + other uses
+                    """
                     metal_df = p_df[p_df["initial_processing_stage"] == 0]
                     metal_df = metal_df.groupby(
                                     ["reference_mineral","iso3","initial_processing_stage"]
@@ -210,51 +212,60 @@ def main(config,country_case,constraint):
                     metal_df["scenario"] = l
                     metal_df["year"] = y
                     all_dfs.append(metal_df)
-                    st_1_df = t_df[t_df["trade_type"].isin(["Export"])] 
-                    st_1_df["stage_one_factor"] = st_1_df.progress_apply(
-                                lambda x:get_stage_one_conversion_factors(x,pr_conv_factors_df),
-                                axis=1)
-                    st_1_df["stage_1_production_for_export_tonnes"
-                        ] = st_1_df[final_tons_column]*st_1_df["stage_one_factor"]
-                    st_1_df = st_1_df.groupby(
-                                    ["reference_mineral","iso3"]
-                                    )["stage_1_production_for_export_tonnes"].sum().reset_index()
+                    st_1_df = pd.merge(metal_df,metal_content_factors_df,how="left",on=["reference_mineral"])
+                    st_1_df[f"{pt}_tonnes"
+                        ] = st_1_df[f"{pt}_tonnes"]/st_1_df["metal_content_factor"]
                     st_1_df["processing_stage"] = 1.0
-                    st_1_df["scenario"] = l
-                    st_1_df["year"] = y
-
-                    # st_1_df = t_df[
-                    #                 (
-                    #                     t_df["trade_type"].isin(["Export","Domestic"])
-                    #                 ) & (
-                    #                     t_df["initial_processing_stage"] == 0.0
-                    #                 )
-                    #                 ] 
-                    # st_1_df = st_1_df.groupby(
-                    #                 ["reference_mineral","iso3","initial_processing_stage"]
-                    #                 )[initial_tons_column].sum().reset_index()
-                    # st_1_df.rename(
-                    #             columns={
-                    #                     "initial_processing_stage":"processing_stage",
-                    #                     initial_tons_column:"stage_1_production_for_export_tonnes",
-                    #                     },
-                    #             inplace=True)
-                    # st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["reference_mineral"])
-                    # st_1_df["stage_1_production_for_export_tonnes"
-                    #     ] = st_1_df[initial_tons_column]/st_1_df["metal_content_factor"]
-                    # st_1_df["initial_processing_stage"] = 1.0
-                    # st_1_df["scenario"] = l
-                    # st_1_df["year"] = y
-                    # st_1_df.rename(
-                    #             columns={
-                    #                     "initial_processing_stage":"processing_stage"
-                    #                     },
-                    #             inplace=True)
-                    # st_1_df.drop(initial_tons_column,axis=1,inplace=True)
+                    st_1_df.drop("metal_content_factor",axis=1,inplace=True)
                     all_dfs.append(st_1_df)
+                    p_df = p_df[p_df["final_processing_stage"] > 1.0]
                 elif pt == "export":
                     p_df = t_df[t_df["trade_type"] == "Export"]
                     tr_df = t_df[t_df["trade_type"].isin(["Export","Domestic"])]
+                    
+                    trade_types = ["Export","Domestic"]
+                    st_1_export_df = []
+                    for tt in trade_types:
+                    	if tt == "Export":
+                    		st_1_df = t_df[
+                    				(
+                    					t_df["trade_type"] == tt
+                    				) & (
+                    					t_df["initial_processing_stage"] == 0
+                    				)
+                    				] 
+                    	else:
+                    		st_1_df = t_df[
+                    				(
+                    					t_df["trade_type"] == tt
+                    				) & (
+                    					t_df["initial_processing_stage"] == 0
+                    				) & (
+                    					t_df["final_processing_location"] != "city_demand"
+                    				)
+                    				] 
+
+	                    st_1_df = st_1_df_df.groupby(
+	                                    ["reference_mineral","iso3","initial_processing_stage"]
+	                                    )[initial_tons_column].sum().reset_index()
+	                    st_1_df.rename(
+	                                columns={
+	                                        "initial_processing_stage":"processing_stage",
+	                                        initial_tons_column:"stage_1_production_for_export_tonnes"},
+	                                inplace=True)
+	                    st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["reference_mineral"])
+	                    st_1_df["stage_1_production_for_export_tonnes"
+	                        ] = st_1_df["stage_1_production_for_export_tonnes"]/st_1_df["metal_content_factor"]
+	                    st_1_df["processing_stage"] = 1.0
+	                    st_1_df.drop("metal_content_factor",axis=1,inplace=True)
+	                    st_1_export_df.append(st_1_df)
+
+	                st_1_export_df = pd.concat(st_1_export_df).groupby(
+	                					["reference_mineral","iso3","processing_stage"],
+	                					as_index=False).sum()
+	                st_1_export_df["scenario"] = l
+	                st_1_export_df["year"] = y
+	                all_dfs.append(st_1_export_df)
                 # elif pt == "import_ccg":
                 #     p_df = t_df[t_df["trade_type"] == "Import_CCG"]
                 #     tr_df = p_df.copy()
