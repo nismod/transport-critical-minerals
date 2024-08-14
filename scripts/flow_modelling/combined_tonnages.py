@@ -245,7 +245,7 @@ def main(config,country_case,constraint):
                                     )
                                     ] 
 
-                        st_1_df = st_1_df_df.groupby(
+                        st_1_df = st_1_df.groupby(
                                         ["reference_mineral","iso3","initial_processing_stage"]
                                         )[initial_tons_column].sum().reset_index()
                         st_1_df.rename(
