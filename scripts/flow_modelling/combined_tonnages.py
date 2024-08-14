@@ -371,6 +371,8 @@ def main(config,country_case,constraint):
     all_dfs["value_added_usd"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd"] - all_dfs["expenditure_usd"]
     all_dfs["value_added_usd_opex_only"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd_opex_only"] - all_dfs["expenditure_usd"]
     all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
+    all_dfs["value_added_gdp_ratio"] = all_dfs["value_added_usd"]/all_dfs["gdp_usd"]
+    all_dfs["value_added_opex_only_gdp_ratio"] = all_dfs["value_added_usd_opex_only"]/all_dfs["gdp_usd"]
     all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3"])
     all_dfs.to_excel(writer_t,sheet_name=f"{country_case}_{constraint}")
     writer_t.close()
