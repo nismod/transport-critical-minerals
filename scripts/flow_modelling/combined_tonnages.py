@@ -90,8 +90,17 @@ def main(config,country_case,constraint):
                             "Final_Price_and_Costs_RP.xlsx"),
                     sheet_name = "OpEx_final",index_col=[0])
     opex_df = opex_df.reset_index()
+
+    gdp_df = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "production_costs",
+                            "GDP Projections Critical Minerals 1.xlsx"),
+                        sheet_name = "IMF")
+    gdp_df.columns = ["country_name","iso3",2022,2030,2040]
     years = [2022,2030,2040]
     price_costs_df = []
+    regional_gdp_df = []
     index_cols = ["year","reference_mineral","processing_stage"]
     for y in years:
         pdf = price_df[["reference_mineral","processing_stage",y]]
@@ -115,8 +124,14 @@ def main(config,country_case,constraint):
                         axis=1)
         price_costs_df.append(pc_df.reset_index())
 
-    price_costs_df = pd.concat(price_costs_df,axis=0,ignore_index=True)
+        g_df = gdp_df[["iso3",y]]
+        g_df["year"] = y
+        g_df[y] = 1.0e9*g_df[y]
+        g_df.rename(columns={y:"gdp_usd"},inplace=True)
+        regional_gdp_df.append(g_df)
 
+    price_costs_df = pd.concat(price_costs_df,axis=0,ignore_index=True)
+    regional_gdp_df = pd.concat(regional_gdp_df,axis=0,ignore_index=True)
 
     output_file = os.path.join(
                         results_folder,
@@ -353,6 +368,7 @@ def main(config,country_case,constraint):
                 ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
     all_dfs["value_added_usd"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd"] - all_dfs["expenditure_usd"]
     all_dfs["value_added_usd_opex_only"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd_opex_only"] - all_dfs["expenditure_usd"]
+    all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
     all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3"])
     all_dfs.to_excel(writer_t,sheet_name=f"{country_case}_{constraint}")
     writer_t.close()
