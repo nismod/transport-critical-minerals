@@ -363,11 +363,21 @@ def main(config,country_case,constraint):
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()
 
-    all_sums = ["revenue_usd","stage1_production_cost_usd","stage1_production_cost_usd_opex_only","expenditure_usd"]
+    all_sums = ["stage1_production_cost_usd","stage1_production_cost_usd_opex_only","expenditure_usd"]
     all_dfs = all_dfs.reset_index()
+    revenue_df = all_dfs[all_dfs["processing_stage"] > 1.0]
+    revenue_df = revenue_df.groupby(
+                        ["year","scenario","reference_mineral","iso3"]
+                        )["revenue_usd"].sum().reset_index()
     all_dfs = all_dfs.groupby(
                 ["year","scenario","reference_mineral","iso3"]
                 ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
+    all_dfs = pd.merge(
+                        all_dfs,
+                        revenue_df,
+                        how="left",
+                        on=["year","scenario","reference_mineral","iso3"]
+                    ).fillna(0)
     all_dfs["value_added_usd"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd"] - all_dfs["expenditure_usd"]
     all_dfs["value_added_usd_opex_only"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd_opex_only"] - all_dfs["expenditure_usd"]
     all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
