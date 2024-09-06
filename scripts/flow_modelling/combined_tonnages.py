@@ -133,6 +133,13 @@ def main(config,country_case,constraint):
     price_costs_df = pd.concat(price_costs_df,axis=0,ignore_index=True)
     regional_gdp_df = pd.concat(regional_gdp_df,axis=0,ignore_index=True)
 
+    water_intensity_df = pd.read_csv(
+                            os.path.join(
+                                processed_data_path,
+                                "mineral_usage_factors",
+                                "water_intensities_final.csv")
+                            )[["reference_mineral","processing_stage","water_intensity_m3_per_kg"]]
+
     output_file = os.path.join(
                         results_folder,
                         "transport_totals_by_stage.xlsx")
@@ -341,6 +348,11 @@ def main(config,country_case,constraint):
                     ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
 
     all_dfs = pd.merge(all_dfs,price_costs_df,how="left",on=index_cols).fillna(0)
+    all_dfs = pd.merge(all_dfs,water_intensity_df,
+                        how="left",
+                        on=["reference_mineral","processing_stage"]
+                    ).fillna(0)
+    all_dfs["water_usage_m3"] = 1.0e3*all_dfs["production_tonnes"]*all_dfs["water_intensity_m3_per_kg"]
     all_dfs["revenue_usd"] = all_dfs["export_tonnes"]*all_dfs["price_usd_per_tonne"]
     all_dfs["expenditure_usd"] = all_dfs["import_tonnes"]*all_dfs["price_usd_per_tonne"]
     all_dfs["capex_usd"] = all_dfs["production_tonnes"]*all_dfs["capex_usd_per_tonne"]

@@ -184,7 +184,7 @@ def main(config):
                                                 ]
                                 },
                     ]
-    make_plot = False
+    make_plot = True
     if make_plot is True:
         results_file = os.path.join(output_data_path,
                                 "result_summaries",
