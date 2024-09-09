@@ -77,11 +77,11 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        year = ast.literal_eval(str(sys.argv[2]))
-        percentile = ast.literal_eval(str(sys.argv[3]))
-        efficient_scale = ast.literal_eval(str(sys.argv[4]))
-        country_case = ast.literal_eval(str(sys.argv[5]))
-        constraint = ast.literal_eval(str(sys.argv[6]))
+        year = int(sys.argv[1])
+        percentile = str(sys.argv[2])
+        efficient_scale = str(sys.argv[3])
+        country_case = str(sys.argv[4])
+        constraint = str(sys.argv[5])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
