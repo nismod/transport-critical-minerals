@@ -45,7 +45,7 @@ def main(config):
     if plot_mine_sites is True:
         scenarios = ["country_unconstrained","country_constrained"]
         layers = ["2022_baseline","2030_mid_min_threshold_metal_tons","2040_mid_min_threshold_metal_tons"]
-        layers_names = ["2022 SQ","2030 MN (or MR)","2040 MN (or MR)"]
+        layers_names = ["2022","2030","2040"]
         # scenarios = ["country_unconstrained"]
         # layers = ["2022_baseline"]
         for sc in scenarios:

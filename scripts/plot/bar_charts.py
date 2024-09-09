@@ -142,17 +142,19 @@ def main(config):
                 "export_transport_cost_usd", 
                 "tonsCO2eq",
                 "revenue_usd",
-                "production_cost_usd"
+                "production_cost_usd",
+                "water_usage_m3"
             ]
     column_titles = [
-                        "production volume (000' tonnes)",
-                        "export volume (000' tonnes)",
+                        "production volume ('000 tonnes)",
+                        "export volume ('000 tonnes)",
                         "transport costs (million USD)",
                         "transport carbon emissions (000' tonsCO2eq)",
                         "revenue (million USD)",
-                        "production costs (million USD)"
+                        "production costs (million USD)",
+                        "water usage ('000 m3)"
                     ]
-    multiply_factors = [1.0e-3,1.0e-3,1.0e-6,1e-3,1.0e-6,1.0e-6]
+    multiply_factors = [1.0e-3,1.0e-3,1.0e-6,1e-3,1.0e-6,1.0e-6,1.0e-3]
     column_titles = [f"Annual {c}" for c in column_titles]
     scenarios_descriptions = [
                                 {
