@@ -12,13 +12,6 @@ from map_plotting_utils import *
 from mapping_properties import *
 from tqdm import tqdm
 tqdm.pandas()
-def assign_processing_type(x):
-    if x["mode"] == "mine":
-        return "Mine"
-    elif x["mode"] == "city":
-        return "Existing processing location"
-    else:
-        return "New processing location"
 
 def main(config,years,percentiles,efficient_scales,country_cases,constraints):
     processed_data_path = config['paths']['data']
@@ -111,7 +104,7 @@ def main(config,years,percentiles,efficient_scales,country_cases,constraints):
                                                 1.0,
                                                 "None",
                                                 "None",
-                                                line_colors = 6*["#525252"],
+                                                line_colors = 8*["#525252"],
                                                 no_value_color = '#969696',
                                                 line_steps = 8,
                                                 width_step = 0.08,
