@@ -80,7 +80,7 @@ def plot_clustered_stacked(fig,axe,
         for j, pa in enumerate(h[i:i+n_col]):
             for rect in pa.patches: # for each index
                 rect.set_x(rect.get_x() + 1 / float(n_df + 1) * i / float(n_col))
-                rect.set_hatch(H * int(i / n_col)) #edited part 
+                # rect.set_hatch(H * int(i / n_col)) #edited part 
                 rect.set_width(1 / float(n_df + 1))
 
     # sec.set_xticks([5, 15, 25], labels=['\nOughts', '\nTeens', '\nTwenties'])
@@ -107,28 +107,34 @@ def plot_clustered_stacked(fig,axe,
     axe.set_ylabel(ylabel,fontweight='bold',fontsize=15)
     axe.tick_params(axis='y',labelsize=15)
     axe.set_title(title,fontweight='bold',fontsize=18)
+    ymin, ymax = axe.get_ylim()
+    axe.set_ylim(ymin,1.2*ymax)
 
     legend_handles = []
     titles = ["$\\bf{Mineral \, processing \, stages}$","$\\bf Scenarios$"]
-    legend_handles.append(axe.plot([],[],
-                                    color="none",
-                                    label="$\\bf{Mineral \, processing \, stages}$")[0])
+    # legend_handles.append(axe.plot([],[],
+    #                                 color="none",
+    #                                 label="$\\bf{Mineral \, processing \, stages}$")[0])
     for idx,(bc,bl) in enumerate(zip(bar_colors,l[:n_col])):
         legend_handles.append(mpatches.Patch(color=bc,
                                         label=bl))
 
     # l1 = axe.legend(h[:n_col], l[:n_col], loc="upper right",prop={'size':15,'weight':'bold'})
-    legend_handles.append(axe.plot([],[],
-                                    color="none",
-                                    label="$\\bf Scenarios$")[0])
+    # legend_handles.append(axe.plot([],[],
+    #                                 color="none",
+    #                                 label="$\\bf Scenarios$")[0])
     
-    for idx in range(len(labels)):
-        legend_handles.append(mpatches.Patch(facecolor="#000000",edgecolor='white',
-                                        label=labels[idx],hatch=H*idx))
+    # for idx in range(len(labels)):
+    #     legend_handles.append(mpatches.Patch(facecolor="#000000",edgecolor='white',
+    #                                     label=labels[idx],hatch=H*idx))
     leg = axe.legend(
                 handles=legend_handles, 
                 fontsize=15, 
                 loc='upper left',
+                # bbox_to_anchor=(0.7,-0.1),
+                ncols=3,
+                title="$\\bf{Mineral \, processing \, stages}$",
+                title_fontsize=15,
                 frameon=False)
 
     # Move titles to the left 
@@ -173,36 +179,64 @@ def main(config):
                     ]
     multiply_factors = [1.0e-3,1.0e-3,1.0e-6,1,1.0e-6,1.0e-6]
     stage_colors = [
-                    "#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf","#999999"
+                    "#fed976","#fdae6b","#fc8d59","#8c6bb1","#fb6a4a","#810f7c","#cb181d","#cc4c02","#7f0000"
                     ]
     column_titles = [f"Annual {c}" for c in column_titles]
     scenarios_descriptions = [
                                 {
                                     "scenario_type":"country_unconstrained",
-                                    "scenario_name":"MN",
+                                    "scenario_name":"Mid National",
                                     "scenarios":[
                                                     "2022_baseline",
                                                     "2030_mid_min_threshold_metal_tons",
                                                     "2040_mid_min_threshold_metal_tons"
                                                 ],
                                     "scenario_labels":[
-                                                    "2022 SQ",
-                                                    "2030 MN",
-                                                    "2040 MN"
+                                                    "2022",
+                                                    "2030",
+                                                    "2040"
                                                 ]
                                 },
                                 {
                                     "scenario_type":"region_unconstrained",
-                                    "scenario_name":"MR",
+                                    "scenario_name":"Mid Regional",
                                     "scenarios":[
                                                     "2022_baseline",
                                                     "2030_mid_max_threshold_metal_tons",
                                                     "2040_mid_max_threshold_metal_tons"
                                                 ],
                                     "scenario_labels":[
-                                                    "2022 SQ",
-                                                    "2030 MR",
-                                                    "2040 MR"
+                                                    "2022",
+                                                    "2030",
+                                                    "2040"
+                                                ]
+                                },
+                                {
+                                    "scenario_type":"country_constrained",
+                                    "scenario_name":"Mid National",
+                                    "scenarios":[
+                                                    "2022_baseline",
+                                                    "2030_mid_min_threshold_metal_tons",
+                                                    "2040_mid_min_threshold_metal_tons"
+                                                ],
+                                    "scenario_labels":[
+                                                    "2022",
+                                                    "2030",
+                                                    "2040"
+                                                ]
+                                },
+                                {
+                                    "scenario_type":"region_constrained",
+                                    "scenario_name":"Mid Regional",
+                                    "scenarios":[
+                                                    "2022_baseline",
+                                                    "2030_mid_max_threshold_metal_tons",
+                                                    "2040_mid_max_threshold_metal_tons"
+                                                ],
+                                    "scenario_labels":[
+                                                    "2022",
+                                                    "2030",
+                                                    "2040"
                                                 ]
                                 },
                     ]

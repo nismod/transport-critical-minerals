@@ -85,7 +85,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         with open("aggregated_flow_set.txt","w+") as f:
@@ -143,6 +143,33 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
+    run_script = True
+    if run_script is True:
+        num_blocks = 8
+        with open("aggregated_flow_set.txt","w+") as f:
+            for row in future_scenarios:
+                st = ""
+                for r in row[:-1]:
+                    st += f"{r};"
+                st += f"{row[-1]}\n"
+                f.write(st)                
+        f.close()
+
+        """Next we aggregate the flows through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ";",
+                "-a",
+                "aggregated_flow_set.txt",
+                "python",
+                "zambia_agg_flows.py",
+                "{}"
+                ]
+        print ("* Start the processing of plotting flows")
+        print (args)
+        subprocess.run(args)
     
 if __name__ == '__main__':
     CONFIG = load_config()
