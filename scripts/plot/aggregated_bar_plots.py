@@ -179,7 +179,7 @@ def main(config):
     #                 "#fed976","#fdae6b","#fc8d59","#8c6bb1","#fb6a4a","#810f7c","#cb181d","#cc4c02","#7f0000"
     #                 ]
     stage_colors = [
-                    "#fed976","#8c6bb1","#7f0000","#fb6a4a","#810f7c","#cb181d","#cc4c02"
+                    "#fed976","#fb6a4a","#7f0000","#fb6a4a","#810f7c","#cb181d","#cc4c02"
                     ]
     column_titles = [f"Annual {c}" for c in column_titles]
     scenarios_descriptions = [
