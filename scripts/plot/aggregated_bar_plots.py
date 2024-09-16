@@ -274,22 +274,22 @@ def main(config):
                 fig, ax = plt.subplots(1,1,figsize=(18,9),dpi=500)
                 dfall = []
                 df = data_df[data_df["processing_stage"] > 0]
-                df = df.groupby(["scenario","reference_mineral","processing_stage"])[col].sum().reset_index()
+                df = df.groupby(["scenario","reference_mineral","processing_type"])[col].sum().reset_index()
                 df = df[df[col] > 0]
-                stages = sorted(list(set(df["processing_stage"].values.tolist())))
+                stages = sorted(list(set(df["processing_type"].values.tolist())))
                 stage_colors = stage_colors[:len(stages)]
                 for sc in scenarios:
                     m_df = pd.DataFrame(reference_minerals,columns=["reference_mineral"])
                     for st in stages:
-                        s_df = df[(df["processing_stage"] == st) & (df["scenario"] == sc)]
+                        s_df = df[(df["processing_type"] == st) & (df["scenario"] == sc)]
                         if len(s_df.index) > 0:
                             s_df[col] = m_t*s_df[col]
-                            s_df.rename(columns={col:f"Stage {st}"},inplace=True)
+                            s_df.rename(columns={col:f"{st}"},inplace=True)
                             m_df = pd.merge(
-                                            m_df,s_df[["reference_mineral",f"Stage {st}"]],
+                                            m_df,s_df[["reference_mineral",f"{st}"]],
                                             how="left",on=["reference_mineral"]).fillna(0)
                         else:
-                            m_df[f"Stage {st}"] = 0.0
+                            m_df[f"{st}"] = 0.0
                     dfall.append(m_df.set_index(["reference_mineral"]))
                 ax = plot_clustered_stacked(
                                             fig,ax,dfall,stage_colors,
