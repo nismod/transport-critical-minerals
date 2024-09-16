@@ -175,8 +175,11 @@ def main(config):
                         "production costs (billion USD)"
                     ]
     multiply_factors = [1.0e-6,1.0e-6,1.0e-9,1,1.0e-9,1.0e-9]
+    # stage_colors = [
+    #                 "#fed976","#fdae6b","#fc8d59","#8c6bb1","#fb6a4a","#810f7c","#cb181d","#cc4c02","#7f0000"
+    #                 ]
     stage_colors = [
-                    "#fed976","#fdae6b","#fc8d59","#8c6bb1","#fb6a4a","#810f7c","#cb181d","#cc4c02","#7f0000"
+                    "#fed976","#8c6bb1","#7f0000","#fb6a4a","#810f7c","#cb181d","#cc4c02"
                     ]
     column_titles = [f"Annual {c}" for c in column_titles]
     scenarios_descriptions = [
