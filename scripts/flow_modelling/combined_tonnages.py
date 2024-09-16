@@ -140,6 +140,12 @@ def main(config,country_case,constraint):
                                 "water_intensities_final.csv")
                             )[["reference_mineral","processing_stage","water_intensity_m3_per_kg"]]
 
+    stage_names_df = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "mineral_usage_factors",
+                            "stage_mapping.xlsx"),
+                        sheet_name="stage_maps")[["reference_mineral","processing_stage","processing_type"]]
     output_file = os.path.join(
                         results_folder,
                         "transport_totals_by_stage.xlsx")
@@ -371,7 +377,8 @@ def main(config,country_case,constraint):
                     all_dfs[f"{p}_usd_per_tonne"],
                     0
             )
-    all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3","processing_stage"])
+    all_dfs = pd.merge(all_dfs,stage_names_df,how="left",on=["reference_mineral","processing_stage"])
+    all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3","processing_type","processing_stage"])
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()
 

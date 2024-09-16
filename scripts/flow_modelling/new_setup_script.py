@@ -77,7 +77,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -93,7 +93,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -108,9 +108,9 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
-        reference_minerals = ["cobalt"]
+        # reference_minerals = ["cobalt"]
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
             for rf in reference_minerals:
@@ -141,7 +141,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
@@ -178,7 +178,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -197,7 +197,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -216,9 +216,9 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
-        reference_minerals = ["cobalt"]
+        # reference_minerals = ["cobalt"]
         num_blocks = 0
         with open("flow_set.txt","w+") as f:
             for rf in reference_minerals:
@@ -255,7 +255,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -288,7 +288,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
     
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
