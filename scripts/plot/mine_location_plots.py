@@ -29,7 +29,6 @@ def main(config):
 
     reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
     reference_minerals_columns = [f"{rf}_initial_stage_production_tons_0.0_in_country" for rf in reference_minerals]
-    'copper_initial_stage_production_tons_0.0_in_country'
     # reference_mineral_colors = [
     #                             "#662506","#023858","#4d004b",
     #                             "#004529","#000000","#67000d",
@@ -51,10 +50,11 @@ def main(config):
         for sc in scenarios:
             if sc == "country_constrained":
                 lyrs = layers[1:]
-                lyr_nm = [f"{l} - Constrained" for l in layers_names[1:]]
+                # lyr_nm = [f"{l} - Constrained" for l in layers_names[1:]]
+                lyr_nm = layers_names[1:]
             else:
                 lyrs = layers
-                lyr_nm = [f"{l} - Unconstrained" for l in layers_names]
+                lyr_nm = layers_names
             dfs = []
             weights = []
             minerals_classes = []
@@ -88,9 +88,6 @@ def main(config):
                 ax = plot_ccg_basemap(ax_plots[idx])
                 legend_handles = []
                 titles = ["$\\bf{Mine \, annual \, output \,(tonnes)}$","$\\bf{Minerals \, produced}$"]
-                legend_handles.append(plt.plot([],[],
-                                                color="none",
-                                                label="$\\bf{Mine \, annual \, output \,(tonnes)}$")[0])
                 ax,legend = point_map_plotting_colors_width(ax,df,
                                     "total_tons",
                                     weights,
@@ -99,7 +96,7 @@ def main(config):
                                     point_colors=reference_mineral_colors,
                                     point_labels=minerals,
                                     point_zorder=[6+n for n in range(len(minerals))],
-                                    point_steps=12,
+                                    point_steps=10,
                                     width_step = 40.0,
                                     interpolation = 'fisher-jenks',
                                     legend_label="Annual output (tonnes)",
@@ -108,33 +105,58 @@ def main(config):
                                     no_value_label="No output",
                                     no_value_color="#ffffff"
                                     )
-                legend_handles += legend
-                legend_handles.append(plt.plot([],[],
-                                                color="none",
-                                                label="$\\bf{Minerals \, produced}$")[0])
-                for jdx,(l,nc) in enumerate(zip(minerals,reference_mineral_colors[:len(minerals)])):
-                    legend_handles.append(mpatches.Patch(color=nc,
-                                                label=l))
-                if sc == "country_unconstrained":
-                    leg_size = 11
-                else:
+                if idx == len(dfs) - 2:
+                    # legend_handles.append(plt.plot([],[],
+                    #                                 color="none",
+                    #                                 label="$\\bf{Mine \, annual \, output \,(tonnes)}$")[0])
+                    legend_handles += legend
+                    ncols = 1
                     leg_size = 13
-                leg = ax.legend(
-                    handles=legend_handles, 
-                    fontsize=leg_size,
-                    ncol = 2, 
-                    loc='lower right',
-                    frameon=False)
-                # Move titles to the left 
-                for item, label in zip(leg.legend_handles, leg.texts):
-                    if label._text in titles:
-                        width = item.get_window_extent(fig.canvas.get_renderer()).width
-                        label.set_ha('left')
-                        label.set_position((-10.0*width,0))
+                    legend_title = titles[0]
+                elif idx == len(dfs) - 1:
+                    # legend_handles.append(plt.plot([],[],
+                    #                                 color="none",
+                    #                                 label="$\\bf{Minerals \, produced}$")[0])
+                    for jdx,(l,nc) in enumerate(zip(minerals,reference_mineral_colors[:len(minerals)])):
+                        legend_handles.append(mpatches.Patch(color=nc,
+                                                    label=l))
+                    ncols = 1
+                    leg_size = 14
+                    legend_title = titles[1]
+                # if sc == "country_unconstrained":
+                #     leg_size = 15
+                # else:
+                #     leg_size = 15
+                if len(legend_handles) > 0:
+                    leg = ax.legend(
+                        handles=legend_handles, 
+                        fontsize=leg_size,
+                        title=legend_title,
+                        title_fontsize=14,
+                        ncol = ncols, 
+                        loc='lower right',
+                        frameon=False)
+                    # Move titles to the left 
+                    for item, label in zip(leg.legend_handles, leg.texts):
+                        if label._text in titles:
+                            width = item.get_window_extent(fig.canvas.get_renderer()).width
+                            label.set_ha('left')
+                            label.set_position((-10.0*width,0))
+
+                total_tons = 1.0e-6*df["total_tons"].sum()
+                ax.text(
+                        0.05,
+                        0.20,
+                        f"Total tonnes = {total_tons:,.2f} million",
+                        horizontalalignment='left',
+                        transform=ax.transAxes,
+                        size=18,
+                        weight='bold'
+                        )
 
                 ax.set_title(
                     nm, 
-                    fontsize=14,fontweight="bold")
+                    fontsize=24,fontweight="bold")
 
             plt.tight_layout()
             save_fig(os.path.join(figures,f"mine_maps_{sc}.png"))

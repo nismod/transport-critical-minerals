@@ -396,7 +396,7 @@ def main(config):
                     df = pd.read_excel(
                                         results_file,
                                         sheet_name=cs,
-                                        index_col=[0,1,2,3])
+                                        index_col=[0,1,2,3,4])
                     df = df.reset_index()
                     countries = sorted(list(set(df["iso3"].values.tolist())))
                     df = df[(df["scenario"] == scenario) & (df["processing_stage"] > 0) & (df["reference_mineral"] == rf)]  

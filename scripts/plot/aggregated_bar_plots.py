@@ -18,12 +18,12 @@ from mapping_properties import *
 from tqdm import tqdm
 tqdm.pandas()
 
-mpl.style.use('ggplot')
-mpl.rcParams['font.size'] = 10.
-mpl.rcParams['font.family'] = 'tahoma'
-mpl.rcParams['axes.labelsize'] = 12.
-mpl.rcParams['xtick.labelsize'] = 10.
-mpl.rcParams['ytick.labelsize'] = 10.
+# mpl.style.use('ggplot')
+# mpl.rcParams['font.size'] = 10.
+# mpl.rcParams['font.family'] = 'tahoma'
+# mpl.rcParams['axes.labelsize'] = 12.
+# mpl.rcParams['xtick.labelsize'] = 10.
+# mpl.rcParams['ytick.labelsize'] = 10.
 
 
 def plot_clustered_stacked(fig,axe,
@@ -103,6 +103,8 @@ def plot_clustered_stacked(fig,axe,
     #                 [f"\n{d}" for d in df.index.values.tolist()], 
     #                 rotation = 0,fontsize=15,fontweight="bold"
     #                 )
+    axe.set_axisbelow(True)
+    axe.grid(which='major', axis='x', linestyle='-', zorder=0)
     axe.set_xlabel('')
     axe.set_ylabel(ylabel,fontweight='bold',fontsize=15)
     axe.tick_params(axis='y',labelsize=15)
@@ -256,13 +258,13 @@ def main(config):
             data_df = pd.read_excel(
                             results_file,
                             sheet_name=sc_t,
-                            index_col=[0,1,2,3])
+                            index_col=[0,1,2,3,4])
             data_df = data_df.reset_index()
             if sc_t != "country_unconstrained":
                 baseline_df = pd.read_excel(
                                 results_file,
                                 sheet_name="country_unconstrained",
-                                index_col=[0,1,2,3])
+                                index_col=[0,1,2,3,4])
                 baseline_df = baseline_df.reset_index()
                 data_df = pd.concat(
                                 [

@@ -55,7 +55,7 @@ def main(config):
                                 "#d4b9da","#000000","#016c59","#014636"
                                 ]
     all_properties = mineral_properties()
-    plot_mine_sites = True
+    plot_mine_sites = False
     if plot_mine_sites is True:
         scenarios_descriptions = [
                                     {
@@ -196,57 +196,70 @@ def main(config):
     plot_mine_sites = True
     if plot_mine_sites is True:
         scenarios_descriptions = [
+                                    # {
+                                    #     "type":"2030_unconstrained",
+                                    #     "scenarios":[
+                                    #                     "country_unconstrained",
+                                    #                     "region_unconstrained"
+                                    #                 ],
+                                    #     "scenario_names":["country","region"],
+                                    #     "layers":[
+                                    #                 "2030_mid_min_threshold_metal_tons",
+                                    #                 "2030_mid_max_threshold_metal_tons"],
+                                    #     "layers_names":["2030 Mid National",
+                                    #                     "2030 Mid Regional"]
+                                    # },
+                                    # {
+                                    #     "type":"2030_constrained",
+                                    #     "scenarios":[
+                                    #                     "country_constrained",
+                                    #                     "region_constrained"
+                                    #                 ],
+                                    #     "scenario_names":["country","region"],
+                                    #     "layers":[
+                                    #                 "2030_mid_min_threshold_metal_tons",
+                                    #                 "2040_mid_max_threshold_metal_tons"],
+                                    #     "layers_names":["2030 Mid National",
+                                    #                     "2030 Mid Regional"]
+                                    # },
+                                    # {
+                                    #     "type":"2040_unconstrained",
+                                    #     "scenarios":[
+                                    #                     "country_unconstrained",
+                                    #                     "region_unconstrained"
+                                    #                 ],
+                                    #     "scenario_names":["country","region"],
+                                    #     "layers":[
+                                    #                 "2040_mid_min_threshold_metal_tons",
+                                    #                 "2040_mid_max_threshold_metal_tons"],
+                                    #     "layers_names":["2040 Mid National",
+                                    #                     "2040 Mid Regional"]
+                                    # },
+                                    # {
+                                    #     "type":"2040_constrained",
+                                    #     "scenarios":[
+                                    #                     "country_constrained",
+                                    #                     "region_constrained"
+                                    #                 ],
+                                    #     "scenario_names":["country","region"],
+                                    #     "layers":[
+                                    #                 "2040_mid_min_threshold_metal_tons",
+                                    #                 "2040_mid_max_threshold_metal_tons"],
+                                    #     "layers_names":["2040 Mid National",
+                                    #                     "2040 Mid Regional"]
+                                    # },
                                     {
-                                        "type":"2030_unconstrained",
+                                        "type":"2040_unconstrained_constrained",
                                         "scenarios":[
                                                         "country_unconstrained",
-                                                        "region_unconstrained"
+                                                        "country_constrained"
                                                     ],
-                                        "scenario_names":["country","region"],
-                                        "layers":[
-                                                    "2030_mid_min_threshold_metal_tons",
-                                                    "2030_mid_max_threshold_metal_tons"],
-                                        "layers_names":["2030 Mid National - Unconstrained",
-                                                        "2030 Mid Regional - Unconstrained"]
-                                    },
-                                    {
-                                        "type":"2030_constrained",
-                                        "scenarios":[
-                                                        "country_constrained",
-                                                        "region_constrained"
-                                                    ],
-                                        "scenario_names":["country","region"],
-                                        "layers":[
-                                                    "2030_mid_min_threshold_metal_tons",
-                                                    "2040_mid_max_threshold_metal_tons"],
-                                        "layers_names":["2030 Mid National - Constrained",
-                                                        "2030 Mid Regional - Constrained"]
-                                    },
-                                    {
-                                        "type":"2040_unconstrained",
-                                        "scenarios":[
-                                                        "country_unconstrained",
-                                                        "region_unconstrained"
-                                                    ],
-                                        "scenario_names":["country","region"],
+                                        "scenario_names":["country","country"],
                                         "layers":[
                                                     "2040_mid_min_threshold_metal_tons",
-                                                    "2040_mid_max_threshold_metal_tons"],
-                                        "layers_names":["2040 Mid National - Unconstrained",
-                                                        "2040 Mid Regional - Unconstrained"]
-                                    },
-                                    {
-                                        "type":"2040_constrained",
-                                        "scenarios":[
-                                                        "country_constrained",
-                                                        "region_constrained"
-                                                    ],
-                                        "scenario_names":["country","region"],
-                                        "layers":[
-                                                    "2040_mid_min_threshold_metal_tons",
-                                                    "2040_mid_max_threshold_metal_tons"],
-                                        "layers_names":["2040 Mid National - Constrained",
-                                                        "2040 Mid Regional - Constrained"]
+                                                    "2040_mid_min_threshold_metal_tons"],
+                                        "layers_names":["2040 Unconstrained",
+                                                        "2040 Constrained"]
                                     },
                                 ]
         # scenarios = ["country_unconstrained"]
@@ -274,7 +287,11 @@ def main(config):
                                             "optimised_processing_locations",
                                             f"node_locations_for_energy_conversion_{sc}.gpkg"),
                                             layer=lyr)
-                mine_sites_df = mine_sites_df[~mine_sites_df["mode"].isin(["mine","city"])]
+                if styp != "2040_unconstrained_constrained":
+                    mine_sites_df = mine_sites_df[~mine_sites_df["mode"].isin(["mine","city"])]
+                else:
+                    mine_sites_df = mine_sites_df[mine_sites_df["mode"] == "mine"]
+                    reference_minerals_columns = [f"{rf}_initial_stage_production_tons_0.0_in_country" for rf in reference_minerals]
                 mine_columns = [m for m in mine_sites_df.columns.values.tolist() if m in reference_minerals_columns]
                 mine_sites_df["total_tons"] = mine_sites_df[mine_columns].sum(axis=1)
                 mine_sites_df["mineral_types"] = mine_sites_df.progress_apply(lambda x:get_stages(x,mine_columns),axis=1)
@@ -302,9 +319,13 @@ def main(config):
                 #             "$\\bf{Processing \, annual \, output \,(tonnes)}$"
                 #         ]
 
+                # titles = [
+                #             "$\\bf{Processing \, annual \, output \,(tonnes)}$",
+                #             "$\\bf{Minerals \, processed}$"
+                #         ]
                 titles = [
-                            "$\\bf{Processing \, annual \, output \,(tonnes)}$",
-                            "$\\bf{Minerals \, processed}$"
+                            "$\\bf{Mine \, annual \, output \,(tonnes)}$",
+                            "$\\bf{Minerals \, produced}$"
                         ]
 
 
@@ -315,21 +336,21 @@ def main(config):
                 #     legend_handles.append(mpatches.Patch(color=nc,
                 #                                 label=l))
 
-                legend_handles.append(plt.plot([],[],
-                                                color="none",
-                                                label="$\\bf{Processing \, annual \, output \,(tonnes)}$")[0])
-                if styp == "2030_unconstrained":
-                    leg_size = 12
-                    pts = 12
-                elif styp == "2040_unconstrained":
-                    leg_size = 10
-                    pts = 16
-                elif styp == "2040_constrained":
-                    leg_size = 11
-                    pts = 13
-                else:
-                    leg_size = 12
-                    pts = 12
+                # legend_handles.append(plt.plot([],[],
+                #                                 color="none",
+                #                                 label="$\\bf{Processing \, annual \, output \,(tonnes)}$")[0])
+                # if styp == "2030_unconstrained":
+                #     leg_size = 12
+                #     pts = 12
+                # elif styp == "2040_unconstrained":
+                #     leg_size = 10
+                #     pts = 16
+                # elif styp == "2040_constrained":
+                #     leg_size = 11
+                #     pts = 13
+                # else:
+                #     leg_size = 12
+                #     pts = 12
 
                 ax,legend = point_map_plotting_colors_width(ax,df,
                                     "total_tons",
@@ -339,7 +360,7 @@ def main(config):
                                     point_colors=reference_mineral_colors,
                                     point_labels=minerals,
                                     point_zorder=[6+n for n in range(len(minerals))],
-                                    point_steps=pts,
+                                    point_steps=12,
                                     width_step = 40.0,
                                     interpolation = 'fisher-jenks',
                                     legend_label="Annual output (tonnes)",
@@ -348,32 +369,57 @@ def main(config):
                                     no_value_label="No output",
                                     no_value_color="#ffffff"
                                     )
-                legend_handles += legend
-                legend_handles.append(plt.plot([],[],
-                                                color="none",
-                                                label="$\\bf{Minerals \, processed}$")[0])
-                for jdx,(l,nc) in enumerate(zip(minerals,reference_mineral_colors[:len(minerals)])):
-                    legend_handles.append(mpatches.Patch(color=nc,
-                                                label=l))
-                leg = ax.legend(
-                    handles=legend_handles, 
-                    fontsize=leg_size,
-                    ncol = 2, 
-                    loc='lower right',
-                    frameon=False)
-                # Move titles to the left 
-                for item, label in zip(leg.legend_handles, leg.texts):
-                    if label._text in titles:
-                        width = item.get_window_extent(fig.canvas.get_renderer()).width
-                        label.set_ha('left')
-                        label.set_position((-10.0*width,0))
-
+                if idx == len(dfs) - 2:
+                    # legend_handles.append(plt.plot([],[],
+                    #                                 color="none",
+                    #                                 label="$\\bf{Mine \, annual \, output \,(tonnes)}$")[0])
+                    legend_handles += legend
+                    ncols = 1
+                    leg_size = 13
+                    legend_title = titles[0]
+                elif idx == len(dfs) - 1:
+                    # legend_handles.append(plt.plot([],[],
+                    #                                 color="none",
+                    #                                 label="$\\bf{Minerals \, produced}$")[0])
+                    for jdx,(l,nc) in enumerate(zip(minerals,reference_mineral_colors[:len(minerals)])):
+                        legend_handles.append(mpatches.Patch(color=nc,
+                                                    label=l))
+                    ncols = 1
+                    leg_size = 14
+                    legend_title = titles[1]
+                
+                if len(legend_handles) > 0:
+                    leg = ax.legend(
+                        handles=legend_handles, 
+                        fontsize=leg_size,
+                        title=legend_title,
+                        title_fontsize=14,
+                        ncol = ncols, 
+                        loc='lower right',
+                        frameon=False)
+                    # Move titles to the left 
+                    for item, label in zip(leg.legend_handles, leg.texts):
+                        if label._text in titles:
+                            width = item.get_window_extent(fig.canvas.get_renderer()).width
+                            label.set_ha('left')
+                            label.set_position((-10.0*width,0))
+                total_tons = 1.0e-6*df["total_tons"].sum()
+                ax.text(
+                        0.05,
+                        0.20,
+                        f"Total tonnes = {total_tons:,.2f} million",
+                        horizontalalignment='left',
+                        transform=ax.transAxes,
+                        size=18,
+                        weight='bold'
+                        )
                 ax.set_title(
                     nm, 
-                    fontsize=14,fontweight="bold")
+                    fontsize=20,fontweight="bold")
 
             plt.tight_layout()
-            save_fig(os.path.join(figures,f"processing_locations_maps_{styp}.png"))
+            # save_fig(os.path.join(figures,f"processing_locations_maps_{styp}.png"))
+            save_fig(os.path.join(figures,f"mine_locations_maps_{styp}.png"))
             plt.close()
 
 
