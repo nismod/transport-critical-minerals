@@ -82,7 +82,7 @@ def main(config):
                             ]
     reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
     
-    # Read the data on the conversion factors to go from one stage ot another
+    # Read the data on the conversion factors to go from one stage to another
     # This will help in understanding material requirements for production of a stage output
     # from the inputs of another stage                        
     pr_conv_factors_df = pd.read_excel(os.path.join(processed_data_path,

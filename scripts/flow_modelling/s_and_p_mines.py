@@ -40,6 +40,11 @@ def main(config):
     baseline_years = ["2022"]
     future_years = ["2030","2040"]
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    # Read the finalised version of the BACI trade data
+    ccg_countries = pd.read_csv(
+                        os.path.join(processed_data_path,
+                                "baci","ccg_country_codes.csv"))
+    ccg_countries = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
     scenarios = [
                     {
                         "scenario":"baseline",
@@ -60,10 +65,10 @@ def main(config):
         file_directory = os.path.join(
                                 processed_data_path,
                                 "minerals",
-                                "future prod june 2024",
-                                "s_and_p_ccg_mine_scenarios_future")
+                                "future production",
+                                "s_and_p_mine_scenarios_all")
         if sc == "baseline":
-            file_end = "_high.xlsx"
+            file_end = "_high_all.xlsx"
         else:
             file_end = ".xlsx"
         for root, dirs, files in os.walk(file_directory):
@@ -104,6 +109,20 @@ def main(config):
                                                     axis=1)
                     s_and_p_mines = gpd.GeoDataFrame(s_and_p_mines,geometry="geometry",crs="EPSG:4326")
                     s_and_p_mines.to_file(os.path.join(processed_data_path,
+                                "minerals",
+                                f"s_and_p_mines_current_and_future_estimates_global.gpkg"),
+                                layer=mineral_scenario,
+                                driver="GPKG")
+
+                    africa_mines = s_and_p_mines[s_and_p_mines["CONTINENT"] == "Africa"]
+                    africa_mines.to_file(os.path.join(processed_data_path,
+                                "minerals",
+                                f"s_and_p_mines_current_and_future_estimates_africa.gpkg"),
+                                layer=mineral_scenario,
+                                driver="GPKG")
+
+                    ccg_mines = s_and_p_mines[s_and_p_mines["ISO_A3"].isin(ccg_countries)]
+                    ccg_mines.to_file(os.path.join(processed_data_path,
                                 "minerals",
                                 f"s_and_p_mines_current_and_future_estimates.gpkg"),
                                 layer=mineral_scenario,

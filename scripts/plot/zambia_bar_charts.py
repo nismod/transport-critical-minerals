@@ -256,13 +256,13 @@ def main(config):
             data_df = pd.read_excel(
                             results_file,
                             sheet_name=sc_t,
-                            index_col=[0,1,2,3])
+                            index_col=[0,1,2,3,4])
             data_df = data_df.reset_index()
             if sc_t != "country_unconstrained":
                 baseline_df = pd.read_excel(
                                 results_file,
                                 sheet_name="country_unconstrained",
-                                index_col=[0,1,2,3])
+                                index_col=[0,1,2,3,4])
                 baseline_df = baseline_df.reset_index()
                 data_df = pd.concat(
                                 [

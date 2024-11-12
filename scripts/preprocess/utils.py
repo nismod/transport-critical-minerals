@@ -80,6 +80,13 @@ def components(edges,nodes,
 
     return edges, nodes
 
+def add_node_degree(edges_dataframe,nodes_dataframe):
+    degree_df = edges_dataframe[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
+    nodes_dataframe = pd.merge(nodes_dataframe,degree_df,how="left",on=["id"])
+
+    nodes_crs = nodes_dataframe.crs
+    return gpd.GeoDataFrame(nodes_flows_dataframe,geometry="geometry",crs=nodes_crs)
+
 def add_lines(x,from_nodes_df,to_nodes_df,from_nodes_id,to_nodes_id):
     from_point = from_nodes_df[from_nodes_df[from_nodes_id] == x[from_nodes_id]]
     to_point = to_nodes_df[to_nodes_df[to_nodes_id].isin([x[to_nodes_id]])] 
@@ -196,11 +203,11 @@ def create_network_from_nodes_and_edges(nodes,edges,node_edge_prefix,
         network = snkit.network.merge_edges(network,by=by)
         print ('* Done with merging network')
 
-    network.edges.rename(columns={'from_id':'from_node',
-                                'to_id':'to_node',
-                                'id':'edge_id'},
-                                inplace=True)
-    network.nodes.rename(columns={'id':'node_id'},inplace=True)
+    # network.edges.rename(columns={'from_id':'from_node',
+    #                             'to_id':'to_node',
+    #                             'id':'edge_id'},
+    #                             inplace=True)
+    # network.nodes.rename(columns={'id':'node_id'},inplace=True)
     
     return network
 

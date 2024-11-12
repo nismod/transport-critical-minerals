@@ -74,7 +74,7 @@ def main(config,
     new_trade_minerals = [
                             {
                                 "reference_mineral":"cobalt",
-                                "replicate_product":282200,
+                                "replicate_product":283329,
                                 "future_stage":5.0
                             },
                             {

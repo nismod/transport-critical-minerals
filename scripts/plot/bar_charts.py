@@ -18,12 +18,12 @@ from mapping_properties import *
 from tqdm import tqdm
 tqdm.pandas()
 
-mpl.style.use('ggplot')
-mpl.rcParams['font.size'] = 10.
-mpl.rcParams['font.family'] = 'tahoma'
-mpl.rcParams['axes.labelsize'] = 12.
-mpl.rcParams['xtick.labelsize'] = 10.
-mpl.rcParams['ytick.labelsize'] = 10.
+# mpl.style.use('ggplot')
+# mpl.rcParams['font.size'] = 10.
+# mpl.rcParams['font.family'] = 'tahoma'
+# mpl.rcParams['axes.labelsize'] = 12.
+# mpl.rcParams['xtick.labelsize'] = 10.
+# mpl.rcParams['ytick.labelsize'] = 10.
 
 
 def plot_clustered_stacked(fig,axe,
@@ -90,6 +90,8 @@ def plot_clustered_stacked(fig,axe,
     axe.set_ylabel(ylabel,fontweight='bold',fontsize=15)
     axe.tick_params(axis='y',labelsize=15)
     axe.set_title(title,fontweight='bold',fontsize=18)
+    axe.set_axisbelow(True)
+    axe.grid(which='major', axis='x', linestyle='-', zorder=0)
 
     legend_handles = []
     titles = ["$\\bf{Mineral \, processing \, stages}$","$\\bf Scenarios$"]
@@ -186,7 +188,7 @@ def main(config):
                                                 ]
                                 },
                     ]
-    make_plot = True
+    make_plot = False
     if make_plot is True:
         results_file = os.path.join(output_data_path,
                                 "result_summaries",
@@ -202,13 +204,13 @@ def main(config):
             data_df = pd.read_excel(
                             results_file,
                             sheet_name=sc_t,
-                            index_col=[0,1,2,3])
+                            index_col=[0,1,2,3,4])
             data_df = data_df.reset_index()
             if sc_t != "country_unconstrained":
                 baseline_df = pd.read_excel(
                                 results_file,
                                 sheet_name="country_unconstrained",
-                                index_col=[0,1,2,3])
+                                index_col=[0,1,2,3,4])
                 baseline_df = baseline_df.reset_index()
                 data_df = pd.concat(
                                 [
@@ -316,7 +318,8 @@ def main(config):
                                 "result_summaries",
                                 "transport_totals_by_stage.xlsx")
         constraints = ["country_unconstrained","country_constrained"]
-        reference_mineral_colors = ["#f46d43","#fdae61","#fee08b","#c2a5cf","#66c2a5","#3288bd"]
+        reference_minerals = ["cobalt","copper","graphite","lithium","manganese","nickel"]
+        reference_mineral_colors = ["#fdae61","#f46d43","#66c2a5","#c2a5cf","#fee08b","#3288bd"]
         scenarios = ["2030_mid_min_threshold_metal_tons","2040_mid_min_threshold_metal_tons"]
         tons_column = "production_tonnes"
         index_cols = ["reference_mineral","iso3"]
@@ -346,9 +349,12 @@ def main(config):
         fig, ax = plt.subplots(1,1,figsize=(18,9),dpi=500)
         ax = plot_clustered_stacked(
                                 fig,ax,dfs,reference_mineral_colors,
-                                labels=["MN 2030 unconstrained","MN 2030 constrained","MN 2040 unconstrained","MN 2040 constrained"],
+                                labels=["National 2030 unconstrained",
+                                        "National 2030 constrained",
+                                        "National 2040 unconstrained",
+                                        "National 2040 constrained"],
                                 ylabel="Annual metal content produced (000' tonnes)", 
-                                title=f"MN scenarios - metal content production")
+                                title=f"Mid National scenarios - metal content production")
         plt.grid()
         plt.tight_layout()
         save_fig(os.path.join(figures,
@@ -360,7 +366,7 @@ def main(config):
                                 fig,ax,delta_df,reference_mineral_colors,
                                 labels=["2030 difference", "2040 difference"],
                                 ylabel="Difference in annual metal content produced (000' tonnes)", 
-                                title=f"MN 2030 and 2040 scenarios - Unconstrained minus Constrained production of metal content")
+                                title=f"Mid National 2030 and 2040 scenarios - Unconstrained minus Constrained production of metal content")
         plt.grid()
         plt.tight_layout()
         save_fig(os.path.join(figures,
@@ -389,8 +395,8 @@ def main(config):
         all_properties = mineral_properties()
         for rf in reference_minerals:
             dfall = []
-            stages = all_properties[rf]["stages"]
-            stage_colors = all_properties[rf]["stage_colors"]
+            stages = all_properties[rf]["stage_labels"]
+            stage_colors = all_properties[rf]["stage_label_colors"]
             for scenario in scenarios:
                 for cs in constraints:
                     df = pd.read_excel(
@@ -406,21 +412,22 @@ def main(config):
                         m_df = pd.DataFrame(countries,columns=["iso3"])
                         # xvals = 2*(np.arange(0,len(countries)) + f)
                         for st in stages:
-                            s_df = df[df["processing_stage"] == st]
+                            s_df = df[df["processing_type"] == st]
                             if len(s_df.index) > 0:
                                 s_df[col] = multiply_factor*s_df[col]
-                                s_df.rename(columns={col:f"Stage {st}"},inplace=True)
-                                m_df = pd.merge(m_df,s_df[["iso3",f"Stage {st}"]],how="left",on=["iso3"]).fillna(0)
+                                s_df = s_df.groupby(["iso3","processing_type"])[col].sum().reset_index()
+                                s_df.rename(columns={col:f"{st}"},inplace=True)
+                                m_df = pd.merge(m_df,s_df[["iso3",f"{st}"]],how="left",on=["iso3"]).fillna(0)
                             else:
-                                m_df[f"Stage {st}"] = 0
+                                m_df[f"{st}"] = 0
                         dfall.append(m_df.set_index(["iso3"]))
                     
             fig, ax = plt.subplots(1,1,figsize=(18,9),dpi=500)   
             ax = plot_clustered_stacked(
                                         fig,ax,dfall,stage_colors,
-                                        labels=["MN 2030","MR 2030","MN 2040","MR 2040"],
+                                        labels=["National 2030","Regional 2030","National 2040","Regional 2040"],
                                         ylabel="Annual export volumes (000' tonnes)", 
-                                        title=f"{rf.title()} MN and MR scenario comparisons")
+                                        title=f"{rf.title()} Mid National and Mid Regional scenario comparisons")
             plt.grid()
             plt.tight_layout()
             save_fig(os.path.join(figures,

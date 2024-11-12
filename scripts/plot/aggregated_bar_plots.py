@@ -278,6 +278,7 @@ def main(config):
             for cdx,(col,col_t,m_t) in enumerate(zip(columns,column_titles,multiply_factors)):
                 fig, ax = plt.subplots(1,1,figsize=(18,9),dpi=500)
                 dfall = []
+                df_totals = []
                 df = data_df[data_df["processing_stage"] > 0]
                 df = df.groupby(["scenario","reference_mineral","processing_type"])[col].sum().reset_index()
                 df = df[df[col] > 0]
@@ -295,7 +296,9 @@ def main(config):
                                             how="left",on=["reference_mineral"]).fillna(0)
                         else:
                             m_df[f"{st}"] = 0.0
-                    dfall.append(m_df.set_index(["reference_mineral"]))
+                    m_df = m_df.set_index(["reference_mineral"])
+                    df_totals.append(m_df.to_numpy().sum())
+                    dfall.append(m_df)
                 ax = plot_clustered_stacked(
                                             fig,ax,dfall,stage_colors,
                                             labels=sc_l,
@@ -306,6 +309,7 @@ def main(config):
                 save_fig(os.path.join(results_folder,
                             f"{col}_{sc_t}.png"))
                 plt.close()
+                print (f"{sc_t} Total {col_t}",df_totals)
 
 if __name__ == '__main__':
     CONFIG = load_config()
