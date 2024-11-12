@@ -85,7 +85,7 @@ def main(config):
                         mineral_dfs[mineral] = s_and_p_mines
                         mineral_scenario = f"{mineral}_baseline"
                     else:
-                        mineral_scenario = file.replace(".xlsx","")
+                        mineral_scenario = file.replace("_all.xlsx","")
                         df = mineral_dfs[mineral]
                         s_and_p_mines = pd.merge(
                                             s_and_p_mines,
