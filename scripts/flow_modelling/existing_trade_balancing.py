@@ -161,7 +161,7 @@ def main(config):
     mineral_balance_df["import_location"] = np.where(
                             mineral_balance_df["refining_stage_cam"] < mineral_balance_df["mine_final_refined_stage"],
                             "mine","city_process")
-    mineral_balance_df.to_csv("metal_production.csv",index=False)
+    # mineral_balance_df.to_csv("metal_production.csv",index=False)
 
     # Breakdown the production into in-country trade and final export 
     export_df = mineral_balance_df[mineral_balance_df["trade_type"] == "Export"]
@@ -204,7 +204,7 @@ def main(config):
                 domestic_df_copy[trade_balance_columns]
             ],axis=0,ignore_index=True)
 
-    export_balance_df.to_csv("export_trade_breakdown.csv",index=False)
+    # export_balance_df.to_csv("export_trade_breakdown.csv",index=False)
 
     # Get the fraction of the import that goes to a country for
     #     Mine level processing
@@ -286,12 +286,12 @@ def main(config):
     # Get the balances for the products going out of Africa completely
     port_bound_df = t_df[(t_df["import_continent"] != "Africa") & (~t_df["import_country_code"].isin(ccg_countries))]
     port_bound_df["final_processing_location"] = "port"
-    port_bound_df.to_csv("port_bound.csv",index=False)
+    # port_bound_df.to_csv("port_bound.csv",index=False)
     
     # Get the balances for the products in Africa to non-CCG countries
     non_ccg_africa_bound_df = t_df[(t_df["import_continent"] == "Africa") & (~t_df["import_country_code"].isin(ccg_countries))]
     non_ccg_africa_bound_df["final_processing_location"] = "city_demand"
-    non_ccg_africa_bound_df.to_csv("non_ccg_africa_bound.csv",index=False)
+    # non_ccg_africa_bound_df.to_csv("non_ccg_africa_bound.csv",index=False)
 
     # Get the balances for the products in Africa to non-CCG countries
     ccg_africa_bound_df = t_df[t_df["import_country_code"].isin(ccg_countries)]
@@ -318,7 +318,7 @@ def main(config):
                                                         "city_process","port") 
 
     ccg_africa_bound_df = pd.concat([ccg_africa_bound_df,ccg_imports_df],axis=0,ignore_index=True).fillna(0)
-    ccg_africa_bound_df.to_csv("ccg_africa_bound.csv",index=False)
+    # ccg_africa_bound_df.to_csv("ccg_africa_bound.csv",index=False)
 
     country_imports_df.drop("final_processing_stage",axis=1,inplace=True)
     country_imports_df.rename(
@@ -337,7 +337,7 @@ def main(config):
     ccg_africa_bound_df[
             "final_stage_production_tons"
             ] = ccg_africa_bound_df["location_fraction"]*ccg_africa_bound_df["final_stage_production_tons"]
-    ccg_africa_bound_df.to_csv("ccg_africa_bound_import_shares.csv",index=False)
+    # ccg_africa_bound_df.to_csv("ccg_africa_bound_import_shares.csv",index=False)
 
     # Get the domestic trade now
     st_one_df = trade_df[(trade_df["refining_stage_cam"] == 1)]

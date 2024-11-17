@@ -499,7 +499,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                                                 mines_df,year,
                                                 non_grid_columns,
                                                 non_grid_thresholds)
-                print (od_df)
+                # print (od_df)
             df = []
             for lt in location_types:
                 l_df = od_df[od_df["initial_processing_location"] == lt]
@@ -518,19 +518,20 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         gcosts = [0] + list(np.cumsum(row.gcost_usd_tons_path))
                         dist = [0] + list(np.cumsum(row.distance_km_path))
                         time = [0] + list(np.cumsum(row.time_hr_path))
-                        if f_st < m_st:
-                            fst_list = [f_st] + [m_st]*(len(node_path) - 1)
-                            cf = get_mine_conversion_factors(
-                                            metal_content_factors_df,
-                                            pr_conv_factors_df,
-                                            reference_mineral,
-                                            in_st,m_st)
-                            ftons_list = [f_tons] + [in_tons/cf]*(len(node_path) - 1)
-                        else:
-                            fst_list = [f_st]*len(node_path)
-                            ftons_list = [f_tons]*len(node_path)
+                        # if f_st < m_st:
+                        #     fst_list = [f_st] + [m_st]*(len(node_path) - 1)
+                        #     cf = get_mine_conversion_factors(
+                        #                     metal_content_factors_df,
+                        #                     pr_conv_factors_df,
+                        #                     reference_mineral,
+                        #                     in_st,m_st)
+                        #     ftons_list = [f_tons] + [in_tons/cf]*(len(node_path) - 1)
+                        # else:
+                        #     fst_list = [f_st]*len(node_path)
+                        #     ftons_list = [f_tons]*len(node_path)
                         
-
+                        fst_list = [f_st]*len(node_path)
+                        ftons_list = [f_tons]*len(node_path)
                         country_df_flows += list(zip([o_iso]*len(node_path),
                                         [pidx]*len(node_path),
                                         node_path,
@@ -576,7 +577,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 df.append(l_df)
 
             df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
-            print (l_df)
+            # print (l_df)
 
         if year > 2022:
             df.to_parquet(
