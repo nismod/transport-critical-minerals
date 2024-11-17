@@ -45,6 +45,16 @@ def main(config):
     if run_script is True:
         args = [
                 "python",
+                "road_proximity.py"
+                ]
+        print ("* Find the proximity of nodes to roads")
+        print (args)
+        subprocess.run(args)
+
+    run_script = False
+    if run_script is True:
+        args = [
+                "python",
                 "location_filters.py"
                 ]
         print ("* Put filters on the nodes and edges")
@@ -110,7 +120,6 @@ def main(config):
 
     run_script = False
     if run_script is True:
-        # reference_minerals = ["cobalt"]
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
             for rf in reference_minerals:

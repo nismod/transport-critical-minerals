@@ -70,10 +70,18 @@ def get_common_input_dataframes(data_type,refining_year,trade_year):
                                         "aggregated_stages.xlsx"),dtype=data_type)[[
                                             "reference_mineral",
                                             "initial_refined_stage",
-                                            "final_refined_stage", 
+                                            "final_refined_stage",
                                             "aggregate_ratio"
                                             ]]
-    # Read the data on how much metal concent goes into ores and concentrates
+    # Read the data on the usage of stage 1 (or metal content converted to higher stage)
+    mineral_usage_factor_df = pd.read_excel(os.path.join(processed_data_path,
+                                        "mineral_usage_factors",
+                                        "mineral_usage_factors.xlsx"))[[
+                                            "reference_mineral",
+                                            "final_refined_stage",
+                                            "usage_factor"
+                                            ]]
+    # Read the data on how much metal content goes into ores and concentrates
     metal_content_factors_df = pd.read_csv(os.path.join(processed_data_path,
                                             "mineral_usage_factors",
                                             "metal_content.csv"))
@@ -102,7 +110,8 @@ def get_common_input_dataframes(data_type,refining_year,trade_year):
     trade_df = trade_df[trade_df["trade_quantity_tons"]>0]
 
     return (pr_conv_factors_df, 
-            metal_content_factors_df, ccg_countries, mine_city_stages, trade_df)
+            metal_content_factors_df, ccg_countries, 
+            mine_city_stages, trade_df, mineral_usage_factor_df)
 
 def get_trade_exports_imports(trade_df,ccg_countries):
     export_df = trade_df[trade_df["export_country_code"].isin(ccg_countries)]

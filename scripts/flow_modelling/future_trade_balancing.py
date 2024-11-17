@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding: utf-8
 
 import os 
@@ -12,13 +11,19 @@ def get_mine_conversion_factors(x,mcf_df,pcf_df,ini_st_column,fnl_st_column,cf_c
     exp_st = x[fnl_st_column]
     mine_st = x[ini_st_column]
     cf_df = pcf_df[pcf_df["reference_mineral"] == ref_min]
-    if mine_st == 0:
-        mc = mcf_df[mcf_df["reference_mineral"] == ref_min
+    mc = mcf_df[mcf_df["reference_mineral"] == ref_min
                     ]["metal_content_factor"].values[0]
+    if mine_st == 0:
         cf_val = mc*cf_df[cf_df["final_refined_stage"] == str(exp_st).replace(".0","")
                         ][cf_column].values[0]/cf_df[
                         cf_df["final_refined_stage"] == '1'
                         ][cf_column].values[0]
+    elif exp_st == 0:
+        cf_val = (1.0/mc)*cf_df[cf_df["final_refined_stage"] == '1'
+                        ][cf_column].values[0]/cf_df[
+                        cf_df["final_refined_stage"] == str(mine_st).replace(".0","")
+                        ][cf_column].values[0]
+
     else:
         cf_val = cf_df[cf_df["final_refined_stage"] == str(exp_st).replace(".0","")
                         ][cf_column].values[0]/cf_df[
@@ -104,7 +109,7 @@ def main(config,
     (
         pr_conv_factors_df, 
         metal_content_factors_df, 
-        ccg_countries, mine_city_stages, trade_df
+        ccg_countries, mine_city_stages, trade_df, mineral_usage_factor_df
     ) = get_common_input_dataframes(data_type,year,baseline_year)
 
     # Add the mine final stage to te trade dataframe and also estimate the cost-to-ton ratios
@@ -179,13 +184,34 @@ def main(config,
         ] = mine_exports_df["production_to_trade_fraction"]*mine_exports_df["future_metal_content_tons"]
     mine_exports_df = mine_exports_df[mine_exports_df["future_metal_content_tons"] > 0]
     mine_exports_df = pd.merge(mine_exports_df,production_scales_df,how="left",on=["reference_mineral"])
-    mine_exports_df["final_processing_stage"
-     ] = mine_exports_df.progress_apply(
-        lambda x:mine_city_stages[
-                    mine_city_stages["reference_mineral"] == x["reference_mineral"
-                    ]]["mine_final_refined_stage"].values[0] if x["future_metal_content_tons"
-                    ] > x[efficient_scale] else 1.0,
-        axis=1)
+    mine_exports_df["final_refined_stage"
+        ] = mine_exports_df.progress_apply(
+                lambda x:mine_city_stages[
+                        mine_city_stages["reference_mineral"] == x["reference_mineral"
+                        ]]["mine_final_refined_stage"].values[0],
+                axis=1)
+    mine_exports_df = pd.merge(
+                                mine_exports_df,
+                                mineral_usage_factor_df,
+                                how="left",
+                                on=["reference_mineral","final_refined_stage"]
+                                )
+    if efficient_scale == "min_threshold_metal_tons":
+        mine_exports_df["final_processing_stage"
+        ] = mine_exports_df.progress_apply(
+            lambda x:x["final_refined_stage"
+                        ] if x["usage_factor"]*x["future_metal_content_tons"
+                        ] > x[efficient_scale] else 1.0,
+            axis=1)
+    else:
+        mine_exports_df["final_processing_stage"] = mine_exports_df["final_refined_stage"]
+        
+    mine_exports_df["usage_factor"
+    ] = np.where(
+                mine_exports_df["final_processing_stage"] > 1.0,
+                mine_exports_df["usage_factor"],
+                1.0
+                )
     mine_exports_df["future_trade_tons"] = mine_exports_df.progress_apply(
                                                 lambda x:x["future_metal_content_trade_tons"
                                                 ]/get_mine_conversion_factors(
@@ -193,14 +219,15 @@ def main(config,
                                                     pr_conv_factors_df,
                                                     "initial_processing_stage",
                                                     "final_processing_stage"),axis=1)
-    # mine_exports_df.to_csv("test.csv",index=False)
-
+    mine_exports_df.drop("final_refined_stage",axis=1,inplace=True)
+    # mine_exports_df.to_csv("mine_totals.csv",index=False)
 
     # Get the total tonnage of exports and imports of each CCG country
     trade_balance_df, export_df, import_df = get_trade_exports_imports(trade_df,ccg_countries)
     trade_balance_df.rename(columns={"refining_stage_cam":"final_processing_stage"},inplace=True)
     
     # Estimate trade balancing under the new stage conversion
+    # Merge the historic export-import trade with the new mine level outputs
     trade_balance_df = pd.merge(
                             trade_balance_df,
                             mine_exports_df,
@@ -208,6 +235,7 @@ def main(config,
                             on=["export_country_code",
                                 "reference_mineral",
                                 "final_processing_stage"]).fillna(0)
+    # Merge the information on the proportional usage for processing and final demand
     trade_balance_df = pd.merge(
                         trade_balance_df,
                         import_proportion_df,
@@ -215,6 +243,7 @@ def main(config,
                         on=["export_country_code",
                             "reference_mineral",
                             "final_processing_stage"]).fillna(0)
+    # Infer the mine final refined stage based on the main stage being exported 
     trade_balance_df["mine_final_refined_stage"
         ] = np.where(
                 trade_balance_df["future_trade_tons"] > 0,
@@ -230,6 +259,7 @@ def main(config,
                 trade_balance_df["mine_final_refined_stage"],
                 1)
 
+    # Estimate the future exports making sure the imports are also satisfied 
     trade_balance_df["future_export_binary"] = np.where(
                                                 trade_balance_df["mine_final_refined_stage"] >= trade_balance_df["final_processing_stage"],
                                                 0,1)
@@ -253,8 +283,10 @@ def main(config,
     trade_balance_df["future_import_tons"] = trade_balance_df["trade_quantity_tons_import"] - trade_balance_df["future_domestic_tons"]
     trade_balance_df.loc[trade_balance_df["future_import_tons"] < 1e-6,"future_import_tons"] = 0
 
+
     trade_balance_df = trade_balance_df[trade_balance_df["final_processing_stage"] > 0]
     
+    # Find the volume of production needed for higher stage exports
     trade_balance_df["stage_conversion_factor"] = trade_balance_df.progress_apply(
                             lambda x:get_mine_conversion_factors(
                             x,metal_content_factors_df,
@@ -304,6 +336,7 @@ def main(config,
             trade_balance_df["mine_production_consumed_total_tons"]
             )
 
+    # Readjust the volumne of future higher stage export that would require domestic production
     trade_balance_df["mine_production_actual_consumed_tons"
         ] = np.where(
                 trade_balance_df.groupby(
@@ -378,7 +411,7 @@ def main(config,
                 trade_balance_df[
                 ["future_export_tons_rem","future_actual_export"]].min(axis=1),
                 trade_balance_df["future_export_tons_rem"])
-
+    trade_balance_df.drop("future_actual_export",axis=1,inplace=True)
     trade_balance_df = trade_balance_df.sort_values(
         ["export_country_code","reference_mineral","final_processing_stage"],ascending=False)
     trade_balance_df["import_export_ratio_cumsum"
@@ -394,6 +427,38 @@ def main(config,
     trade_balance_df["future_import_for_processing"
         ] = trade_balance_df["import_export_ratio_cumsum"]*trade_balance_df["future_import_tons"]
 
+    stage1_df = trade_balance_df[trade_balance_df["usage_factor"] > 0]
+    stage1_df["future_stage1_export"] = (1-stage1_df["usage_factor"])*stage1_df["future_export_tons_rem"]
+    stage1_df["initial_processing_stage"] = stage1_df["final_processing_stage"]
+    stage1_df["final_processing_stage"] = 1.0
+    stage1_df["future_export_tons_rem"] = stage1_df.progress_apply(
+                                                lambda x:x["future_stage1_export"
+                                                ]/get_mine_conversion_factors(
+                                                    x,metal_content_factors_df,
+                                                    pr_conv_factors_df,
+                                                    "initial_processing_stage",
+                                                    "final_processing_stage"),axis=1)
+    stage1_df["initial_processing_stage"] = 0
+    stage1_df[["future_metal_content_trade_tons","future_trade_tons"]] = 0
+    trade_balance_df["future_export_tons_rem"
+        ] = np.where(
+                    trade_balance_df["usage_factor"] > 0,
+                    trade_balance_df["usage_factor"]*trade_balance_df["future_export_tons_rem"],
+                    trade_balance_df["future_export_tons_rem"])
+    trade_balance_df = pd.concat([trade_balance_df,stage1_df],axis=0,ignore_index=True)
+    trade_balance_df["future_export_tons_rem"
+        ]  = trade_balance_df.groupby(
+                ["export_country_code","reference_mineral","final_processing_stage"]
+                )["future_export_tons_rem"].transform("sum")
+
+    trade_balance_df["future_metal_content_tons_rem"
+        ] = trade_balance_df.progress_apply(
+                                    lambda x:x["future_export_tons_rem"
+                                    ]/get_mine_conversion_factors(
+                                        x,metal_content_factors_df,
+                                        pr_conv_factors_df,
+                                        "final_processing_stage",
+                                        "initial_processing_stage"),axis=1)
     trade_balance_df["future_metal_content_trade_tons"
         ] = trade_balance_df.groupby(
                 ["export_country_code","reference_mineral"]
@@ -403,28 +468,41 @@ def main(config,
                 ["export_country_code","reference_mineral"]
                 )["future_trade_tons"].transform("sum")
 
+    trade_balance_df = trade_balance_df.drop_duplicates(
+                    subset=[
+                            "export_country_code",
+                            "reference_mineral",
+                            "final_processing_stage"],
+                    keep="first")
     mine_city_stages.rename(columns={"mine_final_refined_stage":"mine_highest_stage"},inplace=True)
     trade_balance_df = pd.merge(trade_balance_df,mine_city_stages,how="left",on=["reference_mineral"])
-    # trade_balance_df.to_csv("export_import_tons_breakdown.csv",index=False)
+    trade_balance_df.to_csv("export_import_tons_breakdown.csv",index=False)
 
-    export_df = trade_balance_df[
-                    trade_balance_df["mine_final_refined_stage"
-                    ] < trade_balance_df["final_processing_stage"]
-                    ]
+    # export_df = trade_balance_df[
+    #                 trade_balance_df["mine_final_refined_stage"
+    #                 ] != trade_balance_df["final_processing_stage"]
+    #                 ]
+    export_df = trade_balance_df[trade_balance_df["future_export_tons_rem"] > 0]
     export_df["initial_processing_stage"
         ] = np.where(
                 export_df["final_processing_stage"] <= export_df["mine_highest_stage"],
                 0,
                 export_df["mine_final_refined_stage"])
+    # export_df["initial_tons"
+    #     ] = np.where(
+    #             (export_df["final_processing_stage"] <= export_df["mine_highest_stage"]
+    #             ) & (export_df["future_trade_tons"] > 0),
+    #             export_df["mine_production_actual_consumed_tons"
+    #             ]*export_df["future_metal_content_trade_tons"
+    #             ]/export_df["future_trade_tons"
+    #             ],
+    #             export_df["mine_production_actual_consumed_tons"])
     export_df["initial_tons"
         ] = np.where(
-                (export_df["final_processing_stage"] <= export_df["mine_highest_stage"]
-                ) & (export_df["future_trade_tons"] > 0),
-                export_df["mine_production_actual_consumed_tons"
-                ]*export_df["future_metal_content_trade_tons"
-                ]/export_df["future_trade_tons"
-                ],
-                export_df["mine_production_actual_consumed_tons"])
+                export_df["initial_processing_stage"] == 0,
+                export_df["future_metal_content_tons_rem"],
+                export_df["mine_production_actual_consumed_tons"]
+                )
     export_df["final_tons"] = export_df["future_export_tons_rem"]
     export_df["trade_type"] = "Export"
     export_df["initial_processing_location"
@@ -434,23 +512,23 @@ def main(config,
             "city_process")
     export_df["final_processing_location"] = "outside"
 
-    mine_export_df = trade_balance_df[
-                    trade_balance_df["mine_final_refined_stage"
-                    ] == trade_balance_df["final_processing_stage"]
-                    ]
-    mine_export_df["initial_processing_stage"] = 0
-    mine_export_df["initial_tons"
-        ] = np.where(
-                mine_export_df["future_trade_tons"] > 0,
-                mine_export_df["future_export_tons_rem"
-                ]*mine_export_df["future_metal_content_trade_tons"
-                ]/mine_export_df["future_trade_tons"
-                ],
-                0) 
-    mine_export_df["final_tons"] = mine_export_df["future_export_tons_rem"]
-    mine_export_df["trade_type"] = "Export"
-    mine_export_df["initial_processing_location"] = "mine"
-    mine_export_df["final_processing_location"] = "outside"
+    # mine_export_df = trade_balance_df[
+    #                 trade_balance_df["mine_final_refined_stage"
+    #                 ] == trade_balance_df["final_processing_stage"]
+    #                 ]
+    # mine_export_df["initial_processing_stage"] = 0
+    # mine_export_df["initial_tons"
+    #     ] = np.where(
+    #             mine_export_df["future_trade_tons"] > 0,
+    #             mine_export_df["future_export_tons_rem"
+    #             ]*mine_export_df["future_metal_content_trade_tons"
+    #             ]/mine_export_df["future_trade_tons"
+    #             ],
+    #             0) 
+    # mine_export_df["final_tons"] = mine_export_df["future_export_tons_rem"]
+    # mine_export_df["trade_type"] = "Export"
+    # mine_export_df["initial_processing_location"] = "mine"
+    # mine_export_df["final_processing_location"] = "outside"
 
 
     mine_domestic_df = trade_balance_df[
@@ -524,14 +602,13 @@ def main(config,
     final_trade_df = pd.concat(
                         [
                             export_df,
-                            mine_export_df,
                             mine_domestic_df,
                             import_processing_df,
                             import_consumption_df
                         ],axis=0,ignore_index=True)
     final_trade_df = final_trade_df[final_trade_df["final_tons"]>0]
     final_trade_df = final_trade_df[trade_balance_columns]
-    # final_trade_df.to_csv("final_trade.csv",index=False)
+    final_trade_df.to_csv("final_trade.csv",index=False)
 
     final_trade_df["refining_stage_cam"] = final_trade_df["final_processing_stage"]
 
