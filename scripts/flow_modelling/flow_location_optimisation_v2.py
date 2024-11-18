@@ -433,7 +433,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     (
         pr_conv_factors_df, 
         metal_content_factors_df, 
-        ccg_countries, mine_city_stages, _
+        ccg_countries, mine_city_stages, _,_
     ) = get_common_input_dataframes(data_type,year,baseline_year)
     """Step 1: get all the relevant nodes and find their distances 
                 to grid and bio-diversity layers 
