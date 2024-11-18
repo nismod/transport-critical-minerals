@@ -39,7 +39,7 @@ def main(config,year,percentile,efficient_scale):
     (
         _, 
         metal_content_factors_df, 
-        _, _, _
+        _, _, _, _
     ) = get_common_input_dataframes(data_type,year,baseline_year)
     if year == 2022:
         layer_name = f"{year}"

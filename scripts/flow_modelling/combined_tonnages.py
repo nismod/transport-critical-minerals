@@ -66,7 +66,7 @@ def main(config,country_case,constraint):
     (
         pr_conv_factors_df, 
         metal_content_factors_df, 
-        _, _, _
+        _, _, _, _
     ) = get_common_input_dataframes(data_type,baseline_year,baseline_year)
 
     price_df = pd.read_excel(

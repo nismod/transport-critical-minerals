@@ -131,7 +131,7 @@ def main(config,year,percentile,efficient_scale):
     (
         pr_conv_factors_df, 
         metal_content_factors_df, 
-        ccg_countries, mine_city_stages, _
+        ccg_countries, mine_city_stages, _, _
     ) = get_common_input_dataframes(data_type,year,baseline_year)
     all_flows = []
     for reference_mineral in reference_minerals:
