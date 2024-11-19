@@ -506,73 +506,75 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 if lt == "mine":
                     country_df_flows = []
                     for row in l_df.itertuples():
-                        o_iso = row.export_country_code
-                        pidx = row.path_index
                         in_st = row.initial_processing_stage
                         f_st = row.final_processing_stage
                         m_st = row.mine_final_refined_stage
-                        in_tons = row.initial_stage_production_tons
-                        f_tons = row.final_stage_production_tons
-                        node_path = row.node_path
-                        node_path = [n.replace("_land","") for n in node_path]
-                        gcosts = [0] + list(np.cumsum(row.gcost_usd_tons_path))
-                        dist = [0] + list(np.cumsum(row.distance_km_path))
-                        time = [0] + list(np.cumsum(row.time_hr_path))
-                        # if f_st < m_st:
-                        #     fst_list = [f_st] + [m_st]*(len(node_path) - 1)
-                        #     cf = get_mine_conversion_factors(
-                        #                     metal_content_factors_df,
-                        #                     pr_conv_factors_df,
-                        #                     reference_mineral,
-                        #                     in_st,m_st)
-                        #     ftons_list = [f_tons] + [in_tons/cf]*(len(node_path) - 1)
-                        # else:
-                        #     fst_list = [f_st]*len(node_path)
-                        #     ftons_list = [f_tons]*len(node_path)
-                        
-                        fst_list = [f_st]*len(node_path)
-                        ftons_list = [f_tons]*len(node_path)
-                        country_df_flows += list(zip([o_iso]*len(node_path),
-                                        [pidx]*len(node_path),
-                                        node_path,
-                                        [in_st]*len(node_path),
-                                        fst_list,
-                                        [in_tons]*len(node_path),
-                                        ftons_list,
-                                        gcosts,
-                                        dist,
-                                        time
-                                        ))
-                    country_df_flows = pd.DataFrame(country_df_flows,
-                                        columns=["export_country_code",
-                                        "path_index",
-                                        "id",
-                                        "initial_processing_stage",
-                                        "final_processing_stage",
+                        if (in_st == 0.0) and (f_st == m_st):
+                            o_iso = row.export_country_code
+                            pidx = row.path_index
+                            in_tons = row.initial_stage_production_tons
+                            f_tons = row.final_stage_production_tons
+                            node_path = row.node_path
+                            node_path = [n.replace("_land","") for n in node_path]
+                            gcosts = [0] + list(np.cumsum(row.gcost_usd_tons_path))
+                            dist = [0] + list(np.cumsum(row.distance_km_path))
+                            time = [0] + list(np.cumsum(row.time_hr_path))
+                            # if f_st < m_st:
+                            #     fst_list = [f_st] + [m_st]*(len(node_path) - 1)
+                            #     cf = get_mine_conversion_factors(
+                            #                     metal_content_factors_df,
+                            #                     pr_conv_factors_df,
+                            #                     reference_mineral,
+                            #                     in_st,m_st)
+                            #     ftons_list = [f_tons] + [in_tons/cf]*(len(node_path) - 1)
+                            # else:
+                            #     fst_list = [f_st]*len(node_path)
+                            #     ftons_list = [f_tons]*len(node_path)
+                            
+                            fst_list = [f_st]*len(node_path)
+                            ftons_list = [f_tons]*len(node_path)
+                            country_df_flows += list(zip([o_iso]*len(node_path),
+                                            [pidx]*len(node_path),
+                                            node_path,
+                                            [in_st]*len(node_path),
+                                            fst_list,
+                                            [in_tons]*len(node_path),
+                                            ftons_list,
+                                            gcosts,
+                                            dist,
+                                            time
+                                            ))
+                    if len(country_df_flows) > 0:
+                        country_df_flows = pd.DataFrame(country_df_flows,
+                                            columns=["export_country_code",
+                                            "path_index",
+                                            "id",
+                                            "initial_processing_stage",
+                                            "final_processing_stage",
+                                            "initial_stage_production_tons",
+                                            "final_stage_production_tons",
+                                            "gcosts","distance_km","time_hr"])
+                        optimal_df = find_optimal_locations(
+                                        country_df_flows,
+                                        nodes,
+                                        ccg_countries,
                                         "initial_stage_production_tons",
                                         "final_stage_production_tons",
-                                        "gcosts","distance_km","time_hr"])
-                    optimal_df = find_optimal_locations(
-                                    country_df_flows,
-                                    nodes,
-                                    ccg_countries,
-                                    "initial_stage_production_tons",
-                                    "final_stage_production_tons",
-                                    "gcosts","distance_km",
-                                    "time_hr",
-                                    production_size,
-                                    country_case,
-                                    grid_column,
-                                    grid_threshold,
-                                    non_grid_columns,
-                                    non_grid_thresholds,
-                                    optimisation=constraint)
-                    if len(optimal_df) > 0:
-                        optimal_df = pd.DataFrame(optimal_df)
-                        optimal_df["reference_mineral"] = reference_mineral
-                        optimal_df["production_size"] = production_size
-                        all_optimal_locations.append(optimal_df)
-                        l_df = update_od_dataframe(l_df,optimal_df,metal_factor,modify_columns)
+                                        "gcosts","distance_km",
+                                        "time_hr",
+                                        production_size,
+                                        country_case,
+                                        grid_column,
+                                        grid_threshold,
+                                        non_grid_columns,
+                                        non_grid_thresholds,
+                                        optimisation=constraint)
+                        if len(optimal_df) > 0:
+                            optimal_df = pd.DataFrame(optimal_df)
+                            optimal_df["reference_mineral"] = reference_mineral
+                            optimal_df["production_size"] = production_size
+                            all_optimal_locations.append(optimal_df)
+                            l_df = update_od_dataframe(l_df,optimal_df,metal_factor,modify_columns)
 
                 df.append(l_df)
 
