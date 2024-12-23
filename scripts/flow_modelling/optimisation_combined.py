@@ -422,11 +422,11 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
 
     #  Get a number of input dataframes
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
-    (
-        pr_conv_factors_df, 
-        metal_content_factors_df, 
-        ccg_countries, mine_city_stages, _,_
-    ) = get_common_input_dataframes(data_type,year,baseline_year)
+    # (
+    #     pr_conv_factors_df, 
+    #     metal_content_factors_df, 
+    #     ccg_countries, mine_city_stages, _,_
+    # ) = get_common_input_dataframes(data_type,year,baseline_year)
     production_size_df = pd.read_excel(
                                         os.path.join(
                                             processed_data_path,
@@ -455,6 +455,11 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
     mines_dfs = []
     optimise = True
     for year in years:
+        (
+            pr_conv_factors_df, 
+            metal_content_factors_df, 
+            ccg_countries, mine_city_stages, _,_
+        ) = get_common_input_dataframes(data_type,year,baseline_year)
         for reference_mineral in reference_minerals:
             # Find year locations
             production_size = production_size_df[
