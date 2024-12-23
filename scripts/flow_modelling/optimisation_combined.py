@@ -556,7 +556,7 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
                             country_df_flows["year"] = year
                             country_df_flows["reference_mineral"] = reference_mineral
                             country_df_flows["production_size"] = production_size
-                            country_df_flows_combined.apped(country_df_flows)
+                            country_df_flows_combined.append(country_df_flows)
                     else:
                         df.append(l_df)
 
