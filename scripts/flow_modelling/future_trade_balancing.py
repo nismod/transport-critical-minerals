@@ -50,6 +50,7 @@ def get_importer_shares(existing_trade_df,import_groupby_columns,value_column,to
         product_code = nt["replicate_product"]
         aim_df = global_import_df[global_import_df["product_code"] == product_code]
         aim_df["refining_stage_cam"] = nt["future_stage"]
+        aim_df["reference_mineral"] = nt["reference_mineral"]
         added_import_df.append(aim_df)
 
     added_import_df = pd.concat(added_import_df,axis=0,ignore_index=True)

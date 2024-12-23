@@ -562,6 +562,7 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
 
     if optimise is True:
         country_df_flows = pd.concat(country_df_flows_combined,axis=0,ignore_index=True)
+        print (country_df_flows)
         l_df = pd.concat(l_dfs,axis=0,ignore_index=True)
         optimal_df, year_ref_min_df = find_optimal_locations_combined(
                         country_df_flows,
