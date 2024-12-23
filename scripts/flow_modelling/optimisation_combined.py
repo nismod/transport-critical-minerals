@@ -7,6 +7,7 @@ import os
 import re
 import json
 import pandas as pd
+import ast
 import numpy as np
 pd.options.mode.copy_on_write = True
 import igraph as ig
