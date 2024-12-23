@@ -246,7 +246,7 @@ def find_optimal_locations_combined(flow_dataframe,
             opt_list_y_rf_df.append(
                                     y_rf_df[
                                             [
-                                                "id","iso3","mode",
+                                                "id","iso3","processing_location",
                                                 year_column,
                                                 reference_mineral_column,
                                                 "production_size"
