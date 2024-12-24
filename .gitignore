@@ -1,6 +1,7 @@
 # Data 
 *.osm.pbf
 *.gpkg
+*.txt
 data/*
 incoming_data/*
 figures/*
