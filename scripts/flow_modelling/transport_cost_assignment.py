@@ -1032,3 +1032,122 @@ def get_distance_to_layer(
                                 crs=f"EPSG:{global_epsg}")
     
     return points_with_distance_df
+
+def get_distance_to_layer_global(
+                points_dataframe,
+                points_id_column="id",
+                global_epsg=4326,
+                projected_epsg=32736):
+    
+    country_codes_and_projections = pd.read_excel(
+                        os.path.join(
+                            processed_data_path,
+                            "local_projections.xlsx")
+                        )
+    countries = country_codes_and_projections["iso3"].values.tolist()
+
+    global_boundaries = gpd.read_file(os.path.join(processed_data_path,
+                                    "admin_boundaries",
+                                    "gadm36_levels_gpkg",
+                                    "gadm36_levels_continents.gpkg"))
+    global_boundaries = global_boundaries[global_boundaries["ISO_A3"].isin(countries)]
+
+    layer_details = [
+                        {
+                            "layer_type":"grid",
+                            "layer_column":"grid_id"
+                        },
+                        {
+                            "layer_type":"KeyBiodiversityAreas",
+                            "layer_file":"Environmental datasets/KeyBiodiversityAreas/Africa_KBA/Africa_KBA.shp",
+                            "layer_name":None,
+                            "layer_column":"intname"
+                        },
+                        {
+                            "layer_type":"LastOfWild",
+                            "layer_file":"Environmental datasets/LastOfWildSouthernAfrica/low_southern_africa.shp",
+                            "layer_name":None,
+                            "layer_column":"biome"
+                        },
+                        {
+                            "layer_type":"ProtectedAreas",
+                            "layer_file":"Environmental datasets/ProtectedAreasSouthernAfrica/protected_areas_southern_africa.shp",
+                            "layer_name":None,
+                            "layer_column":"DESIG_ENG"
+                        },
+                        {
+                            "layer_type":"Waterstress",
+                            "layer_file":"water_stress/water_stress_data.gpkg",
+                            "layer_name":"future_annual",
+                            "layer_column":"bau30_ws_x_l"
+                        },
+            ]
+
+    
+    points_with_distance_df = []
+    for lyr in layer_details:
+        if lyr["layer_type"] == "grid":
+            layer_gdf = get_electricity_grid_lines()
+            lyr_distance_df = []
+            for row in country_codes_and_projections.itertuples():
+                boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
+                lyr_network = gpd.clip(layer_gdf,boundary_df)
+
+                lyr_network = lyr_network.to_crs(epsg=row.projection_epsg)
+
+                pt_df = points_dataframe[points_dataframe["iso3"] == row.iso3]
+                pt_df = pt_df.to_crs(epsg=row.projection_epsg)
+
+                dist_column_name = f"distance_to_{lyr['layer_type'].lower()}_km"
+                closest_df = gpd.sjoin_nearest(
+                                        pt_df[[points_id_column,"geometry"]],
+                                        lyr_network[[lyr["layer_column"],"geometry"]],
+                                        how="left",
+                                        distance_col=dist_column_name).reset_index()
+                closest_df[dist_column_name] = 0.001*closest_df[dist_column_name]
+                closest_df = closest_df.sort_values(by=dist_column_name,ascending=True)
+                closest_df = closest_df.drop_duplicates(subset=[points_id_column],keep="first")
+                lyr_distance_df.append(closest_df[[points_id_column,dist_column_name]])
+            lyr_distance_df = pd.concat(lyr_distance_df,axis=0,ignore_index=True)
+            points_with_distance_df.append(lyr_distance_df.set_index(points_id_column))
+        else:
+            pt_df = points_dataframe.to_crs(epsg=projected_epsg)
+            layer_gdf = gpd.read_file(
+                            os.path.join(
+                                processed_data_path,lyr["layer_file"]),
+                            layer=lyr["layer_name"])
+            # layer_gdf = layer_gdf.to_crs(epsg=global_epsg)
+            if lyr["layer_type"] == "Waterstress":
+                layer_gdf = layer_gdf[layer_gdf["bau30_ws_x_c"].isin([-1,3,4])]
+
+            layer_gdf = layer_gdf.to_crs(epsg=projected_epsg)
+            dist_column_name = f"distance_to_{lyr['layer_type'].lower()}_km"
+            closest_df = gpd.sjoin_nearest(
+                                    pt_df[[points_id_column,"geometry"]],
+                                    layer_gdf[[lyr["layer_column"],"geometry"]],
+                                    how="left",
+                                    distance_col=dist_column_name).reset_index()
+            closest_df[dist_column_name] = 0.001*closest_df[dist_column_name]
+            closest_df = closest_df.sort_values(by=dist_column_name,ascending=True)
+            closest_df = closest_df.drop_duplicates(subset=[points_id_column],keep="first")
+            closest_df.rename(
+                            columns={
+                                    lyr["layer_column"]:f"nearest_{lyr['layer_type'].lower()}_type"
+                                    },
+                            inplace=True)
+            closest_df = closest_df[[points_id_column,
+                                    f"nearest_{lyr['layer_type'].lower()}_type",
+                                    dist_column_name]]
+            points_with_distance_df.append(closest_df.set_index(points_id_column))
+
+    points_with_distance_df = pd.concat(points_with_distance_df,axis=1)
+    points_with_distance_df = gpd.GeoDataFrame(
+                                pd.merge(
+                                        points_dataframe,
+                                        points_with_distance_df.reset_index(),
+                                        how="left",
+                                        on=[points_id_column]),
+                                geometry="geometry",
+                                crs=f"EPSG:{global_epsg}")
+    
+    return points_with_distance_df

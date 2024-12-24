@@ -37,16 +37,29 @@ def main(config):
                                 modes=["rail","sea","road","mine","city"],
                                 layer_type="nodes",merge=False)
     nodes = nodes[nodes["iso3"].isin(ccg_countries)]
-    nodes = get_distance_to_layer(nodes)
+    # nodes = get_distance_to_layer(nodes)
+    # nodes.to_parquet(
+    #         os.path.join(
+    #             results_folder,
+    #             "nodes_with_location_identifiers.geoparquet")
+    #         )
+    # nodes.to_file(
+    #         os.path.join(
+    #             results_folder,
+    #             "nodes_with_location_identifiers.gpkg"),
+    #         driver="GPKG"
+    #         )
+
+    nodes = get_distance_to_layer_global(nodes)
     nodes.to_parquet(
             os.path.join(
                 results_folder,
-                "nodes_with_location_identifiers.geoparquet")
+                "nodes_with_location_identifiers_regional.geoparquet")
             )
     nodes.to_file(
             os.path.join(
                 results_folder,
-                "nodes_with_location_identifiers.gpkg"),
+                "nodes_with_location_identifiers_regional.gpkg"),
             driver="GPKG"
             )
 

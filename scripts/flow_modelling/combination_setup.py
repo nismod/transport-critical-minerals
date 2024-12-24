@@ -89,7 +89,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -105,7 +105,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -120,7 +120,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -152,8 +152,44 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = True
+    run_script = False
     if run_script is True:
+        num_blocks = 0
+        percentile_years = {
+                            "baseline":[2022],
+                            "low":[2030,2040],
+                            "mid":[2030,2040],
+                            "high":[2030,2040]
+                            }
+        with open("combination_set.txt","w+") as f:
+            for sc,yr in percentile_years.items():
+                st = f"{[yr]};"
+                if sc == "baseline":
+                    ref_mins = [["cobalt"],["copper"],["nickel"],["graphite"],["manganese"],["lithium"]]
+                else:
+                    ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
+                for row in ref_mins:
+                    st += f"{row};"
+                    st += f""
+                    f.write(st)                
+        f.close()
+
+        """Next we aggregate the flows through the scenarios
+        """
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ";",
+                "-a",
+                "combination_set.txt",
+                "python",
+                "optimisation_combined.py",
+                "{}"
+                ]
+        print ("* Start the processing of plotting flows")
+        print (args)
+        subprocess.run(args)
+
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -189,7 +225,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -208,7 +244,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -227,7 +263,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         # reference_minerals = ["cobalt"]
         num_blocks = 0
@@ -266,7 +302,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -285,7 +321,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for lc in location_cases:
             for opt in optimisation_type:
@@ -299,7 +335,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
     
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:

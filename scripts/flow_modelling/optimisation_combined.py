@@ -174,6 +174,8 @@ def find_optimal_locations_combined(flow_dataframe,
                             grid_threshold,
                             non_grid_columns,
                             non_grid_thresholds,
+                            distance_from_origin=0.0,
+                            processing_buffer=0.0,
                             optimisation="constrained"):
     flow_dataframe = pd.merge(
                             flow_dataframe,
@@ -186,7 +188,7 @@ def find_optimal_locations_combined(flow_dataframe,
 
     if optimisation == "constrained":
         flow_dataframe = filter_out_processing_locations(flow_dataframe,
-                            non_grid_columns,non_grid_thresholds)
+                            non_grid_columns,[processing_buffer]*len(non_grid_columns))
 
     if country_case == "country":
         flow_dataframe = flow_dataframe[flow_dataframe["export_country_code"] == flow_dataframe["iso3"]]
@@ -209,8 +211,13 @@ def find_optimal_locations_combined(flow_dataframe,
     #                         flow_dataframe[initial_tons_column] >= production_size
     #                     )]
     opt_list = []
-    opt_list_y_rf_df = []
+    # opt_list_y_rf_df = []
     c_df_flows = flow_dataframe[flow_dataframe["initial_processing_stage"] == 0]
+    if distance_from_origin > 0.0:
+        c_df_flows = c_df_flows[c_df_flows[
+                        distance_column
+                        ] <= distance_from_origin
+                        ]
     while len(c_df_flows.index) > 0:
         optimal_locations = defaultdict()
         # First get the sums by years and minerals
@@ -240,23 +247,24 @@ def find_optimal_locations_combined(flow_dataframe,
             pth_idx = list(set(c_df_flows[c_df_flows["id"] == id_value]["path_index"].values.tolist()))
             optimal_locations["node_paths"] = pth_idx 
             opt_list.append(optimal_locations)
-            y_rf_df = c_df_flows[c_df_flows["id"] == id_value].drop_duplicates(
-                                    subset=[year_column,reference_mineral_column],keep="first")
-            y_rf_df.rename(columns={"mode":"processing_location"},inplace=True)
-            opt_list_y_rf_df.append(
-                                    y_rf_df[
-                                            [
-                                                "id","iso3","processing_location",
-                                                year_column,
-                                                reference_mineral_column,
-                                                "production_size"
-                                            ] + [f"total_{c}" for c in columns]
-                                        ]
-                                    )
+            # y_rf_df = c_df_flows[c_df_flows["id"] == id_value].drop_duplicates(
+            #                         subset=[year_column,reference_mineral_column],keep="first")
+            # y_rf_df.rename(columns={"mode":"processing_location"},inplace=True)
+            # opt_list_y_rf_df.append(
+            #                         y_rf_df[
+            #                                 [
+            #                                     "id","iso3","processing_location",
+            #                                     year_column,
+            #                                     reference_mineral_column,
+            #                                     "production_size"
+            #                                 ] + [f"total_{c}" for c in columns]
+            #                             ]
+            #                         )
             c_df_flows = c_df_flows[~c_df_flows["path_index"].isin(pth_idx)]
 
 
-    return opt_list, opt_list_y_rf_df
+    # return opt_list, opt_list_y_rf_df
+    return opt_list
 
 def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
     m_df = df[
@@ -379,16 +387,33 @@ def update_od_dataframe(initial_df,optimal_df,modify_columns):
 
     return u_df
 
-def main(config,years,reference_minerals,percentile,efficient_scale,country_case,constraint,baseline_year=2022):
+def main(
+        config,
+        years,
+        reference_minerals,
+        percentile,
+        efficient_scale,
+        country_case,
+        constraint,
+        baseline_year=2022,
+        distance_from_origin=0.0,
+        environmental_buffer=0.0
+        ):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
     input_folder = os.path.join(output_data_path,"flow_od_paths")
-    results_folder = os.path.join(
-                            output_data_path,
-                            f"combined_flow_optimisation_{country_case}_{constraint}"
-                            )
+    if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+        results_folder = os.path.join(
+                                output_data_path,
+                                f"flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km"
+                                )
+    else:
+        results_folder = os.path.join(
+                                output_data_path,
+                                f"flow_optimisation_{country_case}_{constraint}"
+                                )
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
 
@@ -418,7 +443,7 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
     grid_column = "grid"
     grid_threshold = 5.0
     non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas","waterstress"]
-    non_grid_thresholds = [0.0,0.0,0.0,0.0]
+    non_grid_thresholds = 3*[environmental_buffer] + [0.0]
 
     #  Get a number of input dataframes
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
@@ -507,7 +532,6 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
                                                     mines_df,year,
                                                     non_grid_columns,
                                                     non_grid_thresholds)
-                    # print (od_df)
 
                 mines_dfs.append(mines_df)
                 for lt in location_types:
@@ -562,9 +586,8 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
 
     if optimise is True:
         country_df_flows = pd.concat(country_df_flows_combined,axis=0,ignore_index=True)
-        print (country_df_flows)
         l_df = pd.concat(l_dfs,axis=0,ignore_index=True)
-        optimal_df, year_ref_min_df = find_optimal_locations_combined(
+        optimal_df = find_optimal_locations_combined(
                         country_df_flows,
                         nodes,
                         ccg_countries,
@@ -579,10 +602,11 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
                         grid_threshold,
                         non_grid_columns,
                         non_grid_thresholds,
+                        distance_from_origin=distance_from_origin,
                         optimisation=constraint)
         if len(optimal_df) > 0:
             optimal_df = pd.DataFrame(optimal_df)
-            all_optimal_locations += year_ref_min_df
+            # all_optimal_locations += year_ref_min_df
             l_df = update_od_dataframe(l_df,optimal_df,modify_columns)
 
             df.append(l_df)
@@ -590,8 +614,9 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
     df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
     mines_dfs = pd.concat(mines_dfs,axis=0,ignore_index=True)
 
-    if len(all_optimal_locations) > 0:
-        all_optimal_locations = pd.concat(all_optimal_locations,axis=0,ignore_index=True)
+    # if len(all_optimal_locations) > 0:
+    #     all_optimal_locations = pd.concat(all_optimal_locations,axis=0,ignore_index=True)
+
     for year in years:
         all_flows = []
         for reference_mineral in reference_minerals:
@@ -599,6 +624,7 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
             mines_df = mines_dfs[(mines_dfs["year"] == year) & (mines_dfs["reference_mineral"] == reference_mineral)]
             metal_factor = df_year_rf["metal_factor"].values[0]
             if year > baseline_year:
+                file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}"
                 df_year_rf.to_parquet(
                     os.path.join(
                         modified_paths_folder,
@@ -631,38 +657,67 @@ def main(config,years,reference_minerals,percentile,efficient_scale,country_case
                                 f"{layer_name}_{year}_{country_case}.geoparquet"))
 
         all_flows = pd.concat(all_flows,axis=0,ignore_index=True)
+        reference_mineral_string = "_".join(reference_minerals)
         if year == baseline_year:
             file_name = f"location_totals_{year}_{percentile}"
             production_size = 0
         else:
             file_name = f"location_totals_{year}_{percentile}_{efficient_scale}"
-        all_flows.to_csv(
-                os.path.join(
-                    results_folder,
-                    f"{file_name}_{country_case}_{constraint}.csv"),
-                index=False)
-        
-        all_opt_loc = all_optimal_locations[all_optimal_locations["year"] == year]
-        if len(all_opt_loc.index) > 0:
-            all_opt_loc.to_csv(
-                            os.path.join(
-                                results_folder,
-                                f"{file_name}_{country_case}_{constraint}_optimal_locations.csv"),
-                            index=False)
+
+        all_flows_file = os.path.join(
+                                    results_folder,
+                                    f"{file_name}_{country_case}_{constraint}.csv"
+                                    )
+        if os.path.isfile(all_flows_file) is True:
+            all_flows.to_csv(all_flows_file,mode='a',header=False,index=False)
+        else:
+            all_flows.to_csv(all_flows_file,index=False)
+        # if optimise is True:
+        #     all_opt_loc = all_optimal_locations[all_optimal_locations["year"] == year]
+        #     if len(all_opt_loc.index) > 0:
+        #         all_opt_file = os.path.join(
+        #                                 results_folder,
+        #                                 f"{file_name}_{country_case}_{constraint}_optimal_locations.csv"
+        #                                 )
+        #         if os.path.isfile(all_opt_file) is True:
+        #             all_opt_loc.to_csv(all_opt_file,mode='a',header=False,index=False)
+        #         else:
+        #             all_opt_loc.to_csv(all_opt_file,index=False)
 
 
 
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        years = ast.literal_eval(str(sys.argv[1]))
-        minerals = ast.literal_eval(str(sys.argv[2]))
-        percentile = str(sys.argv[3])
-        efficient_scale = str(sys.argv[4])
-        country_case = str(sys.argv[5])
-        constraint = str(sys.argv[6])
-        baseline_year = int(sys.argv[7])
+        if len(sys.argv) > 7:
+            years = ast.literal_eval(str(sys.argv[1]))
+            minerals = ast.literal_eval(str(sys.argv[2]))
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
+            baseline_year = int(sys.argv[7])
+            distance_from_origin = float(sys.argv[8])
+            environmental_buffer = float(sys.argv[9])
+        else:
+            years = ast.literal_eval(str(sys.argv[1]))
+            minerals = ast.literal_eval(str(sys.argv[2]))
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
+            baseline_year = 2022
+            distance_from_origin = 0.0
+            environmental_buffer = 0.0
+
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,years,minerals,percentile,efficient_scale,country_case,constraint,baseline_year=baseline_year)
+    main(
+            CONFIG,
+            years,minerals,percentile,
+            efficient_scale,country_case,constraint,
+            baseline_year=baseline_year,
+            distance_from_origin=distance_from_origin,
+            environmental_buffer=environmental_buffer
+        )
