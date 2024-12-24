@@ -89,7 +89,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -105,7 +105,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -120,7 +120,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -152,29 +152,50 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
-        num_blocks = 0
-        percentile_years = {
-                            "baseline":[2022],
-                            "low":[2030,2040],
-                            "mid":[2030,2040],
-                            "high":[2030,2040]
-                            }
+        num_blocks = 6
+        all_scenarios = []
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        print (distance_filters)
+        ref_mins = [["cobalt"],["copper"],["nickel"],["graphite"],["manganese"],["lithium"]]
+        baseline_scenario = [[2022],"baseline","none","country","unconstrained"]
+        for rf in ref_mins:    
+            all_scenarios.append([rf] + baseline_scenario)
+        ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
+        p = "min_threshold_metal_tons"
+        c = "country"
+        yrs = [2030,2040]
+        for rf in ref_mins:
+            for s in ["low","mid","high"]:
+                for o in ["unconstrained","constrained"]:
+                    if o == "constrained":
+                        for idx,(op,ef) in enumerate(distance_filters):
+                            all_scenarios.append([rf] + [yrs] + [s,p,c,o,baseline_year,op,ef])
+                    else:
+                        all_scenarios.append([rf] + [yrs] + [s,p,c,o])
+        p = "max_threshold_metal_tons"
+        c = "region"
+        yrs = [2030,2040]
+        for rf in ref_mins:
+            for s in ["low","mid","high"]:
+                for o in ["unconstrained","constrained"]:
+                    if o == "constrained":
+                        for idx,(op,ef) in enumerate(distance_filters):
+                            all_scenarios.append([rf] + [yrs] + [s,p,c,o,baseline_year,op,ef])
+                    else:
+                        all_scenarios.append([rf] + [yrs] + [s,p,c,o])
+
         with open("combination_set.txt","w+") as f:
-            for sc,yr in percentile_years.items():
-                st = f"{[yr]};"
-                if sc == "baseline":
-                    ref_mins = [["cobalt"],["copper"],["nickel"],["graphite"],["manganese"],["lithium"]]
-                else:
-                    ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
-                for row in ref_mins:
-                    st += f"{row};"
-                    st += f""
-                    f.write(st)                
+            for row in all_scenarios:
+                st = ""
+                for r in row[:-1]:
+                    st += f"{r};"
+                st += f"{row[-1]}\n"
+                f.write(st)               
         f.close()
 
-        """Next we aggregate the flows through the scenarios
+        """Next we run the optimsation script
         """
         args = [
                 "parallel",
@@ -190,40 +211,24 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-        num_blocks = 0
-        with open("optimisation_set.txt","w+") as f:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
-                num_blocks += 1
-                if year == baseline_year:
-                    th = "none"
-                    loc = "country"
-                    opt = "unconstrained"
-                    f.write(f"{year},{percentile},{th},{loc},{opt}\n")
-                else:
-                    for loc in location_cases:
-                        if loc == "country":
-                            th = "min_threshold_metal_tons"
-                        else:
-                            th = "max_threshold_metal_tons"
-                        for opt in optimisation_type:
-                            f.write(f"{year},{percentile},{th},{loc},{opt}\n")                    
-        f.close()
-
-        """Next we call the flow analysis script and loop through the scenarios
-        """
-        args = [
-                "parallel",
-                "-j", str(num_blocks),
-                "--colsep", ",",
-                "-a",
-                "optimisation_set.txt",
-                "python",
-                "flow_location_optimisation_v2.py",
-                "{}"
-                ]
-        print ("* Start the processing of flow location optimisation")
-        print (args)
-        subprocess.run(args)
+        # num_blocks = 0
+        # with open("optimisation_set.txt","w+") as f:
+        #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
+        #         num_blocks += 1
+        #         if year == baseline_year:
+        #             th = "none"
+        #             loc = "country"
+        #             opt = "unconstrained"
+        #             f.write(f"{year},{percentile},{th},{loc},{opt}\n")
+        #         else:
+        #             for loc in location_cases:
+        #                 if loc == "country":
+        #                     th = "min_threshold_metal_tons"
+        #                 else:
+        #                     th = "max_threshold_metal_tons"
+        #                 for opt in optimisation_type:
+        #                     f.write(f"{year},{percentile},{th},{loc},{opt}\n")                    
+        # f.close()
 
     run_script = False
     if run_script is True:

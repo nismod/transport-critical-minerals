@@ -389,8 +389,8 @@ def update_od_dataframe(initial_df,optimal_df,modify_columns):
 
 def main(
         config,
-        years,
         reference_minerals,
+        years,
         percentile,
         efficient_scale,
         country_case,
@@ -407,12 +407,12 @@ def main(
     if distance_from_origin > 0.0 or environmental_buffer > 0.0:
         results_folder = os.path.join(
                                 output_data_path,
-                                f"flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km"
+                                f"combined_flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km"
                                 )
     else:
         results_folder = os.path.join(
                                 output_data_path,
-                                f"flow_optimisation_{country_case}_{constraint}"
+                                f"combined_flow_optimisation_{country_case}_{constraint}"
                                 )
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
@@ -443,7 +443,7 @@ def main(
     grid_column = "grid"
     grid_threshold = 5.0
     non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas","waterstress"]
-    non_grid_thresholds = 3*[environmental_buffer] + [0.0]
+    non_grid_thresholds = [environmental_buffer]*len(non_grid_columns)
 
     #  Get a number of input dataframes
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
@@ -465,7 +465,7 @@ def main(
     node_location_path = os.path.join(
                                     output_data_path,
                                     "location_filters",
-                                    "nodes_with_location_identifiers.geoparquet"
+                                    "nodes_with_location_identifiers_regional.geoparquet"
                                     )
     nodes = gpd.read_parquet(node_location_path)
     nodes["mode"] = np.where(nodes["mode"] == "city","city_process",nodes["mode"])
@@ -690,8 +690,8 @@ if __name__ == '__main__':
     CONFIG = load_config()
     try:
         if len(sys.argv) > 7:
-            years = ast.literal_eval(str(sys.argv[1]))
-            minerals = ast.literal_eval(str(sys.argv[2]))
+            minerals = ast.literal_eval(str(sys.argv[1]))
+            years = ast.literal_eval(str(sys.argv[2]))
             percentile = str(sys.argv[3])
             efficient_scale = str(sys.argv[4])
             country_case = str(sys.argv[5])
@@ -700,8 +700,8 @@ if __name__ == '__main__':
             distance_from_origin = float(sys.argv[8])
             environmental_buffer = float(sys.argv[9])
         else:
-            years = ast.literal_eval(str(sys.argv[1]))
-            minerals = ast.literal_eval(str(sys.argv[2]))
+            minerals = ast.literal_eval(str(sys.argv[1]))
+            years = ast.literal_eval(str(sys.argv[2]))
             percentile = str(sys.argv[3])
             efficient_scale = str(sys.argv[4])
             country_case = str(sys.argv[5])
@@ -715,7 +715,7 @@ if __name__ == '__main__':
         exit()
     main(
             CONFIG,
-            years,minerals,percentile,
+            minerals,years,percentile,
             efficient_scale,country_case,constraint,
             baseline_year=baseline_year,
             distance_from_origin=distance_from_origin,
