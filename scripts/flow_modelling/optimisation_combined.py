@@ -485,7 +485,9 @@ def main(
             metal_content_factors_df, 
             ccg_countries, mine_city_stages, _,_
         ) = get_common_input_dataframes(data_type,year,baseline_year)
+        print (reference_minerals)
         for reference_mineral in reference_minerals:
+            print (reference_mineral)
             # Find year locations
             production_size = production_size_df[
                                         production_size_df[
@@ -713,7 +715,6 @@ if __name__ == '__main__':
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    print (minerals)
     main(
             CONFIG,
             minerals,years,percentile,
