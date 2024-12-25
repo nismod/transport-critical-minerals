@@ -485,14 +485,7 @@ def main(
             metal_content_factors_df, 
             ccg_countries, mine_city_stages, _,_
         ) = get_common_input_dataframes(data_type,year,baseline_year)
-        print (reference_minerals)
         for reference_mineral in reference_minerals:
-            print (reference_mineral)
-            # Find year locations
-            production_size = production_size_df[
-                                        production_size_df[
-                                            "reference_mineral"] == reference_mineral
-                                            ][efficient_scale].values[0]
             metal_factor = metal_content_factors_df[
                         metal_content_factors_df["reference_mineral"] == reference_mineral
                         ]["metal_content_factor"].values[0]
@@ -505,6 +498,10 @@ def main(
                 production_size = 0
             else:
                 file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}"
+                production_size = production_size_df[
+                                            production_size_df[
+                                                "reference_mineral"] == reference_mineral
+                                                ][efficient_scale].values[0]
 
             od_df = pd.read_parquet(
                             os.path.join(
