@@ -713,6 +713,7 @@ if __name__ == '__main__':
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
+    print (minerals)
     main(
             CONFIG,
             minerals,years,percentile,

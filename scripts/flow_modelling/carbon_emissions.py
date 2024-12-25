@@ -102,6 +102,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         stages = list(set([float(c.split("_")[-1]) for c in stages]))
         for row in country_codes_and_projections.itertuples():
             boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
+            df = df[(df["from_iso_a3"] == row.iso3) | (df["to_iso_a3"] == row.iso3)]
             df = gpd.clip(flows_gdf,boundary_df)
             if len(df.index) > 0:
                 df = df.to_crs(epsg=row.projection_epsg)
