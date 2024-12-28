@@ -152,7 +152,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
@@ -189,7 +189,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -208,7 +208,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -278,14 +278,14 @@ def main(config):
                 "-a",
                 "optimisation_set.txt",
                 "python",
-                "carbon_emissions.py",
+                "emissions_estimations.py",
                 "{}"
                 ]
         print ("* Start the processing of flow location optimisation")
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for lc in location_cases:
             for opt in optimisation_type:
@@ -299,7 +299,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
     
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:

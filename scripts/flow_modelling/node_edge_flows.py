@@ -30,6 +30,13 @@ def main(config,reference_mineral,year,percentile,efficient_scale,country_case,c
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
+    baseline_year = 2022
+    # Read the finalised version of the BACI trade data
+    ccg_countries = pd.read_csv(
+                        os.path.join(processed_data_path,
+                                "baci","ccg_country_codes.csv"))
+    ccg_countries = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
+
     modified_paths_folder = os.path.join(
                                 output_data_path,
                                 f"flow_optimisation_{country_case}_{constraint}",
@@ -44,72 +51,93 @@ def main(config,reference_mineral,year,percentile,efficient_scale,country_case,c
                             "initial_stage_production_tons",
                             "final_stage_production_tons"
                         ]
-    if year == 2022:
+
+    if year == baseline_year:
         file_path = os.path.join(
                         output_data_path,
                         "flow_od_paths",
                         f"{reference_mineral}_flow_paths_{year}_{percentile}.parquet")
-        production_size = 0
+        # production_size = 0
+        od_df = pd.read_parquet(file_path)
     else:
-        file_path = os.path.join(
+        export_file_path = os.path.join(
                         modified_paths_folder,
                         f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet")
-
-        # Read data on production scales
-        production_size_df = pd.read_excel(
-                                    os.path.join(
-                                        processed_data_path,
-                                        "production_costs",
-                                        "scales.xlsx"),
-                                    sheet_name="efficient_scales"
-                                    )
-        # print (production_size_df)
-        production_size = production_size_df[
-                                    production_size_df[
-                                        "reference_mineral"] == reference_mineral
-                                        ][efficient_scale].values[0]
+        export_df = pd.read_parquet(export_file_path)
+        export_df = export_df[export_df["trade_type"] != "Import"]
+        import_file_path = os.path.join(
+                        output_data_path,
+                        "flow_od_paths",
+                        f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet")
+        import_df = pd.read_parquet(import_file_path)
+        import_df = import_df[import_df["trade_type"] == "Import"]
+        od_df = pd.concat([export_df,import_df],axis=0,ignore_index=True)
     
-    od_df = pd.read_parquet(file_path)
-    od_df = od_df[od_df["trade_type"] != "Import"]
-    origin_isos = list(set(od_df["export_country_code"].values.tolist()))
-    stages = list(
-                    set(
-                        zip(
-                            od_df["initial_processing_stage"].values.tolist(),
-                            od_df["final_processing_stage"].values.tolist()
-                            )
-                        )
-                    )
-    country_df = []
     edges_flows_df = []
     nodes_flows_df = []
-    sum_dict = dict([(f,[]) for f in trade_ton_columns])    
-    for o_iso in origin_isos:
-        for idx,(i_st,f_st) in enumerate(stages):
-            df = od_df[
-                        (
-                            od_df["export_country_code"] == o_iso
-                        ) & (
-                            od_df["initial_processing_stage"] == i_st
-                        ) & (
-                            od_df["final_processing_stage"] == f_st
-                        )]
-            if len(df.index) > 0:
-                st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
-                for jdx, (flow_column,st) in enumerate(st_tons):
-                    sum_dict[flow_column].append(f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}")
-                    for path_type in ["full_edge_path","full_node_path"]:
-                        f_df = get_flow_on_edges(
-                                       df,
-                                        "id",path_type,
-                                        flow_column)
-                        f_df.rename(columns={flow_column:f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}"},
-                            inplace=True)
-                        if path_type == "full_edge_path":
-                            edges_flows_df.append(f_df)
+    sum_dict = dict([(f,[]) for f in trade_ton_columns])
+    inter_country_df = od_df[od_df["trade_type"] != "Import"]
+    inter_country_df = inter_country_df[
+                            (
+                                inter_country_df["export_country_code"] != inter_country_df["import_country_code"]
+                            ) & (
+                                inter_country_df["import_country_code"].isin(ccg_countries)
+                            )
+                            ]
+    for ty in ["export","import","inter"]:
+        if ty == "export":
+            gdf = od_df[od_df["trade_type"] != "Import"]
+            gdf = gdf[~gdf.index.isin(inter_country_df.index.values.tolist())]
+        elif ty == "import":
+            gdf = od_df[od_df["trade_type"] == "Import"]
+        else:
+            gdf = inter_country_df
+            gdf["inter_country_code"] = gdf.progress_apply(
+                                            lambda x:f"{x.export_country_code}_{x.import_country_code}",
+                                            axis=1)
+
+        origin_isos = list(set(gdf[f"{ty}_country_code"].values.tolist()))
+        stages = list(
+                        set(
+                            zip(
+                                gdf["initial_processing_stage"].values.tolist(),
+                                gdf["final_processing_stage"].values.tolist()
+                                )
+                            )
+                        )
+        for o_iso in origin_isos:
+            for idx,(i_st,f_st) in enumerate(stages):
+                df = gdf[
+                            (
+                                gdf[f"{ty}_country_code"] == o_iso
+                            ) & (
+                                gdf["initial_processing_stage"] == i_st
+                            ) & (
+                                gdf["final_processing_stage"] == f_st
+                            )]
+                if len(df.index) > 0:
+                    st_tons = list(zip(trade_ton_columns,[i_st,f_st]))
+                    for jdx, (flow_column,st) in enumerate(st_tons):
+                        if ty == "export":
+                            rename_column = f"{reference_mineral}_{flow_column}_{st}_origin_{o_iso}"
+                            sum_dict[flow_column].append(rename_column)
+                        elif ty == "import":
+                            rename_column = f"{reference_mineral}_{flow_column}_{st}_destination_{o_iso}"
+                            sum_dict[flow_column].append(rename_column)
                         else:
-                            nodes_flows_df.append(f_df)
-        print ("* Done with:",o_iso)
+                            rename_column = f"{reference_mineral}_{flow_column}_{st}_inter_{o_iso}"
+                            sum_dict[flow_column].append(rename_column)
+                        for path_type in ["full_edge_path","full_node_path"]:
+                            f_df = get_flow_on_edges(
+                                           df,
+                                            "id",path_type,
+                                            flow_column)
+                            f_df.rename(columns={flow_column:rename_column},inplace=True)
+                            if path_type == "full_edge_path":
+                                edges_flows_df.append(f_df)
+                            else:
+                                nodes_flows_df.append(f_df)
+            print ("* Done with:",o_iso)
 
     # print (sum_dict)
     sum_add = []
@@ -130,12 +158,25 @@ def main(config,reference_mineral,year,percentile,efficient_scale,country_case,c
             flow_sums = []
             stage_sums = defaultdict(list)
             for stage in stages:
-                stage_sums[stage.split("_origin")[0]].append(stage)
+                if "_origin_" in stage:
+                    sn = stage.split("_origin_")[0] + "_export"
+                elif "_destination_" in stage:
+                    sn = stage.split("_destination_")[0] + "_import"
+                else:
+                    sn = stage.split("_inter_")[0] + "_inter"
+                stage_sums[sn].append(stage)
             for k,v in stage_sums.items():
                 flows_df[k] = flows_df[list(set(v))].sum(axis=1)
                 flow_sums.append(k)
 
-            flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[list(set(flow_sums))].sum(axis=1) 
+            import_columns = list(set([c for c in flow_sums if "_import" in c]))
+            export_columns = list(set([c for c in flow_sums if "_export" in c]))
+            inter_columns = list(set([c for c in flow_sums if "_inter" in c]))
+            flows_df[f"{reference_mineral}_{flow_column}_export"] = flows_df[export_columns].sum(axis=1)
+            flows_df[f"{reference_mineral}_{flow_column}_import"] = flows_df[import_columns].sum(axis=1)
+            flows_df[f"{reference_mineral}_{flow_column}_inter"] = flows_df[inter_columns].sum(axis=1)
+            flows_df[f"{reference_mineral}_{flow_column}"
+                    ] = flows_df[export_columns + import_columns + inter_columns].sum(axis=1)
 
         flows_df = add_geometries_to_flows(flows_df,
                                 merge_column="id",
@@ -145,8 +186,8 @@ def main(config,reference_mineral,year,percentile,efficient_scale,country_case,c
             degree_df = flows_df[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
         elif path_type == "nodes" and len(degree_df.index) > 0:
             flows_df = pd.merge(flows_df,degree_df,how="left",on=["id"])
-            if year > 2022:
-                flows_df[f"{reference_mineral}_{efficient_scale}"] = production_size
+            # if year > 2022:
+            #     flows_df[f"{reference_mineral}_{efficient_scale}"] = production_size
             # flows_df["min_production_size_global_tons"] = min_production_size_global
 
         flows_df = gpd.GeoDataFrame(flows_df,

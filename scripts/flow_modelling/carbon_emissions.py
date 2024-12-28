@@ -63,7 +63,8 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 
     """Step 1: Get the input datasets
     """
-    reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    # reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    reference_minerals = ["graphite","cobalt"]
     trade_ton_column = "final_stage_production_tons"
 
     carbon_emission_df = pd.read_excel(
@@ -102,25 +103,26 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         stages = list(set([float(c.split("_")[-1]) for c in stages]))
         for row in country_codes_and_projections.itertuples():
             boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
-            df = df[(df["from_iso_a3"] == row.iso3) | (df["to_iso_a3"] == row.iso3)]
-            df = gpd.clip(flows_gdf,boundary_df)
+            df = flows_gdf[(flows_gdf["from_iso_a3"] == row.iso3) | (flows_gdf["to_iso_a3"] == row.iso3)]
             if len(df.index) > 0:
-                df = df.to_crs(epsg=row.projection_epsg)
-                df["reference_mineral"] = reference_mineral
-                df["iso3"] = row.iso3
-                df["length_km"] = 0.001*df.geometry.length
-                for st in stages:
-                	df["processing_stage"] = st
-                	df.rename(columns={f"{reference_mineral}_{trade_ton_column}_{st}":trade_ton_column},inplace=True)
-                	df["ton_km"] = df[trade_ton_column]*df["length_km"]
-                	gdf = df.groupby(
-                				[
-                					"reference_mineral",
-                					"iso3","mode",
-                					"processing_stage"
-                				]).agg(dict(sum_cols)).reset_index()
-                	df.drop(trade_ton_column,axis=1,inplace=True)
-                	all_flows.append(gdf)
+                df = gpd.clip(df,boundary_df)
+                if len(df.index) > 0:
+                    df = df.to_crs(epsg=row.projection_epsg)
+                    df["reference_mineral"] = reference_mineral
+                    df["iso3"] = row.iso3
+                    df["length_km"] = 0.001*df.geometry.length
+                    for st in stages:
+                    	df["processing_stage"] = st
+                    	df.rename(columns={f"{reference_mineral}_{trade_ton_column}_{st}":trade_ton_column},inplace=True)
+                    	df["ton_km"] = df[trade_ton_column]*df["length_km"]
+                    	gdf = df.groupby(
+                    				[
+                    					"reference_mineral",
+                    					"iso3","mode",
+                    					"processing_stage"
+                    				]).agg(dict(sum_cols)).reset_index()
+                    	df.drop(trade_ton_column,axis=1,inplace=True)
+                    	all_flows.append(gdf)
             print (f"Done with {row.iso3} for {reference_mineral}")
 
     all_flows = pd.concat(all_flows,axis=0,ignore_index=True)

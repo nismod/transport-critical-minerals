@@ -18,6 +18,11 @@ from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
+config = load_config()
+incoming_data_path = config['paths']['incoming_data']
+processed_data_path = config['paths']['data']
+output_data_path = config['paths']['results']
+
 def get_stage_one_conversion_factors(x,pcf_df,cf_column="aggregate_ratio"):
     ref_min = x["reference_mineral"]
     exp_st = x["final_processing_stage"]
@@ -28,47 +33,7 @@ def get_stage_one_conversion_factors(x,pcf_df,cf_column="aggregate_ratio"):
                     ][cf_column].values[0]
     return cf_val
 
-def main(config,country_case,constraint):
-    incoming_data_path = config['paths']['incoming_data']
-    processed_data_path = config['paths']['data']
-    output_data_path = config['paths']['results']
-
-    tons_input_folder = os.path.join(output_data_path,"tonnage_summaries")
-    carbon_input_folder = os.path.join(output_data_path,"carbon_emissions_summaries")
-
-    results_folder = os.path.join(output_data_path,"result_summaries")
-    if os.path.exists(results_folder) == False:
-        os.mkdir(results_folder)
-
-    #  Get a number of input dataframes
-    year_percentile_combinations = [
-                                    (2022,"baseline"),
-                                    (2030,"low"),
-                                    (2030,"mid"),
-                                    (2030,"high"),
-                                    (2040,"low"),
-                                    (2040,"mid"),
-                                    (2040,"high")
-                                    ]
-    tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
-    reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
-    initial_tons_column = "initial_stage_production_tons"
-    final_tons_column = "final_stage_production_tons" 
-    # tonnage_types = ["production","export","import_ccg","import_nonccg"]
-    tonnage_types = ["production","export","import"] 
-    cost_column = "total_gcosts" 
-    carbon_column = "tonsCO2eq"
-    cost_sum_dict = [(final_tons_column,"sum"),(cost_column,"sum")]
-
-    #  Get a number of input dataframes
-    baseline_year = 2022
-    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
-    (
-        pr_conv_factors_df, 
-        metal_content_factors_df, 
-        _, _, _, _
-    ) = get_common_input_dataframes(data_type,baseline_year,baseline_year)
-
+def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
     price_df = pd.read_excel(
                         os.path.join(
                             processed_data_path,
@@ -97,8 +62,7 @@ def main(config,country_case,constraint):
                             "production_costs",
                             "GDP Projections Critical Minerals 1.xlsx"),
                         sheet_name = "IMF")
-    gdp_df.columns = ["country_name","iso3",2022,2030,2040]
-    years = [2022,2030,2040]
+    gdp_df.columns = ["country_name","iso3"] + years
     price_costs_df = []
     regional_gdp_df = []
     index_cols = ["year","reference_mineral","processing_stage"]
@@ -139,6 +103,80 @@ def main(config,country_case,constraint):
                                 "mineral_usage_factors",
                                 "water_intensities_final.csv")
                             )[["reference_mineral","processing_stage","water_intensity_m3_per_kg"]]
+    return (price_costs_df,regional_gdp_df,water_intensity_df)
+
+def main(country_case,constraint):
+    tons_input_folder = os.path.join(output_data_path,"tonnage_summaries")
+    carbon_input_folder = os.path.join(output_data_path,"carbon_emissions_summaries")
+
+    results_folder = os.path.join(output_data_path,"result_summaries")
+    if os.path.exists(results_folder) == False:
+        os.mkdir(results_folder)
+
+    #  Get a number of input dataframes
+    baseline_year = 2022
+    years = [2022,2030,2040]
+    year_percentile_combinations = [
+                                    (2022,"baseline"),
+                                    (2030,"low"),
+                                    (2030,"mid"),
+                                    (2030,"high"),
+                                    (2040,"low"),
+                                    (2040,"mid"),
+                                    (2040,"high")
+                                    ]
+    tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
+    reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
+    initial_tons_column = "initial_stage_production_tons"
+    final_tons_column = "final_stage_production_tons" 
+    # tonnage_types = ["production","export","import_ccg","import_nonccg"]
+    tonnage_types = ["production","export","import"] 
+    cost_column = "total_gcosts_usd" 
+    carbon_columns = [
+                        "transport_total_tonkm",
+                        "transport_total_tonsCO2eq",
+                        "transport_export_tonsCO2eq",
+                        "transport_import_tonsCO2eq"
+                    ]
+    cost_sum_dict = [(final_tons_column,"sum"),(cost_column,"sum")]
+
+    # all_sums = [
+    #             "production_tonnes",
+    #             "export_tonnes",
+    #             "import_ccg_tonnes",
+    #             "import_nonccg_tonnes",
+    #             "export_transport_cost_usd",
+    #             "export_transport_cost_usd_per_tonne",
+    #             "import_ccg_transport_cost_usd",
+    #             "import_ccg_transport_cost_usd_per_tonne",
+    #             "import_nonccg_transport_cost_usd",
+    #             "import_nonccg_transport_cost_usd_per_tonne",
+    #             carbon_column
+    #             ]
+    all_sums = [
+                "production_tonnes",
+                "stage_1_production_for_value_added_export_tonnes",
+                "export_tonnes",
+                "import_tonnes",
+                "export_transport_cost_usd",
+                "export_transport_cost_usd_per_tonne",
+                "import_transport_cost_usd",
+                "import_transport_cost_usd_per_tonne",
+                ] + carbon_columns
+
+    #  Get a number of input dataframes
+    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
+    (
+        pr_conv_factors_df, 
+        metal_content_factors_df, 
+        _, _, _, _
+    ) = get_common_input_dataframes(data_type,baseline_year,baseline_year)
+
+    (
+        price_costs_df,
+        regional_gdp_df,
+        water_intensity_df
+    ) = get_prices_costs_gdp_waterintensity(years=years)
 
     stage_names_df = pd.read_excel(
                         os.path.join(
@@ -172,7 +210,7 @@ def main(config,country_case,constraint):
     all_layers = []
     all_years = []
     for idx, (year,percentile) in enumerate(combos):
-        if year == 2022:
+        if year == baseline_year:
             tons_file_name = f"location_totals_{year}_baseline"
             carbon_file_name = f"carbon_emission_totals_{year}_baseline"
             layer_name = f"{year}_baseline"
@@ -191,30 +229,6 @@ def main(config,country_case,constraint):
                 all_years.append(year)
 
     all_dfs = []
-    # all_sums = [
-    #             "production_tonnes",
-    #             "export_tonnes",
-    #             "import_ccg_tonnes",
-    #             "import_nonccg_tonnes",
-    #             "export_transport_cost_usd",
-    #             "export_transport_cost_usd_per_tonne",
-    #             "import_ccg_transport_cost_usd",
-    #             "import_ccg_transport_cost_usd_per_tonne",
-    #             "import_nonccg_transport_cost_usd",
-    #             "import_nonccg_transport_cost_usd_per_tonne",
-    #             carbon_column
-    #             ]
-    all_sums = [
-                "production_tonnes",
-                "stage_1_production_for_value_added_export_tonnes",
-                "export_tonnes",
-                "import_tonnes",
-                "export_transport_cost_usd",
-                "export_transport_cost_usd_per_tonne",
-                "import_transport_cost_usd",
-                "import_transport_cost_usd_per_tonne",
-                carbon_column
-                ]
     for idx, (ft,fc,l,y) in enumerate(zip(all_tons_files,all_carbon_files,all_layers,all_years)):
         fname = os.path.join(
                     tons_input_folder,
@@ -343,7 +357,7 @@ def main(config,country_case,constraint):
                         f"{fc}_{country_case}_{constraint}.csv"))
             c_df = c_df.groupby(
                                 ["reference_mineral","iso3","processing_stage"]
-                                )[carbon_column].sum().reset_index()
+                                ).agg(dict([(ca,"sum") for ca in carbon_columns])).reset_index()
             c_df["scenario"] = l
             c_df["year"] = y
             all_dfs.append(c_df)
@@ -409,11 +423,10 @@ def main(config,country_case,constraint):
 
 
 if __name__ == '__main__':
-    CONFIG = load_config()
     try:
         country_case = str(sys.argv[1])
         constraint = str(sys.argv[2])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,country_case,constraint)
+    main(country_case,constraint)
