@@ -227,7 +227,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         # reference_minerals = ["cobalt"]
         num_blocks = 0

@@ -138,7 +138,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     """
     global_epsg = 4326
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
-    reference_minerals = ["cobalt","graphite"]
     trade_ton_column = "final_stage_production_tons"
     index_columns = ["id","from_id","to_id","from_iso_a3","to_iso_a3","mode","geometry"]
 
