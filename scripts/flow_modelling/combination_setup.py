@@ -152,7 +152,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 6
         all_scenarios = []
@@ -211,39 +211,44 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-        # num_blocks = 0
-        # with open("optimisation_set.txt","w+") as f:
-        #     for idx, (year,percentile) in enumerate(year_percentile_combinations):
-        #         num_blocks += 1
-        #         if year == baseline_year:
-        #             th = "none"
-        #             loc = "country"
-        #             opt = "unconstrained"
-        #             f.write(f"{year},{percentile},{th},{loc},{opt}\n")
-        #         else:
-        #             for loc in location_cases:
-        #                 if loc == "country":
-        #                     th = "min_threshold_metal_tons"
-        #                 else:
-        #                     th = "max_threshold_metal_tons"
-        #                 for opt in optimisation_type:
-        #                     f.write(f"{year},{percentile},{th},{loc},{opt}\n")                    
-        # f.close()
-
-    run_script = False
+    run_script = True
     if run_script is True:
-        with open("optimisation_set.txt","r") as r:
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        c = "combined"
+        with open("combined_optimisation_set.txt","w+") as f:
+            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                if year == baseline_year:
+                    th = "none"
+                    loc = "country"
+                    opt = "unconstrained"
+                    f.write(f"{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
+                else:
+                    for loc in location_cases:
+                        if loc == "country":
+                            th = "min_threshold_metal_tons"
+                        else:
+                            th = "max_threshold_metal_tons"
+                        for opt in optimisation_type:
+                            if opt == "constrained":
+                                for idx,(op,ef) in enumerate(distance_filters):
+                                    f.write(f"{year},{percentile},{th},{loc},{opt},{c},{op},{ef}\n")
+                            else:
+                                f.write(f"{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
+
+        f.close()
+
+    run_script = True
+    if run_script is True:
+        with open("combined_optimisation_set.txt","r") as r:
             for p in r:
                 pv = p.split(",")
-                opt = pv[4].strip('\n')
+                ls = pv[-1].strip('\n')
+                st = ",".join(pv[:-1]) 
                 args = [
                         "python",
                         "processing_locations_for_energy.py",
-                        f"{pv[0]}",
-                        f"{pv[1]}",
-                        f"{pv[2]}",
-                        f"{pv[3]}",
-                        f"{opt}"
+                        f"{st}",
+                        f"{ls}"
                         ]
                 print ("* Start the processing of assembling locations for energy calculations")
                 print (args)

@@ -132,37 +132,68 @@ def main(country_case,constraint):
     # tonnage_types = ["production","export","import_ccg","import_nonccg"]
     tonnage_types = ["production","export","import"] 
     cost_column = "total_gcosts_usd" 
-    carbon_columns = [
-                        "transport_total_tonkm",
-                        "transport_total_tonsCO2eq",
-                        "transport_export_tonsCO2eq",
-                        "transport_import_tonsCO2eq"
-                    ]
+    carbon_tons_column = "transport_total_tonkm"
+    carbon_divisor_columns = ["transport_total_tonkm","export_tonnes","import_tonnes"]
     cost_sum_dict = [(final_tons_column,"sum"),(cost_column,"sum")]
+    index_cols = ["year","reference_mineral","processing_stage"]
+    anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type","processing_stage"]
+    column_dictionary = {
+                            "anchor": [
+                                        "year",
+                                        "scenario",
+                                        "reference_mineral",
+                                        "iso3",
+                                        "processing_type",
+                                        "processing_stage"
+                                        ],
+                            "tonnages": [
+                                            "production_tonnes",
+                                            "stage_1_production_for_value_added_export_tonnes",
+                                            "export_tonnes",
+                                            "import_tonnes"
+                                        ],
+                            "carbon":[
+                                        "transport_total_tonkm",
+                                        "transport_total_tonsCO2eq",
+                                        "transport_export_tonsCO2eq",
+                                        "transport_import_tonsCO2eq"
+                                    ],
+                            "water":["water_usage_m3"],
+                            "costs":[
+                                        "revenue_usd",
+                                        "expenditure_usd",
+                                        "capex_usd",
+                                        "opex_usd",
+                                        "production_cost_usd",
+                                        "stage1_production_cost_usd",
+                                        "stage1_production_cost_usd_opex_only",
+                                        "gdp_usd"
+                                    ],
+                            "transport_costs":[
+                                                "export_transport_cost_usd",
+                                                "import_transport_cost_usd"
+                                            ],
+                            "unit_costs":[
+                                            "price_usd_per_tonne",
+                                            "capex_usd_per_tonne",
+                                            "opex_usd_per_tonne"
+                                        ],
+                            "unit_transport_costs":[
+                                                        "export_transport_cost_usd_per_tonne",
+                                                        "import_transport_cost_usd_per_tonne"
+                                                    ],
+                            "unit_carbon":[
+                                                "transport_total_tonsCO2eq_pertonkm",
+                                                "transport_export_tonsCO2eq_pertonne",
+                                                "transport_import_tonsCO2eq_pertonne"
+                                        ],
+                            "unit_water":["water_intensity_m3_per_kg"]
+                        }
 
-    # all_sums = [
-    #             "production_tonnes",
-    #             "export_tonnes",
-    #             "import_ccg_tonnes",
-    #             "import_nonccg_tonnes",
-    #             "export_transport_cost_usd",
-    #             "export_transport_cost_usd_per_tonne",
-    #             "import_ccg_transport_cost_usd",
-    #             "import_ccg_transport_cost_usd_per_tonne",
-    #             "import_nonccg_transport_cost_usd",
-    #             "import_nonccg_transport_cost_usd_per_tonne",
-    #             carbon_column
-    #             ]
-    all_sums = [
-                "production_tonnes",
-                "stage_1_production_for_value_added_export_tonnes",
-                "export_tonnes",
-                "import_tonnes",
-                "export_transport_cost_usd",
-                "export_transport_cost_usd_per_tonne",
-                "import_transport_cost_usd",
-                "import_transport_cost_usd_per_tonne",
-                ] + carbon_columns
+    all_sums = column_dictionary["tonnages"
+                    ] + column_dictionary["transport_costs"
+                    ] + column_dictionary["carbon"
+                    ] + column_dictionary["unit_transport_costs"]
 
     #  Get a number of input dataframes
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
@@ -355,9 +386,10 @@ def main(country_case,constraint):
                     os.path.join(
                         carbon_input_folder,
                         f"{fc}_{country_case}_{constraint}.csv"))
+            c_df = c_df[c_df[carbon_tons_column] > 0]
             c_df = c_df.groupby(
                                 ["reference_mineral","iso3","processing_stage"]
-                                ).agg(dict([(ca,"sum") for ca in carbon_columns])).reset_index()
+                                ).agg(dict([(ca,"sum") for ca in column_dictionary["carbon"]])).reset_index()
             c_df["scenario"] = l
             c_df["year"] = y
             all_dfs.append(c_df)
@@ -366,6 +398,14 @@ def main(country_case,constraint):
     all_dfs = all_dfs.groupby(
                     ["year","scenario","reference_mineral","iso3","processing_stage"]
                     ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
+    for idx,(c,u,d) in enumerate(
+                                zip(
+                                    column_dictionary["carbon"][1:],
+                                    column_dictionary["unit_carbon"],
+                                    carbon_divisor_columns
+                                    )
+                                ):
+        all_dfs[u] = np.where(all_dfs[d] > 0,all_dfs[c]/all_dfs[d],0)
 
     all_dfs = pd.merge(all_dfs,price_costs_df,how="left",on=index_cols).fillna(0)
     all_dfs = pd.merge(all_dfs,water_intensity_df,
@@ -383,6 +423,7 @@ def main(country_case,constraint):
             all_dfs["capex_usd_per_tonne"] + all_dfs["opex_usd_per_tonne"])
     all_dfs["stage1_production_cost_usd_opex_only"
         ] = all_dfs["stage_1_production_for_value_added_export_tonnes"]*all_dfs["opex_usd_per_tonne"]
+    all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
     for idx,(p,r) in enumerate(zip(["price","capex","opex"],["revenue","capex","opex"])):
         all_dfs[
             f"{p}_usd_per_tonne"
@@ -391,8 +432,10 @@ def main(country_case,constraint):
                     all_dfs[f"{p}_usd_per_tonne"],
                     0
             )
+    all_dfs["gdp_usd"] = np.where(all_dfs["revenue_usd"] > 0,all_dfs["gdp_usd"],0)
     all_dfs = pd.merge(all_dfs,stage_names_df,how="left",on=["reference_mineral","processing_stage"])
-    all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3","processing_type","processing_stage"])
+    all_dfs = all_dfs[[x for xs in [v for k,v in column_dictionary.items()] for x in xs]]
+    all_dfs = all_dfs.set_index(anchor_columns)
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()
 

@@ -12,19 +12,41 @@ from utils import *
 from tqdm import tqdm
 tqdm.pandas()
     
-def main(config,year,percentile,efficient_scale,country_case,constraint):
+def main(
+            config,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = None,
+            distance_from_origin=0.0,
+            environmental_buffer=0.0
+        ):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    input_folder = os.path.join(
-                        output_data_path,
-                        f"flow_optimisation_{country_case}_{constraint}"
-                        )
-    flows_folder = os.path.join(
-                        output_data_path,
-                        f"flow_optimisation_{country_case}_{constraint}",
-                        "processed_flows")
+    baseline_year = 2022
+    if combination is None:
+        flows_folder = os.path.join(
+                            output_data_path,
+                            f"flow_optimisation_{country_case}_{constraint}",
+                            "processed_flows")
+        results_file = f"node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"
+    else:
+        if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+            flows_folder = os.path.join(
+                                output_data_path,
+                                f"{combination}_flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km"
+                                )
+            results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}_op_{str(distance_from_origin).replace(".","p")}km_eb_{str(environmental_buffer).replace(".","p")}km.gpkg"
+        else:
+            flows_folder = os.path.join(
+                                    output_data_path,
+                                    f"{combination}_flow_optimisation_{country_case}_{constraint}"
+                                    )
+            results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"
 
     results_folder = os.path.join(output_data_path,"optimised_processing_locations")
     if os.path.exists(results_folder) == False:
@@ -49,7 +71,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     add_columns = []
     for reference_mineral in reference_minerals:
         # Find year locations
-        if year == 2022:
+        if year == baseline_year:
             layer_name = f"{reference_mineral}_{percentile}"
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
@@ -93,10 +115,11 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     crs="EPSG:4326")
     all_flows = all_flows.drop_duplicates(subset=["id"],keep="first")
 
-    if year == 2022:
+    if year == baseline_year:
         layer_name = f"{year}_{percentile}"
     else:
         layer_name = f"{year}_{percentile}_{efficient_scale}"
+
     all_flows.to_file(os.path.join(results_folder,
                         f"node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"),
                         layer=layer_name,driver="GPKG")
@@ -105,12 +128,34 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        year = int(sys.argv[1])
-        percentile = str(sys.argv[2])
-        efficient_scale = str(sys.argv[3])
-        country_case = str(sys.argv[4])
-        constraint = str(sys.argv[5])
+        if len(sys.argv) > 6:
+            year = int(sys.argv[1])
+            percentile = str(sys.argv[2])
+            efficient_scale = str(sys.argv[3])
+            country_case = str(sys.argv[4])
+            constraint = str(sys.argv[5])
+            combination = str(sys.argv[6])
+            distance_from_origin = float(sys.argv[7])
+            environmental_buffer = float(sys.argv[8])
+        else:
+            year = int(sys.argv[1])
+            percentile = str(sys.argv[2])
+            efficient_scale = str(sys.argv[3])
+            country_case = str(sys.argv[4])
+            constraint = str(sys.argv[5])
+            combination = None
+            distance_from_origin = 0.0
+            environmental_buffer = 0.0
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,year,percentile,efficient_scale,country_case,constraint)
+    main(
+            CONFIG,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = None,
+            distance_from_origin=0.0,
+            environmental_buffer=0.0)
