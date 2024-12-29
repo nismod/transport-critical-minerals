@@ -243,13 +243,13 @@ def main(config):
             for p in r:
                 pv = p.split(",")
                 ls = pv[-1].strip('\n')
-                st = ",".join(pv[:-1]) 
                 args = [
                         "python",
-                        "processing_locations_for_energy.py",
-                        f"{st}",
-                        f"{ls}"
+                        "processing_locations_for_energy.py"
                         ]
+                for v in pv[:-1]:
+                    args.append(v)
+                args.append(ls)
                 print ("* Start the processing of assembling locations for energy calculations")
                 print (args)
                 subprocess.run(args)  
