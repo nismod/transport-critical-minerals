@@ -50,6 +50,7 @@ def main(
                                     )
             results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"
 
+    print (results_file)
     results_folder = os.path.join(output_data_path,"optimised_processing_locations")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
@@ -158,6 +159,6 @@ if __name__ == '__main__':
             efficient_scale,
             country_case,
             constraint,
-            combination = None,
+            combination = combination,
             distance_from_origin=0.0,
             environmental_buffer=0.0)
