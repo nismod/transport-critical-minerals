@@ -50,7 +50,6 @@ def main(
                                     )
             results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"
 
-    print (results_file)
     results_folder = os.path.join(output_data_path,"optimised_processing_locations")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
