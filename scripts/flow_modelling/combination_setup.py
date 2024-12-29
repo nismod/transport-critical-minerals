@@ -254,7 +254,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("combined_optimisation_set.txt","r") as r:
             for p in r:
@@ -271,19 +271,19 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
-        # reference_minerals = ["cobalt"]
-        num_blocks = 0
-        with open("flow_set.txt","w+") as f:
+        num_blocks = 16
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        c = "combined"
+        with open("combined_flow_set.txt","w+") as f:
             for rf in reference_minerals:
-                num_blocks += 2
                 for idx, (year,percentile) in enumerate(year_percentile_combinations):
                     if year == baseline_year:
                         th = "none"
                         loc = "country"
                         opt = "unconstrained"
-                        f.write(f"{rf},{year},{percentile},{th},{loc},{opt}\n")
+                        f.write(f"{rf},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
                     else:
                         for loc in location_cases:
                             if loc == "country":
@@ -291,7 +291,12 @@ def main(config):
                             else:
                                 th = "max_threshold_metal_tons"
                             for opt in optimisation_type:
-                                f.write(f"{rf},{year},{percentile},{th},{loc},{opt}\n")                     
+                                if opt == "constrained":
+                                    for idx,(op,ef) in enumerate(distance_filters):
+                                        f.write(f"{rf},{year},{percentile},{th},{loc},{opt},{c},{op},{ef}\n")
+                                else:
+                                    f.write(f"{rf},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
+
         f.close()
 
         """Next we aggregate the flows through the scenarios
@@ -301,7 +306,7 @@ def main(config):
                 "-j", str(num_blocks),
                 "--colsep", ",",
                 "-a",
-                "flow_set.txt",
+                "combined_flow_set.txt",
                 "python",
                 "node_edge_flows.py",
                 "{}"

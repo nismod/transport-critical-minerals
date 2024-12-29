@@ -25,7 +25,18 @@ def find_country_edges(edges,network_edges):
     result = sorted(set(edges) & set(network_edges), key=lambda i: weights[i])
     return result
 
-def main(config,reference_mineral,year,percentile,efficient_scale,country_case,constraint):
+def main(
+            config,
+            reference_mineral,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = None,
+            distance_from_origin=0.0,
+            environmental_buffer=0.0
+            )
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
@@ -41,6 +52,36 @@ def main(config,reference_mineral,year,percentile,efficient_scale,country_case,c
                                 output_data_path,
                                 f"flow_optimisation_{country_case}_{constraint}",
                                 "modified_flow_od_paths")
+    
+    if year == baseline_year:
+        layer_name = f"{reference_mineral}_{percentile}"
+    else:
+        layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
+
+    if combination is None:
+        modified_paths_folder = os.path.join(
+                                    output_data_path,
+                                    f"flow_optimisation_{country_case}_{constraint}",
+                                    "modified_flow_od_paths")
+        results_gpq = f"flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+    else:
+        if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+            modified_paths_folder = os.path.join(
+                                output_data_path,
+                                f"{combination}_flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km",
+                                "modified_flow_od_paths"
+                                )
+            ds = str(distance_from_origin).replace('.','p')
+            eb = str(environmental_buffer).replace('.','p')
+            results_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
+        else:
+            modified_paths_folder = os.path.join(
+                                    output_data_path,
+                                    f"{combination}_flow_optimisation_{country_case}_{constraint}",
+                                    "modified_flow_od_paths"
+                                    )
+            results_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+    
     results_folder = os.path.join(output_data_path,"node_edge_flows")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
@@ -201,19 +242,44 @@ def main(config,reference_mineral,year,percentile,efficient_scale,country_case,c
         #                     f"{path_type}_flows_{year}_{country_case}_{constraint}.gpkg"),
         #                     layer=layer_name,driver="GPKG")
         flows_df.to_parquet(os.path.join(results_folder,
-                            f"{path_type}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"))
+                            f"{path_type}_{results_gpq}"))
 
 
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        reference_mineral = str(sys.argv[1])
-        year = int(sys.argv[2])
-        percentile = str(sys.argv[3])
-        efficient_scale = str(sys.argv[4])
-        country_case = str(sys.argv[5])
-        constraint = str(sys.argv[6])
+        if len(sys.argv) > 7:
+            reference_mineral = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
+            combination = str(sys.argv[7])
+            distance_from_origin = float(sys.argv[8])
+            environmental_buffer = float(sys.argv[9])
+        else:
+            reference_mineral = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
+            combination = None
+            distance_from_origin = 0.0
+            environmental_buffer = 0.0
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,reference_mineral,year,percentile,efficient_scale,country_case,constraint)
+    main(
+            CONFIG,
+            reference_mineral,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = combination,
+            distance_from_origin=distance_from_origin,
+            environmental_buffer=environmental_buffer
+            )
