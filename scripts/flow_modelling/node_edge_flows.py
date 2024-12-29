@@ -36,7 +36,7 @@ def main(
             combination = None,
             distance_from_origin=0.0,
             environmental_buffer=0.0
-            )
+            ):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
