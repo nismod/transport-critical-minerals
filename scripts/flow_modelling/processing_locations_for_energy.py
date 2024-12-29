@@ -123,7 +123,7 @@ def main(
         layer_name = f"{year}_{percentile}_{efficient_scale}"
 
     all_flows.to_file(os.path.join(results_folder,
-                        f"node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"),
+                        results_file),
                         layer=layer_name,driver="GPKG")
 
 
