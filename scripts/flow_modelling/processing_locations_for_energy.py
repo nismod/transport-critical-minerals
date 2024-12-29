@@ -40,7 +40,9 @@ def main(
                                 output_data_path,
                                 f"{combination}_flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km"
                                 )
-            results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}_op_{str(distance_from_origin).replace('.','p')}km_eb_{str(environmental_buffer).replace('.','p')}km.gpkg"
+            ds = str(distance_from_origin).replace('.','p')
+            eb = str(environmental_buffer).replace('.','p')
+            results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.gpkg"
         else:
             flows_folder = os.path.join(
                                     output_data_path,
