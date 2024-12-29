@@ -271,7 +271,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 16
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
@@ -315,19 +315,19 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
-        num_blocks = 12
+        num_blocks = 16
         args = [
                 "parallel",
                 "-j", str(num_blocks),
                 "--colsep", ",",
                 "-a",
-                "optimisation_set.txt",
+                "combined_optimisation_set.txt",
                 "python",
-                "carbon_emissions.py",
+                "emissions_estimations.py",
                 "{}"
                 ]
         print ("* Start the processing of flow location optimisation")

@@ -115,7 +115,17 @@ def get_columns(
     return {"total_tonkm":total_columns,"export_tonkm":export_columns,"import_tonkm":import_columns}
 
 
-def main(config,year,percentile,efficient_scale,country_case,constraint):
+def main(
+            config,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = None,
+            distance_from_origin=0.0,
+            environmental_buffer=0.0
+        ):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
@@ -134,6 +144,15 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
         file_name = f"carbon_emission_totals_{year}_{percentile}"
     else:
         file_name = f"carbon_emission_totals_{year}_{percentile}_{efficient_scale}"
+    if combination is None:
+        results_file = f"{file_name}_{country_case}_{constraint}"
+    else:
+        if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+            ds = str(distance_from_origin).replace('.','p')
+            eb = str(environmental_buffer).replace('.','p')
+            results_file = f"{combination}_{file_name}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km"
+        else:
+            results_file = f"{combination}_{file_name}_{country_case}_{constraint}"
     """Step 1: Get the input datasets
     """
     global_epsg = 4326
@@ -183,10 +202,19 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
             layer_name = f"{reference_mineral}_{percentile}"
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
+        if combination is None:
+            input_gpq = f"flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+        else:
+            if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+                ds = str(distance_from_origin).replace('.','p')
+                eb = str(environmental_buffer).replace('.','p')
+                input_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
+            else:
+                input_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
         flows_gdf = gpd.read_parquet(
                             os.path.join(
                                 input_folder,
-                                f"edges_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"))
+                                f"edges_{input_gpq}"))
         flows_gdf = flows_gdf[flows_gdf["mode"].isin(["road","rail"])]
         flows_gdf = add_isos_to_flows(flows_gdf,nodes_df)
         # tag_columns = []
@@ -242,7 +270,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                     ).to_parquet(
                             os.path.join(
                                 flow_results_folder,
-                                f"{file_name}_{country_case}_{constraint}.geoparquet"
+                                f"{results_file}.geoparquet"
                                 )
                             )
         del unique_edges,gdf
@@ -296,19 +324,41 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     all_flows.to_csv(
             os.path.join(
                 results_folder,
-                f"{file_name}_{country_case}_{constraint}.csv"),
+                f"{results_file}.csv"),
             index=False)
 
 
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        year = int(sys.argv[1])
-        percentile = str(sys.argv[2])
-        efficient_scale = str(sys.argv[3])
-        country_case = str(sys.argv[4])
-        constraint = str(sys.argv[5])
+        if len(sys.argv) > 6:
+            year = int(sys.argv[1])
+            percentile = str(sys.argv[2])
+            efficient_scale = str(sys.argv[3])
+            country_case = str(sys.argv[4])
+            constraint = str(sys.argv[5])
+            combination = str(sys.argv[6])
+            distance_from_origin = float(sys.argv[7])
+            environmental_buffer = float(sys.argv[8])
+        else:
+            year = int(sys.argv[1])
+            percentile = str(sys.argv[2])
+            efficient_scale = str(sys.argv[3])
+            country_case = str(sys.argv[4])
+            constraint = str(sys.argv[5])
+            combination = None
+            distance_from_origin = 0.0
+            environmental_buffer = 0.0
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,year,percentile,efficient_scale,country_case,constraint)
+    main(
+            CONFIG,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = combination,
+            distance_from_origin=distance_from_origin,
+            environmental_buffer=environmental_buffer)
