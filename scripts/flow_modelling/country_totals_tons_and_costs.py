@@ -211,10 +211,6 @@ def main(
                 all_flows["total_gcosts_usd"]/all_flows["final_stage_production_tons"],
                 0
                 )
-    if year == baseline_year:
-        file_name = f"location_totals_{year}_{percentile}"
-    else:
-        file_name = f"location_totals_{year}_{percentile}_{efficient_scale}"
     all_flows.to_csv(
             os.path.join(
                 results_folder,
