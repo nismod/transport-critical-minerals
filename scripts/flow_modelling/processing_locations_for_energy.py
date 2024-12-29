@@ -38,7 +38,8 @@ def main(
         if distance_from_origin > 0.0 or environmental_buffer > 0.0:
             flows_folder = os.path.join(
                                 output_data_path,
-                                f"{combination}_flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km"
+                                f"{combination}_flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km",
+                                "processed_flows"
                                 )
             ds = str(distance_from_origin).replace('.','p')
             eb = str(environmental_buffer).replace('.','p')
@@ -46,7 +47,8 @@ def main(
         else:
             flows_folder = os.path.join(
                                     output_data_path,
-                                    f"{combination}_flow_optimisation_{country_case}_{constraint}"
+                                    f"{combination}_flow_optimisation_{country_case}_{constraint}",
+                                    "processed_flows"
                                     )
             results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"
 
@@ -62,11 +64,18 @@ def main(
     """Step 1: get all the relevant nodes and find their distances 
                 to grid and bio-diversity layers 
     """
-    node_location_path = os.path.join(
-                                    output_data_path,
-                                    "location_filters",
-                                    "nodes_with_location_identifiers.geoparquet"
-                                    )
+    if combination is None:
+        node_location_path = os.path.join(
+                                        output_data_path,
+                                        "location_filters",
+                                        "nodes_with_location_identifiers.geoparquet"
+                                        )
+    else:
+        node_location_path = os.path.join(
+                                        output_data_path,
+                                        "location_filters",
+                                        "nodes_with_location_identifiers_regional.geoparquet"
+                                        )
     nodes = gpd.read_parquet(node_location_path)
     include_columns = nodes.columns.values.tolist()
     all_flows = []
