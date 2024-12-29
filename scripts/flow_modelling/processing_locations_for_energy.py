@@ -159,5 +159,5 @@ if __name__ == '__main__':
             country_case,
             constraint,
             combination = combination,
-            distance_from_origin=0.0,
-            environmental_buffer=0.0)
+            distance_from_origin=distance_from_origin,
+            environmental_buffer=environmental_buffer)
