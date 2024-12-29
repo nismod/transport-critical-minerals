@@ -52,12 +52,46 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
 
     return df
 
-def main(config,year,percentile,efficient_scale,country_case,constraint):
+def main(
+            config,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = None,
+            distance_from_origin=0.0,
+            environmental_buffer=0.0
+        ):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
-    input_folder = os.path.join(output_data_path,f"flow_optimisation_{country_case}_{constraint}")
+    baseline_year = 2022
+    if year == baseline_year:
+        csv_file_name = f"location_totals_{year}_{percentile}"
+    else:
+        csv_file_name = f"location_totals_{year}_{percentile}_{efficient_scale}"
+    if combination is None:
+        input_folder = os.path.join(output_data_path,f"flow_optimisation_{country_case}_{constraint}")
+        results_file = f"{csv_file_name}_{country_case}_{constraint}.csv"
+
+    else:
+        if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+            input_folder = os.path.join(
+                                output_data_path,
+                                f"{combination}_flow_optimisation_{country_case}_{constraint}_op_{distance_from_origin}km_eb_{environmental_buffer}km"
+                                )
+            ds = str(distance_from_origin).replace('.','p')
+            eb = str(environmental_buffer).replace('.','p')
+            results_file = f"{combination}_{csv_file_name}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.csv"
+        else:
+            input_folder = os.path.join(
+                                    output_data_path,
+                                    f"{combination}_flow_optimisation_{country_case}_{constraint}"
+                                    )
+            results_file = f"{combination}_{csv_file_name}_{country_case}_{constraint}.csv"
+    
     results_folder = os.path.join(output_data_path,"tonnage_summaries")
     if os.path.exists(results_folder) == False:
         os.mkdir(results_folder)
@@ -72,7 +106,6 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         ]
 
     #  Get a number of input dataframes
-    baseline_year = 2022
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
     (
         pr_conv_factors_df, 
@@ -178,27 +211,48 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                 all_flows["total_gcosts_usd"]/all_flows["final_stage_production_tons"],
                 0
                 )
-    if year == 2022:
+    if year == baseline_year:
         file_name = f"location_totals_{year}_{percentile}"
-        production_size = 0
     else:
         file_name = f"location_totals_{year}_{percentile}_{efficient_scale}"
     all_flows.to_csv(
             os.path.join(
                 results_folder,
-                f"{file_name}_{country_case}_{constraint}.csv"),
+                results_file),
             index=False)
 
 
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        year = int(sys.argv[1])
-        percentile = str(sys.argv[2])
-        efficient_scale = str(sys.argv[3])
-        country_case = str(sys.argv[4])
-        constraint = str(sys.argv[5])
+        if len(sys.argv) > 6:
+            year = int(sys.argv[1])
+            percentile = str(sys.argv[2])
+            efficient_scale = str(sys.argv[3])
+            country_case = str(sys.argv[4])
+            constraint = str(sys.argv[5])
+            combination = str(sys.argv[6])
+            distance_from_origin = float(sys.argv[7])
+            environmental_buffer = float(sys.argv[8])
+        else:
+            year = int(sys.argv[1])
+            percentile = str(sys.argv[2])
+            efficient_scale = str(sys.argv[3])
+            country_case = str(sys.argv[4])
+            constraint = str(sys.argv[5])
+            combination = None
+            distance_from_origin = 0.0
+            environmental_buffer = 0.0
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,year,percentile,efficient_scale,country_case,constraint)
+    main(
+            CONFIG,
+            year,
+            percentile,
+            efficient_scale,
+            country_case,
+            constraint,
+            combination = combination,
+            distance_from_origin=distance_from_origin,
+            environmental_buffer=environmental_buffer)
