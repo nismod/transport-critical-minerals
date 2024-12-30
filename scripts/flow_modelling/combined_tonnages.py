@@ -105,7 +105,33 @@ def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
                             )[["reference_mineral","processing_stage","water_intensity_m3_per_kg"]]
     return (price_costs_df,regional_gdp_df,water_intensity_df)
 
-def main(country_case,constraint):
+def get_full_file_name(
+                fname,
+                country_case,
+                constraint,
+                combination=None,
+                distance_from_origin=0.0,
+                environmental_buffer=0.0
+                ):
+    fname = f"{fname}_{country_case}_{constraint}"
+    if combination is None:
+        return fname
+    else:
+        if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+            ds = str(distance_from_origin).replace('.','p')
+            eb = str(environmental_buffer).replace('.','p')
+            return f"{combination}_{fname}_op_{ds}km_eb_{eb}km"
+        else:
+            return f"{combination}_{fname}"
+
+def main(
+            config,
+            country_case,
+            constraint,
+            combination = None,
+            distance_from_origin=0.0,
+            environmental_buffer=0.0
+        ):
     tons_input_folder = os.path.join(output_data_path,"tonnage_summaries")
     carbon_input_folder = os.path.join(output_data_path,"carbon_emissions_summaries")
 
@@ -215,9 +241,22 @@ def main(country_case,constraint):
                             "mineral_usage_factors",
                             "stage_mapping.xlsx"),
                         sheet_name="stage_maps")[["reference_mineral","processing_stage","processing_type"]]
+    if combination is None:
+        t_file_name = "transport_totals_by_stage.xlsx"
+        v_file_name = "value_added_totals.xlsx"
+    else:
+        if distance_from_origin > 0.0 or environmental_buffer > 0.0:
+            ds = str(distance_from_origin).replace('.','p')
+            eb = str(environmental_buffer).replace('.','p')
+            t_file_name = f"{combination}_transport_totals_by_stage_op_{ds}km_eb_{eb}km.xlsx"
+            v_file_name = f"{combination}_value_added_totals_op_{ds}km_eb_{eb}km.xlsx"
+        else:
+            t_file_name = f"{combination}_transport_totals_by_stage.xlsx"
+            v_file_name = f"{combination}_value_added_totals.xlsx"
+    
     output_file = os.path.join(
                         results_folder,
-                        "transport_totals_by_stage.xlsx")
+                        t_file_name)
     if os.path.isfile(output_file) is True:
         writer = pd.ExcelWriter(output_file,mode='a',engine="openpyxl",if_sheet_exists='replace')
     else:
@@ -225,7 +264,7 @@ def main(country_case,constraint):
 
     output_file = os.path.join(
                         results_folder,
-                        "value_added_totals.xlsx")
+                        v_file_name)
     if os.path.isfile(output_file) is True:
         writer_t = pd.ExcelWriter(output_file,mode='a',engine="openpyxl",if_sheet_exists='replace')
     else:
@@ -242,8 +281,22 @@ def main(country_case,constraint):
     all_years = []
     for idx, (year,percentile) in enumerate(combos):
         if year == baseline_year:
-            tons_file_name = f"location_totals_{year}_baseline"
-            carbon_file_name = f"carbon_emission_totals_{year}_baseline"
+            tons_file_name = get_full_file_name(
+                                    f"location_totals_{year}_baseline",
+                                    country_case,
+                                    constraint,
+                                    combination=combination,
+                                    distance_from_origin=distance_from_origin,
+                                    environmental_buffer=environmental_buffer
+                                    )
+            carbon_file_name = get_full_file_name(
+                                    f"carbon_emission_totals_{year}_baseline",
+                                    country_case,
+                                    constraint,
+                                    combination=combination,
+                                    distance_from_origin=distance_from_origin,
+                                    environmental_buffer=environmental_buffer
+                                    )
             layer_name = f"{year}_baseline"
             all_tons_files.append(tons_file_name)
             all_carbon_files.append(carbon_file_name)
@@ -251,8 +304,22 @@ def main(country_case,constraint):
             all_years.append(year)
         else:
             for th in tonnage_thresholds:
-                tons_file_name = f"location_totals_{year}_{percentile}_{th}"
-                carbon_file_name = f"carbon_emission_totals_{year}_{percentile}_{th}"
+                tons_file_name = get_full_file_name(
+                                    f"location_totals_{year}_{percentile}_{th}",
+                                    country_case,
+                                    constraint,
+                                    combination=combination,
+                                    distance_from_origin=distance_from_origin,
+                                    environmental_buffer=environmental_buffer
+                                    )
+                carbon_file_name = get_full_file_name(
+                                    f"carbon_emission_totals_{year}_{percentile}_{th}",
+                                    country_case,
+                                    constraint,
+                                    combination=combination,
+                                    distance_from_origin=distance_from_origin,
+                                    environmental_buffer=environmental_buffer
+                                    )
                 layer_name = f"{year}_{percentile}_{th}"
                 all_tons_files.append(tons_file_name)
                 all_carbon_files.append(carbon_file_name)
@@ -263,7 +330,7 @@ def main(country_case,constraint):
     for idx, (ft,fc,l,y) in enumerate(zip(all_tons_files,all_carbon_files,all_layers,all_years)):
         fname = os.path.join(
                     tons_input_folder,
-                    f"{ft}_{country_case}_{constraint}.csv")
+                    f"{ft}.csv")
         if os.path.exists(fname):
             t_df = pd.read_csv(fname)
             # Get the total production volumes 
@@ -385,7 +452,7 @@ def main(country_case,constraint):
             c_df = pd.read_csv(
                     os.path.join(
                         carbon_input_folder,
-                        f"{fc}_{country_case}_{constraint}.csv"))
+                        f"{fc}.csv"))
             c_df = c_df[c_df[carbon_tons_column] > 0]
             c_df = c_df.groupby(
                                 ["reference_mineral","iso3","processing_stage"]
@@ -466,10 +533,27 @@ def main(country_case,constraint):
 
 
 if __name__ == '__main__':
+    CONFIG = load_config()
     try:
-        country_case = str(sys.argv[1])
-        constraint = str(sys.argv[2])
+        if len(sys.argv) > 3:
+            country_case = str(sys.argv[1])
+            constraint = str(sys.argv[2])
+            combination = str(sys.argv[3])
+            distance_from_origin = float(sys.argv[4])
+            environmental_buffer = float(sys.argv[5])
+        else:
+            country_case = str(sys.argv[1])
+            constraint = str(sys.argv[2])
+            combination = None
+            distance_from_origin = 0.0
+            environmental_buffer = 0.0
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(country_case,constraint)
+    main(
+            CONFIG,
+            country_case,
+            constraint,
+            combination = combination,
+            distance_from_origin=distance_from_origin,
+            environmental_buffer=environmental_buffer)

@@ -285,7 +285,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for lc in location_cases:
             for opt in optimisation_type:
@@ -299,24 +299,38 @@ def main(config):
                 print (args)
                 subprocess.run(args)
     
-    run_script = False
+    run_script = True
     if run_script is True:
-        with open("optimisation_set.txt","r") as r:
-            for p in r:
-                pv = p.split(",")
-                opt = pv[4].strip('\n')
-                args = [
-                        "python",
-                        "aggregated_node_edge_flows.py",
-                        f"{pv[0]}",
-                        f"{pv[1]}",
-                        f"{pv[2]}",
-                        f"{pv[3]}",
-                        f"{opt}"
-                        ]
-                print ("* Start the processing of aggregating node edge flows")
-                print (args)
-                subprocess.run(args)   
+        # with open("optimisation_set.txt","r") as r:
+        #     for p in r:
+        #         pv = p.split(",")
+        #         opt = pv[4].strip('\n')
+        #         args = [
+        #                 "python",
+        #                 "aggregated_node_edge_flows.py",
+        #                 f"{pv[0]}",
+        #                 f"{pv[1]}",
+        #                 f"{pv[2]}",
+        #                 f"{pv[3]}",
+        #                 f"{opt}"
+        #                 ]
+        #         print ("* Start the processing of aggregating node edge flows")
+        #         print (args)
+        #         subprocess.run(args)
+        num_blocks = 16
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "optimisation_set.txt",
+                "python",
+                "aggregated_node_edge_flows.py",
+                "{}"
+                ]
+        print ("* Start the processing of aggregating node edge flows")
+        print (args)
+        subprocess.run(args) 
     
 if __name__ == '__main__':
     CONFIG = load_config()

@@ -315,7 +315,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -330,42 +330,76 @@ def main(config):
                 "emissions_estimations.py",
                 "{}"
                 ]
-        print ("* Start the processing of flow location optimisation")
+        print ("* Start the processing of carbon emissions estimations")
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
-        for lc in location_cases:
-            for opt in optimisation_type:
-                args = [
-                        "python",
-                        "combined_tonnages.py",
-                        f"{lc}",
-                        f"{opt}"
-                        ]
-                print ("* Start the processing of tonnage summaries into excel")
-                print (args)
-                subprocess.run(args)
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        cx = "combined"
+        for lcx in location_cases:
+            for optx in optimisation_type:
+                if optx == "constrained":
+                    for ix,(opx,efx) in enumerate(distance_filters):
+                        args = [
+                                "python",
+                                "combined_tonnages.py",
+                                f"{lcx}",
+                                f"{optx}",
+                                f"{cx}",
+                                f"{opx}",
+                                f"{efx}"
+                                ]
+                        print ("* Start the processing of tonnage summaries into excel")
+                        print (args)
+                        subprocess.run(args)
+                else:
+                    args = [
+                            "python",
+                            "combined_tonnages.py",
+                            f"{lcx}",
+                            f"{optx}",
+                            f"{cx}",
+                            "0.0",
+                            "0.0"
+                            ]
+                    print ("* Start the processing of tonnage summaries into excel")
+                    print (args)
+                    subprocess.run(args)
     
-    run_script = False
+    run_script = True
     if run_script is True:
-        with open("optimisation_set.txt","r") as r:
-            for p in r:
-                pv = p.split(",")
-                opt = pv[4].strip('\n')
-                args = [
-                        "python",
-                        "aggregated_node_edge_flows.py",
-                        f"{pv[0]}",
-                        f"{pv[1]}",
-                        f"{pv[2]}",
-                        f"{pv[3]}",
-                        f"{opt}"
-                        ]
-                print ("* Start the processing of aggregating node edge flows")
-                print (args)
-                subprocess.run(args)   
+        # with open("optimisation_set.txt","r") as r:
+        #     for p in r:
+        #         pv = p.split(",")
+        #         opt = pv[4].strip('\n')
+        #         args = [
+        #                 "python",
+        #                 "aggregated_node_edge_flows.py",
+        #                 f"{pv[0]}",
+        #                 f"{pv[1]}",
+        #                 f"{pv[2]}",
+        #                 f"{pv[3]}",
+        #                 f"{opt}"
+        #                 ]
+        #         print ("* Start the processing of aggregating node edge flows")
+        #         print (args)
+        #         subprocess.run(args)  
+        num_blocks = 16
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "combined_optimisation_set.txt",
+                "python",
+                "aggregated_node_edge_flows.py",
+                "{}"
+                ]
+        print ("* Start the processing of aggregating node edge flows")
+        print (args)
+        subprocess.run(args) 
     
 if __name__ == '__main__':
     CONFIG = load_config()
