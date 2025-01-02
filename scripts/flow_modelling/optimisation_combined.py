@@ -313,10 +313,10 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
 def update_od_dataframe(initial_df,optimal_df,modify_columns):
     u_df = []
     modified_paths = []
+    initial_df["stage_1_tons"] = initial_df["initial_stage_production_tons"]/initial_df["metal_factor"]
+    initial_df["node_path"] = initial_df.progress_apply(
+                                    lambda x:[n.replace("_land","") for n in x["node_path"]],axis=1)
     if len(optimal_df.index) > 0:
-        initial_df["stage_1_tons"] = initial_df["initial_stage_production_tons"]/initial_df["metal_factor"]
-        initial_df["node_path"] = initial_df.progress_apply(
-                                        lambda x:[n.replace("_land","") for n in x["node_path"]],axis=1)
         for row in optimal_df.itertuples():
             pth_idx = row.node_paths
             modified_paths += pth_idx
