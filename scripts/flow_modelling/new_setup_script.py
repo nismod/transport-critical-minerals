@@ -152,7 +152,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
@@ -189,7 +189,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         with open("optimisation_set.txt","r") as r:
             for p in r:
@@ -208,26 +208,40 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = False
+    run_script = True
     if run_script is True:
-        with open("optimisation_set.txt","r") as r:
-            for p in r:
-                pv = p.split(",")
-                opt = pv[4].strip('\n')
-                args = [
-                        "python",
-                        "country_totals_tons_and_costs.py",
-                        f"{pv[0]}",
-                        f"{pv[1]}",
-                        f"{pv[2]}",
-                        f"{pv[3]}",
-                        f"{opt}"
-                        ]
-                print ("* Start the processing of tonnage summaries")
-                print (args)
-                subprocess.run(args)
+        num_blocks = 12
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "optimisation_set.txt",
+                "python",
+                "country_totals_tons_and_costs.py",
+                "{}"
+                ]
+        print ("* Start the processing of tonnage summaries")
+        print (args)
+        subprocess.run(args)
+        # with open("optimisation_set.txt","r") as r:
+        #     for p in r:
+        #         pv = p.split(",")
+        #         opt = pv[4].strip('\n')
+        #         args = [
+        #                 "python",
+        #                 "country_totals_tons_and_costs.py",
+        #                 f"{pv[0]}",
+        #                 f"{pv[1]}",
+        #                 f"{pv[2]}",
+        #                 f"{pv[3]}",
+        #                 f"{opt}"
+        #                 ]
+        #         print ("* Start the processing of tonnage summaries")
+        #         print (args)
+        #         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         # reference_minerals = ["cobalt"]
         num_blocks = 0
@@ -266,7 +280,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -285,7 +299,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for lc in location_cases:
             for opt in optimisation_type:

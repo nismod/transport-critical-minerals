@@ -309,67 +309,72 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
 
 def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
     u_df = []
-    initial_df["stage_1_tons"] = initial_df["initial_stage_production_tons"]/metal_factor
-    initial_df["node_path"] = initial_df.progress_apply(
-                                    lambda x:[n.replace("_land","") for n in x["node_path"]],axis=1)
     modified_paths = []
-    for row in optimal_df.itertuples():
-        pth_idx = row.node_paths
-        modified_paths += pth_idx
-        id_value = row.id
-        s_df = initial_df[initial_df["path_index"].isin(pth_idx)]
-        s_df["nidx"] = s_df.progress_apply(lambda x:x["node_path"].index(id_value),axis=1)
-        u_df.append(s_df[s_df["nidx"] == 0])
-        s_df = s_df[s_df["nidx"] > 0]
-        if len(s_df.index) > 0:
-            f_df = s_df.copy()
-            f_df["destination_id"] = id_value
-            f_df["import_country_code"] = row.iso3
-            f_df["final_stage_production_tons"
-                ] = np.where(f_df["final_processing_stage"] < f_df["mine_final_refined_stage"],
-                        f_df["final_stage_production_tons"],
-                        f_df["stage_1_tons"]
-                        )
-            f_df["final_processing_stage"
-                ] = np.where(f_df["final_processing_stage"] < f_df["mine_final_refined_stage"],
-                        f_df["final_processing_stage"],1.0
-                        )
-            f_df["final_processing_location"] = row.processing_location
-            for m in modify_columns:
-                if m in ["node_path","full_node_path"]:
-                    f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]+1],axis=1)
-                else:        
-                    f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]],axis=1)
-            
-            s_df["origin_id"] = id_value
-            s_df["export_country_code"] = row.iso3
-            # s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
-            # s_df["initial_processing_stage"] = 1.0
+    if len(optimal_df.index) > 0:
+        initial_df["stage_1_tons"] = initial_df["initial_stage_production_tons"]/metal_factor
+        initial_df["node_path"] = initial_df.progress_apply(
+                                        lambda x:[n.replace("_land","") for n in x["node_path"]],axis=1)
+        for row in optimal_df.itertuples():
+            pth_idx = row.node_paths
+            modified_paths += pth_idx
+            id_value = row.id
+            s_df = initial_df[initial_df["path_index"].isin(pth_idx)]
+            s_df["nidx"] = s_df.progress_apply(lambda x:x["node_path"].index(id_value),axis=1)
+            u_df.append(s_df[s_df["nidx"] == 0])
+            s_df = s_df[s_df["nidx"] > 0]
+            if len(s_df.index) > 0:
+                f_df = s_df.copy()
+                f_df["destination_id"] = id_value
+                f_df["import_country_code"] = row.iso3
+                f_df["final_stage_production_tons"
+                    ] = np.where(f_df["final_processing_stage"] < f_df["mine_final_refined_stage"],
+                            f_df["final_stage_production_tons"],
+                            f_df["stage_1_tons"]
+                            )
+                f_df["final_processing_stage"
+                    ] = np.where(f_df["final_processing_stage"] < f_df["mine_final_refined_stage"],
+                            f_df["final_processing_stage"],1.0
+                            )
+                f_df["final_processing_location"] = row.processing_location
+                for m in modify_columns:
+                    if m in ["node_path","full_node_path"]:
+                        f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]+1],axis=1)
+                    else:        
+                        f_df[m] = f_df.progress_apply(lambda x:x[m][:x["nidx"]],axis=1)
+                
+                s_df["origin_id"] = id_value
+                s_df["export_country_code"] = row.iso3
+                # s_df["initial_stage_production_tons"] = s_df["stage_1_tons"]
+                # s_df["initial_processing_stage"] = 1.0
 
-            s_df["initial_stage_production_tons"
-                ] = np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
-                        s_df["final_stage_production_tons"],
-                        s_df["stage_1_tons"]
-                        )
-            s_df["initial_processing_stage"
-                ] = np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
-                        s_df["final_processing_stage"],1.0
-                        )
-            s_df["initial_processing_location"] = row.processing_location
-            s_df["final_stage_production_tons"
-                ] =  np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
-                        s_df["final_stage_production_tons"]/s_df["stage_factor"],
-                        s_df["final_stage_production_tons"]
-                        )
-            s_df["final_processing_stage"] = s_df["mine_final_refined_stage"]
-            for m in modify_columns:
-                s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
+                s_df["initial_stage_production_tons"
+                    ] = np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
+                            s_df["final_stage_production_tons"],
+                            s_df["stage_1_tons"]
+                            )
+                s_df["initial_processing_stage"
+                    ] = np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
+                            s_df["final_processing_stage"],1.0
+                            )
+                s_df["initial_processing_location"] = row.processing_location
+                s_df["final_stage_production_tons"
+                    ] =  np.where(s_df["final_processing_stage"] < s_df["mine_final_refined_stage"],
+                            s_df["final_stage_production_tons"]/s_df["stage_factor"],
+                            s_df["final_stage_production_tons"]
+                            )
+                s_df["final_processing_stage"] = s_df["mine_final_refined_stage"]
+                for m in modify_columns:
+                    s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
 
-            u_df.append(f_df)
-            u_df.append(s_df)
+                u_df.append(f_df)
+                u_df.append(s_df)
 
     modified_paths = list(set(modified_paths))
-    remaining_df = initial_df[~initial_df["path_index"].isin(modified_paths)]
+    if len(modified_paths) > 0:
+        remaining_df = initial_df[~initial_df["path_index"].isin(modified_paths)]
+    else:
+        remaining_df = initial_df.copy()
+    
     remaining_df["final_stage_production_tons"
         ] = np.where(remaining_df["final_processing_stage"] < remaining_df["mine_final_refined_stage"],
                 remaining_df["final_stage_production_tons"],
@@ -574,7 +579,9 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                             optimal_df["reference_mineral"] = reference_mineral
                             optimal_df["production_size"] = production_size
                             all_optimal_locations.append(optimal_df)
-                            l_df = update_od_dataframe(l_df,optimal_df,metal_factor,modify_columns)
+                        else:
+                            optimal_df = pd.DataFrame()
+                        l_df = update_od_dataframe(l_df,optimal_df,metal_factor,modify_columns)
 
                 df.append(l_df)
 

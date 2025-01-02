@@ -36,6 +36,8 @@ def load_config():
         config = json.load(config_fh)
     return config
 
+data_path = load_config()['paths']['data']
+
 def within_extent(x, y, extent):
     """Test x, y coordinates against (xmin, xmax, ymin, ymax) extent
     """
@@ -145,7 +147,7 @@ def scale_bar_and_direction(ax,arrow_location=(0.80,0.08),
 
 def save_fig(output_filename):
     print(" * Save", os.path.basename(output_filename))
-    plt.savefig(output_filename)
+    plt.savefig(output_filename,dpi=600)
 
 def plot_basemap(ax,include_labels=False):
     data_path = load_config()['paths']['data']  # "/Users/raghavpant/Desktop/china_study"
@@ -174,147 +176,86 @@ def plot_basemap(ax,include_labels=False):
     plot_scale_bar(ax,scalebar_location=(0.57,0.04),scalebar_distance=100,zorder=20)
     return ax
 
-def plot_global_basemap(ax,include_countries=None,
-                        include_labels=False,label_countries=None,
-                        scalebar_location=(0.88,0.05),
-                        arrow_location=(0.82,0.08),
-                        scalebar_distance=100,
-                        label_size=6.0):
-    data_path = load_config()['paths']['data']  # "/Users/raghavpant/Desktop/china_study"
-    boundary_gdp = gpd.read_file(os.path.join(
+
+def map_background_and_bounds(
+                            include_continents=None,
+                            include_countries=None,
+                            xmin_offset = -0.5,
+                            xmax_offset = 3.5,
+                            ymin_offset = 6.5,
+                            ymax_offset = 0.5
+                            ):
+    boundary_gdf = gpd.read_file(os.path.join(
                     data_path,'admin_boundaries',
                     'ne_10m_admin_0_countries',
                     'ne_10m_admin_0_countries.shp'),encoding="utf-8")
-    if include_countries is not None:
-        boundary_gdp = boundary_gdp[boundary_gdp["ADM0_A3_US"].isin(include_countries)]
 
-    proj = ccrs.PlateCarree() # See more on projections here: https://scitools.org.uk/cartopy/docs/v0.15/crs/projections.html#cartopy-projections
-    bounds = boundary_gdp.geometry.total_bounds # this gives your boundaries of the map as (xmin,ymin,xmax,ymax)
+    if include_continents is not None:
+        continent_gdf = boundary_gdf[boundary_gdf["CONTINENT"].isin(include_continents)]
+    else:
+        continent_gdf = boundary_gdf.copy()
+    
     if include_countries is not None:
-        xmin = bounds[0]+2.0
-        xmax = bounds[2]+6.0
-        ymin = bounds[1]+4.0
-        ymax = bounds[3]+2.0
+        boundary_gdf = boundary_gdf[boundary_gdf["ADM0_A3_US"].isin(include_countries)]
+
+    # proj = ccrs.PlateCarree() # See more on projections here: https://scitools.org.uk/cartopy/docs/v0.15/crs/projections.html#cartopy-projections
+    bounds = boundary_gdf.geometry.total_bounds # this gives your boundaries of the map as (xmin,ymin,xmax,ymax)
+    if include_countries is not None:
+        xmin = bounds[0]+xmin_offset
+        xmax = bounds[2]+xmax_offset
+        ymin = bounds[1]+ymin_offset
+        ymax = bounds[3]+ymax_offset
     else:
         xmin = bounds[0]
         xmax = bounds[2]
         ymin = bounds[1]
         ymax = bounds[3]
 
-    ax = get_axes(ax,extent = (xmin,xmax,ymin,ymax),epsg=4326) # extent requires (xmin,xmax,ymin,ymax) you might have to adjust the offsets a bit manually as I have done here by +/-0.1
-    ax.set_facecolor("#c6e0ff")
-    for boundary in boundary_gdp.itertuples():
-        ax.add_geometries(
-            [boundary.geometry],
-            crs=proj,
-            edgecolor='white',
-            facecolor='#e0e0e0',
-            zorder=1)
+    xlims = [xmin, xmax]
+    ylims = [ymin, ymax]
 
-    if include_labels is True:
-        # labels = pd.read_csv(os.path.join(data_path,'region_names.csv'))
-        labels = boundary_gdp[['ADM0_A3_US','geometry']]
-        labels = labels[labels["ADM0_A3_US"].isin(label_countries)]
-        plot_basemap_labels(ax,labels=labels,label_column="ISO_A3_EH",label_size=label_size)
-    # plot_scale_bar(ax,scalebar_location=(0.90,0.04),scalebar_distance=100,zorder=20)
-    scale_bar_and_direction(ax,arrow_location=arrow_location,
-                    scalebar_location=scalebar_location,
-                    scalebar_distance=100,zorder=20)
-    return ax
+    return continent_gdf, boundary_gdf, xlims, ylims
 
-def plot_africa_basemap(ax):
-    data_path = load_config()['paths']['data']
-    ccg_countries = pd.read_csv(os.path.join(data_path,"admin_boundaries","ccg_country_codes.csv"))
-    ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
-    del ccg_countries
-
-    global_map_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
-                                    "ne_10m_admin_0_countries",
-                                    "ne_10m_admin_0_countries.shp"))
-    ccg_map_df = global_map_df[global_map_df["ADM0_A3_US"].isin(ccg_isos)]
-    global_lake_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
-                                    "ne_10m_lakes",
-                                    "ne_10m_lakes.shp"))
-    africa_isos = list(
-                    set(
-                        global_map_df[
-                            global_map_df["CONTINENT"] == "Africa"
-                            ]["ADM0_A3_US"].values.tolist()
-                        )
-                    )
-    del global_map_df
-    ax = plot_global_basemap(ax,
-                        include_countries=africa_isos)
-    for ccg_country in ccg_map_df.itertuples():
-        ax.add_geometries(
-            [ccg_country.geometry],
-            crs=ccrs.PlateCarree(),
-            edgecolor="white",
-            facecolor="#d9d9d9",
-            zorder=2)
-    plot_basemap_labels(ax,labels=ccg_map_df,label_column="ADM0_A3_US",label_size=10)
-    for lake in global_lake_df.itertuples():
-        ax.add_geometries(
-            [lake.geometry],
-            crs=ccrs.PlateCarree(),
-            edgecolor="#c6e0ff",
-            facecolor="#c6e0ff",
-            zorder=3)
-    return ax
-
-def plot_ccg_basemap(ax,scalebar_location=(0.12,0.05),
-                        arrow_location=(0.06,0.08),
-                        scalebar_distance=100,
-                        label_size=6.0):
-    data_path = load_config()['paths']['data']
-    ccg_countries = pd.read_csv(os.path.join(data_path,"admin_boundaries","ccg_country_codes.csv"))
-    ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
-    boundary_isos = ["RWA","LSO","SWZ","COG","GNQ","GAB","SOM","ETH","SDS","CAF","CMR"]
-    del ccg_countries
-
-    global_map_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
-                                    "ne_10m_admin_0_countries",
-                                    "ne_10m_admin_0_countries.shp"))
-    ccg_map_df = global_map_df[global_map_df["ADM0_A3_US"].isin(ccg_isos + boundary_isos)]
-    global_lake_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
-                                    "ne_10m_lakes",
-                                    "ne_10m_lakes.shp"))
-
-    proj = ccrs.PlateCarree() # See more on projections here: https://scitools.org.uk/cartopy/docs/v0.15/crs/projections.html#cartopy-projections
-    bounds = ccg_map_df.geometry.total_bounds # this gives your boundaries of the map as (xmin,ymin,xmax,ymax)
-    xmin = bounds[0]
-    xmax = bounds[2]
-    ymin = bounds[1] - 5.0
-    ymax = bounds[3] - 9.0
-
-    ax = get_axes(ax,extent = (xmin,xmax,ymin,ymax),epsg=4326) # extent requires (xmin,xmax,ymin,ymax) you might have to adjust the offsets a bit manually as I have done here by +/-0.1
-    ax.set_facecolor("#c6e0ff")
+def plot_global_basemap(
+                        ax,
+                        include_continents=None,
+                        include_countries=None,
+                        include_labels=False
+                        ):
     
-    for ccg_country in ccg_map_df.itertuples():
-        iso = getattr(ccg_country,"ADM0_A3_US")
-        if iso in ccg_isos:
-            facecolor = "#d9d9d9"
-        else:
-            facecolor = "#e0e0e0"
-        ax.add_geometries(
-            [ccg_country.geometry],
-            crs=ccrs.PlateCarree(),
-            edgecolor="white",
-            facecolor=facecolor,
-            zorder=2)
-    plot_basemap_labels(ax,
-                labels=ccg_map_df[ccg_map_df["ADM0_A3_US"].isin(ccg_isos)],
-                label_column="ADM0_A3_US",label_size=10)
-    for lake in global_lake_df.itertuples():
-        ax.add_geometries(
-            [lake.geometry],
-            crs=ccrs.PlateCarree(),
-            edgecolor="#c6e0ff",
-            facecolor="#c6e0ff",
-            zorder=3)
-    scale_bar_and_direction(ax,arrow_location=arrow_location,
-                    scalebar_location=scalebar_location,
-                    scalebar_distance=100,zorder=20)
+    (
+        continent_gdf, 
+        boundary_gdf, 
+        xlims, 
+        ylims
+    ) = map_background_and_bounds(include_continents=include_continents,include_countries=include_countries) 
+
+    ax.set_facecolor("#c6e0ff")  
+    ax.set_ylim(ylims)
+    ax.set_xlim(xlims)
+    continent_gdf.plot(ax=ax, color='whitesmoke', edgecolor='white')
+    boundary_gdf.plot(ax=ax, color='lightgrey', edgecolor='white')
+    
+    if include_labels is True:
+        boundary_gdf.apply(
+                lambda x: ax.annotate(
+                            text=x["ADM0_A3_US"], 
+                            xy=x.geometry.centroid.coords[0], 
+                            ha='center',
+                            color='black',
+                            fontsize=10), 
+                axis=1)
+    
+    return ax
+
+def plot_ccg_basemap(ax,include_continents=None,include_countries=None):
+    ax = plot_global_basemap(ax,include_continents=include_continents,
+                        include_countries=include_countries,include_labels=True)
+    global_lake_df = gpd.read_file(os.path.join(data_path,"admin_boundaries",
+                                    "ne_10m_lakes",
+                                    "ne_10m_lakes.shp"))
+
+    global_lake_df.plot(ax=ax, color="#c6e0ff", edgecolor='white')
     return ax
 
 def plot_ccg_country_basemap(ax,
@@ -387,6 +328,14 @@ def plot_ccg_country_basemap(ax,
                     scalebar_location=scalebar_location,
                     scalebar_distance=100,zorder=20)
     return ax
+
+def get_zorder(tonnage_value,tonnage_key,max_zorder=10):
+    tk = [0] + list(tonnage_key)
+    for v in range(len(tk) - 1):
+        if tk[v] < tonnage_value <= tk[v+1]:
+            return max_zorder - v
+        elif tonnage_value > max(tonnage_key):
+            return max_zorder - len(tk) 
 
 def plot_point_assets(ax,nodes,colors,size,marker,zorder,label):
     proj_lat_lon = ccrs.PlateCarree()
