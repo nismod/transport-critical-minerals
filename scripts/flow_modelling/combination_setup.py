@@ -152,7 +152,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 6
         all_scenarios = []
@@ -211,7 +211,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         c = "combined"
@@ -237,7 +237,7 @@ def main(config):
 
         f.close()
 
-    run_script = False
+    run_script = True
     if run_script is True:
         with open("combined_optimisation_set.txt","r") as r:
             for p in r:
@@ -254,24 +254,39 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = False
+    run_script = True
     if run_script is True:
-        with open("combined_optimisation_set.txt","r") as r:
-            for p in r:
-                pv = p.split(",")
-                ls = pv[-1].strip('\n')
-                args = [
-                        "python",
-                        "country_totals_tons_and_costs.py"
-                        ]
-                for v in pv[:-1]:
-                    args.append(v)
-                args.append(ls)
-                print ("* Start the processing of tonnage summaries")
-                print (args)
-                subprocess.run(args)
+        num_blocks = 16
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ",",
+                "-a",
+                "combined_optimisation_set.txt",
+                "python",
+                "country_totals_tons_and_costs.py",
+                "{}"
+                ]
+        print ("* Start the processing of tonnage summaries")
+        print (args)
+        subprocess.run(args)
+        
+        # with open("combined_optimisation_set.txt","r") as r:
+        #     for p in r:
+        #         pv = p.split(",")
+        #         ls = pv[-1].strip('\n')
+        #         args = [
+        #                 "python",
+        #                 "country_totals_tons_and_costs.py"
+        #                 ]
+        #         for v in pv[:-1]:
+        #             args.append(v)
+        #         args.append(ls)
+        #         print ("* Start the processing of tonnage summaries")
+        #         print (args)
+        #         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 16
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
@@ -315,7 +330,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
