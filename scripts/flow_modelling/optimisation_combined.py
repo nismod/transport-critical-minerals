@@ -377,6 +377,7 @@ def update_od_dataframe(initial_df,optimal_df,modify_columns):
         remaining_df = initial_df[~initial_df["path_index"].isin(modified_paths)]
     else:
         remaining_df = initial_df.copy()
+        remaining_df["nidx"] = 1
     
     remaining_df["final_stage_production_tons"
         ] = np.where(remaining_df["final_processing_stage"] < remaining_df["mine_final_refined_stage"],
