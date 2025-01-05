@@ -157,8 +157,8 @@ def main(
                 o_cols = []
                 d_cols = []
                 for cd in country_codes:
-                    o_cols += [c for c in all_cols if flow_column in flow_column in c and f"_origin_{cd}" in c]
-                    d_cols += [c for c in all_cols if flow_column in flow_column in c and f"_inter_{cd}" in c]
+                    o_cols += [c for c in all_cols if flow_column in c and f"_origin_{cd}" in c]
+                    d_cols += [c for c in all_cols if flow_column in c and f"_inter_{cd}" in c]
 
                 cols = list(set(o_cols + d_cols))
                 if len(cols) > 0:
