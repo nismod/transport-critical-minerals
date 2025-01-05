@@ -18,39 +18,6 @@ from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
-def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
-    m_df = df[
-                (
-                    df["initial_processing_location"] == "mine"
-                ) & (
-                    df["initial_processing_stage"] == 0.0
-                )
-            ]
-    m_df = m_df.groupby(
-                        [
-                        "reference_mineral",
-                        "export_country_code",
-                        "initial_processing_stage",
-                        "initial_processing_location",
-                        "origin_id"]
-                        ).agg(dict([(c,"sum") for c in ["initial_stage_production_tons"]])).reset_index() 
-    m_df = pd.merge(
-                m_df,
-                mines_df[["id",str(year)]],
-                how="left",left_on=["origin_id"],
-                right_on=["id"]).fillna(0)
-    m_df["initial_stage_production_tons"] = m_df[str(year)] - m_df["initial_stage_production_tons"]
-    m_df = m_df[m_df["initial_stage_production_tons"] > 0]
-    if len(m_df.index) > 0:
-        m_df["final_processing_stage"] = 1.0
-        m_df["final_stage_production_tons"] = m_df["initial_stage_production_tons"]/metal_factor
-        m_df["trade_type"] = "Other"
-        m_df["import_country_code"] = m_df["export_country_code"]
-        m_df.drop(["id",str(year)],axis=1,inplace=True)
-        df = pd.concat([df,m_df],axis=0,ignore_index=True)
-
-    return df
-
 def add_isos_to_flows(flows_dataframe,nodes_dataframe,nodes_id_column="nid",nodes_iso_column="iso3"):
     for ft in ["from","to"]:
         flows_dataframe = pd.merge(
@@ -217,13 +184,6 @@ def main(
                                 f"edges_{input_gpq}"))
         flows_gdf = flows_gdf[flows_gdf["mode"].isin(["road","rail"])]
         flows_gdf = add_isos_to_flows(flows_gdf,nodes_df)
-        # tag_columns = []
-        # stages = list(set([float(c.split("_")[-1]) for c in stages]))
-        # columns = [f"{reference_mineral}_{trade_ton_column}_{st}" for st in stages]
-        # sum_cols += columns
-        # flows_gdf = pd.merge(flows_gdf,carbon_emission_df[["mode","CO2_pertonkm"]],how="left",on=["mode"]).fillna(0)
-        # flows_gdf[columns] = flows_gdf[columns].multiply(flows_gdf["CO2_pertonkm"],axis="index")
-        # flows_gdf = flows_gdf[index_columns + columns]
         for row in country_codes_and_projections.itertuples():
             boundary_df = global_boundaries[global_boundaries["ISO_A3"] == row.iso3]
             boundary_df = boundary_df.to_crs(epsg=row.projection_epsg)

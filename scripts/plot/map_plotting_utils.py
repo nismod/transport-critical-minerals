@@ -491,8 +491,12 @@ def generate_weight_bins(weights, n_steps=9, width_step=0.01, interpolation='lin
         scale = np.linspace(1,len(mins),len(mins))
 
 
+    mins = [np.floor(mins[0])] + [np.round(m,int(-1.0*np.floor(np.log10(m)))) for m in mins[1:]]
+
+    maxs = [np.round(m,int(-1.0*np.floor(np.log10(m)))) for m in maxs[:-1]] + [maxs[-1]]
     for i, (min_, max_) in enumerate(zip(mins, maxs)):
-        width_by_range[(min_, max_)] = scale[i] * width_step
+        if min_ != max_:
+            width_by_range[(min_, max_)] = scale[i] * width_step
 
     return width_by_range
 

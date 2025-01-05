@@ -21,18 +21,24 @@ output_path = config['paths']['results']
 figure_path = config['paths']['figures']
 
 def main():
-    figures = os.path.join(figure_path,"regional_figures")
+    country_codes = ["ZMB"]
+    figures = os.path.join(figure_path,f"{'_'.join(country_codes)}_figures")
     if os.path.exists(figures) is False:
         os.mkdir(figures)
 
-    figures = os.path.join(figure_path,"regional_figures","mine_and_processing_locations")
+    figures = os.path.join(figure_path,f"{'_'.join(country_codes)}_figures","mine_and_processing_locations")
     if os.path.exists(figures) is False:
         os.mkdir(figures)
 
-    ccg_countries = pd.read_csv(os.path.join(processed_data_path,"admin_boundaries","ccg_country_codes.csv"))
-    ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
-
-    _,_,xl,yl = map_background_and_bounds(include_countries=ccg_isos)
+    xmin_offset = -0.2
+    ymin_offset = -0.2
+    xmax_offset = 0.1
+    ymax_offset = 0.1
+    _,_,xl,yl = map_background_and_bounds(include_countries=country_codes,
+                                            xmin_offset = xmin_offset,
+                                            xmax_offset = xmax_offset,
+                                            ymin_offset = ymin_offset,
+                                            ymax_offset = ymax_offset)
     dxl = abs(np.diff(xl))[0]
     dyl = abs(np.diff(yl))[0]
     w = 0.03
@@ -159,6 +165,7 @@ def main():
                                             "optimised_processing_locations",
                                             fname),
                                         layer=lyr)
+                mine_sites_df = mine_sites_df[mine_sites_df["iso3"].isin(country_codes)]
                 dfs = []
                 for kdx,(rf,rc) in enumerate(zip(reference_minerals,reference_mineral_colors)):
                     if ton_type == "initial_stage_production_tons":
@@ -187,13 +194,15 @@ def main():
             tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)
             sc_dfs.append(tuple(key_info))
             if len(scenarios) == 1:
-                figwidth = 8
+                figwidth = 12
                 figheight = figwidth/(2+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 5
+                textfontsize = 10
             else:
                 figwidth = 16
                 figheight = figwidth/(2.5+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 8
+                textfontsize = 12
             fig = plt.figure(figsize=(figwidth,figheight))
             plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
             for jdx, (sc_n,df,pos,span) in enumerate(sc_dfs):
@@ -233,12 +242,16 @@ def main():
                                         mec=reference_mineral_colors[k],
                                         ms=10)
                 else:
-                    ax = plot_ccg_basemap(
-                                ax,
-                                include_continents=["Africa"],
-                                include_countries=ccg_isos,
-                                include_labels=True
-                                )
+                    ax = plot_ccg_country_basemap(
+                                        ax,
+                                        include_continents=["Africa"],
+                                        include_countries=country_codes,
+                                        include_labels=True,
+                                        xmin_offset = xmin_offset,
+                                        xmax_offset = xmax_offset,
+                                        ymin_offset = ymin_offset,
+                                        ymax_offset = ymax_offset
+                                        )
                     ax.set_title(sc_n,fontsize=16,fontweight="bold")
                     df["markersize"] = marker_size_max*(df["total_tons"]/tmax)**0.5
                     df = df.sort_values(by="total_tons",ascending=False)
@@ -249,9 +262,9 @@ def main():
                         markersize=df["markersize"],
                         alpha=0.7)
                     ax.text(
-                        xl[0]+0.5*dxl,yl[0]+0.05*dyl,
-                        'Total = {:.1f} million tonnes'.format(df["total_tons"].sum()/1e6),
-                        fontsize=16,weight='bold',ha='center')  
+                        xl[0]+0.7*dxl,yl[0]+0.05*dyl,
+                        'Total = {:.2f} million tonnes'.format(df["total_tons"].sum()/1e6),
+                        fontsize=textfontsize,weight='bold',ha='center')  
             fig_nm = '_'.join(list(set(layers))).replace("_min_threshold_metal_tons","").replace("_max_threshold_metal_tons","")
             if ton_type == "initial_stage_production_tons":
                 fig_file = f"mine_metal_content_maps_{fig_nm}.png"
