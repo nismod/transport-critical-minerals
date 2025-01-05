@@ -112,20 +112,26 @@ def main(
     nodes_dfs = pd.concat(nodes_dfs,axis=0,ignore_index=True)
     edges_dfs = pd.concat(edges_dfs,axis=0,ignore_index=True)
 
-    all_sums = [(c,"sum") for c in list(set(sum_dict.values()))]
+    all_sums = []
+    for k,v in sum_dict.items():
+        all_sums += v
+    all_sums = list(set(all_sums))
+
     edges = edges_dfs[["id","geometry"]].drop_duplicates(subset=["id"],keep="first")
-    edges_flows_df = edges_dfs.groupby(["id","from_id","to_id","mode"]).agg(dict(all_sums)).reset_index()
+    edges_flows_df = edges_dfs.groupby(
+                            ["id","from_id","to_id","mode"]
+                            ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
     for k,v in sum_dict.items():
         edges_flows_df[k] = edges_flows_df[list(set(v))].sum(axis=1)
 
-    edges_flows_df.drop(list(set(sum_dict.values())),axis=1,inplace=True)
+    edges_flows_df.drop(all_sums,axis=1,inplace=True)
     edges_flows_df = pd.merge(edges_flows_df,edges,how="left",on=["id"])
 
     nodes = nodes_dfs[["id","geometry"]].drop_duplicates(subset=["id"],keep="first")
     nodes_flows_df = nodes_dfs.groupby(["id","iso3","infra","mode"]).agg(dict(all_sums)).reset_index()
     for k,v in sum_dict.items():
         nodes_flows_df[k] = nodes_flows_df[list(set(v))].sum(axis=1)
-    nodes_flows_df.drop(list(set(sum_dict.values())),axis=1,inplace=True)
+    nodes_flows_df.drop(all_sums,axis=1,inplace=True)
     
     nodes_flows_df = pd.merge(nodes_flows_df,nodes,how="left",on=["id"])
 
