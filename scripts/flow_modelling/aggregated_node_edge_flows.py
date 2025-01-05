@@ -128,7 +128,9 @@ def main(
     edges_flows_df = pd.merge(edges_flows_df,edges,how="left",on=["id"])
 
     nodes = nodes_dfs[["id","geometry"]].drop_duplicates(subset=["id"],keep="first")
-    nodes_flows_df = nodes_dfs.groupby(["id","iso3","infra","mode"]).agg(dict(all_sums)).reset_index()
+    nodes_flows_df = nodes_dfs.groupby(
+                            ["id","iso3","infra","mode"]
+                            ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
     for k,v in sum_dict.items():
         nodes_flows_df[k] = nodes_flows_df[list(set(v))].sum(axis=1)
     nodes_flows_df.drop(all_sums,axis=1,inplace=True)
