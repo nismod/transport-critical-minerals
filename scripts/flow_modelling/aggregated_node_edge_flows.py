@@ -16,6 +16,30 @@ from transport_cost_assignment import *
 from tqdm import tqdm
 tqdm.pandas()
 
+def get_export_import_columns(
+                    flows_dataframe,
+                    sum_dictionary,
+                    location_types,
+                    trade_types,
+                    trade_ton_column="final_stage_production_tons"
+                ):
+    for idx, (ly,ty) in enumerate(zip(location_types,trade_types)):
+        tag_columns = [c for c in flows_dataframe.columns.values.tolist() if ly in c and trade_ton_column in c]
+        for tg in tag_columns:
+            tg_c = tg.split(ly)[-1]
+            if ty == "export":
+                sum_dictionary[f"{trade_ton_column}_{tg_c}_export"].append(tg)
+            elif ty == "import":
+                sum_dictionary[f"{trade_ton_column}_{tg_c}_import"].append(tg)
+            elif ty == "inter":
+                o_d = tg_c.split("_")
+                if o_d[0] == country_iso:
+                    sum_dictionary[f"{trade_ton_column}_{o_d[0]}_export"].append(tg)
+                elif o_d[1] == country_iso:
+                    sum_dictionary[f"{trade_ton_column}_{o_d[1]}_import"].append(tg)
+
+    return sum_dictionary
+
 def main(
             config,
             year,
@@ -44,12 +68,12 @@ def main(
     del ccg_countries
     
     reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
+    location_types = ["_origin_","_destination_","_inter_"]
     trade_types = ["export","import","inter"]
     trade_column = "final_stage_production_tons"
     nodes_dfs = []
     edges_dfs = []
     sum_dict = defaultdict(list) 
-    all_sums = []
     for reference_mineral in reference_minerals:
         flow_columns = [
                         f"{reference_mineral}_{trade_column}_{tc}" for tc in trade_types
@@ -75,25 +99,35 @@ def main(
             edges_flows_df = gpd.read_parquet(edge_file_path)
             nodes_flows_df = gpd.read_parquet(os.path.join(flow_data_folder,
                                 f"nodes_{input_gpq}"))
-            edges_dfs.append(edges_flows_df[["id","from_id","to_id","mode","geometry"] + flow_columns])
-            nodes_dfs.append(nodes_flows_df[["id","iso3","infra","mode","geometry"] + flow_columns])
+            edges_dfs.append(edges_flows_df)
+            nodes_dfs.append(nodes_flows_df)
             for dx, (tt,fc) in enumerate(zip(trade_types + ["total"],flow_columns)):
-                sum_dict[tt].append(fc)
-                all_sums.append((fc,"sum"))
+                sum_dict[f"{trade_column}_{tt}"].append(fc)
+             
+            sum_dict = get_export_import_columns(
+                                    edges_flows_df,
+                                    sum_dict,
+                                    location_types,
+                                    trade_types)
+            
     
     nodes_dfs = pd.concat(nodes_dfs,axis=0,ignore_index=True)
     edges_dfs = pd.concat(edges_dfs,axis=0,ignore_index=True)
 
+    all_sums = [(c,"sum") for c in list(set(sum_dict.values()))]
     edges = edges_dfs[["id","geometry"]].drop_duplicates(subset=["id"],keep="first")
     edges_flows_df = edges_dfs.groupby(["id","from_id","to_id","mode"]).agg(dict(all_sums)).reset_index()
     for k,v in sum_dict.items():
-        edges_flows_df[f"{trade_column}_{k}"] = edges_flows_df[list(set(v))].sum(axis=1)
+        edges_flows_df[k] = edges_flows_df[list(set(v))].sum(axis=1)
+
+    edges_flows_df.drop(list(set(sum_dict.values())),axis=1,inplace=True)
     edges_flows_df = pd.merge(edges_flows_df,edges,how="left",on=["id"])
 
     nodes = nodes_dfs[["id","geometry"]].drop_duplicates(subset=["id"],keep="first")
     nodes_flows_df = nodes_dfs.groupby(["id","iso3","infra","mode"]).agg(dict(all_sums)).reset_index()
     for k,v in sum_dict.items():
-        nodes_flows_df[f"{trade_column}_{k}"] = nodes_flows_df[list(set(v))].sum(axis=1)
+        nodes_flows_df[k] = nodes_flows_df[list(set(v))].sum(axis=1)
+    nodes_flows_df.drop(list(set(sum_dict.values())),axis=1,inplace=True)
     
     nodes_flows_df = pd.merge(nodes_flows_df,nodes,how="left",on=["id"])
 
