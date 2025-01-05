@@ -33,10 +33,8 @@ def get_export_import_columns(
                 sum_dictionary[f"{trade_ton_column}_{tg_c}_import"].append(tg)
             elif ty == "inter":
                 o_d = tg_c.split("_")
-                if o_d[0] == country_iso:
-                    sum_dictionary[f"{trade_ton_column}_{o_d[0]}_export"].append(tg)
-                elif o_d[1] == country_iso:
-                    sum_dictionary[f"{trade_ton_column}_{o_d[1]}_import"].append(tg)
+                sum_dictionary[f"{trade_ton_column}_{o_d[0]}_export"].append(tg)
+                sum_dictionary[f"{trade_ton_column}_{o_d[1]}_import"].append(tg)
 
     return sum_dictionary
 
