@@ -192,7 +192,7 @@ def main(
                 xk = xl[0] + 0.65*dxl
                 xt = xk-0.04*dxl
                 Nk = len(e_tonnage_weights)
-                yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk) + 0.4*ky*dyl
+                yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk)
                 yt = yk[-1]+np.diff(yk[-3:-1])
                 
                 widths = []
