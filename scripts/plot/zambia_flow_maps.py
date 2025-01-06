@@ -237,7 +237,10 @@ def main(
                         n_tonnage_key = n_tonnage_key[::-1]
                         Nk = n_tonnage_key.size
                         yk = yl[0] + np.linspace(0.05*dyl,0.35*dyl,Nk) + 0.35*ky*dyl
-                        yt = yk[-1]+0.7*np.diff(yk[-3:-1])
+                        if Nk > 3:
+                            yt = yk[-1]+0.7*np.diff(yk[-3:-1])
+                        else:
+                            yt = yk[-1]+0.4*np.diff(yk[-3:-1])
                         size_key = marker_size_max*(n_tonnage_key/n_tmax)**0.5
                         key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                         key.geometry.plot(ax=ax,markersize=size_key,color='k')
