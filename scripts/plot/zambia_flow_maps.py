@@ -287,7 +287,7 @@ def main(
                                     va='center')
                     else:
                         Nk = len(processing_types)
-                        yk = yl[0] + np.linspace(0.1*dyl,0.2*dyl,max(Nk,2)) + 0.5*ky*dyl
+                        yk = yl[0] + np.linspace(0.05*dyl,0.15*dyl,max(Nk,2)) + 0.45*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
                         ax.text(
                                 xt,yt,
