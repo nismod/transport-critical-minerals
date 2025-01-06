@@ -52,7 +52,7 @@ def main(config):
     f.close()
 
     num_blocks = 12
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",

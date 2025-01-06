@@ -179,7 +179,7 @@ def main(
             legendfontsize = 12
         fig = plt.figure(figsize=(figwidth,figheight))
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
-        for jdx, (sc_n,e_df,n_df,pos,span) in enumerate(sc_dfs):
+        for jdx, (sc_n,e_df,pos,span) in enumerate(sc_dfs):
             ax = plt.subplot2grid([1,2*sc_l+1],[0,pos],1,colspan=span)
             ax.spines[['top','right','bottom','left']].set_visible(False)
             ax.set_aspect('equal')
