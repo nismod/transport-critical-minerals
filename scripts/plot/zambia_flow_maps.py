@@ -225,7 +225,7 @@ def main(
             ax.set_xticks([])
             ax.set_yticks([])
             if sc_n == "key":
-                ax.set_ylim(yl[0],1.2*yl[1])
+                ax.set_ylim(yl[0],1.4*yl[1])
                 # ax.set_xlim(xl[0]+0.2*dxl,xl[1])
                 ax.set_xlim(xl)
                 xk = xl[0] + 0.20*dxl
