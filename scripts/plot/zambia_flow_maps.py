@@ -79,7 +79,7 @@ def main(
     panel_span = 2
     marker_size_max = 300
     line_width_max = 0.4
-    line_steps = 6
+    line_steps = 5
     width_step = 0.03
     interpolation='fisher-jenks'
     key_info = ["key",pd.DataFrame(),pd.DataFrame(),0,1]
@@ -236,7 +236,7 @@ def main(
                     if key == 'node_tonnage':
                         n_tonnage_key = n_tonnage_key[::-1]
                         Nk = n_tonnage_key.size
-                        yk = yl[0] + np.linspace(0.1*dyl,0.3*dyl,Nk) + 0.35*ky*dyl
+                        yk = yl[0] + np.linspace(0.1*dyl,0.4*dyl,Nk) + 0.35*ky*dyl
                         yt = yk[-1]+np.diff(yk[-3:-1])
                         size_key = marker_size_max*(n_tonnage_key/n_tmax)**0.5
                         key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
