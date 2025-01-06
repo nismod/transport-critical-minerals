@@ -225,7 +225,7 @@ def main(
             ax.set_xticks([])
             ax.set_yticks([])
             if sc_n == "key":
-                ax.set_ylim(yl[0],1.4*yl[1])
+                ax.set_ylim(yl[0],yl[1])
                 # ax.set_xlim(xl[0]+0.2*dxl,xl[1])
                 ax.set_xlim(xl)
                 xk = xl[0] + 0.20*dxl
@@ -237,7 +237,7 @@ def main(
                         n_tonnage_key = n_tonnage_key[::-1]
                         Nk = n_tonnage_key.size
                         yk = yl[0] + np.linspace(0.05*dyl,0.35*dyl,Nk) + 0.35*ky*dyl
-                        yt = yk[-1]+np.diff(yk[-3:-1])
+                        yt = yk[-1]+0.7*np.diff(yk[-3:-1])
                         size_key = marker_size_max*(n_tonnage_key/n_tmax)**0.5
                         key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                         key.geometry.plot(ax=ax,markersize=size_key,color='k')
@@ -262,7 +262,7 @@ def main(
                         min_max_vals = min_max_vals[::-1]
                         Nk = len(e_tonnage_weights)
                         yk = yl[0] + np.linspace(0.02*dyl,0.25*dyl,Nk) + 0.35*ky*dyl
-                        yt = yk[-1]+np.diff(yk[-3:-1])
+                        yt = yk[-1]+0.7*np.diff(yk[-3:-1])
                         key_1 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                         key_1["id"] = key_1.index.values.tolist()
                         key_2 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(1.02*np.ones(Nk)*xk, yk))
@@ -287,7 +287,7 @@ def main(
                                     va='center')
                     else:
                         Nk = len(processing_types)
-                        yk = yl[0] + np.linspace(0.05*dyl,0.15*dyl,max(Nk,2)) + 0.35*ky*dyl
+                        yk = yl[0] + np.linspace(0.15*dyl,0.25*dyl,max(Nk,2)) + 0.35*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
                         ax.text(
                                 xt,yt,
