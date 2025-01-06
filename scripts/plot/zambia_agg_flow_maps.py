@@ -55,8 +55,7 @@ def main(
     
 
     flow_column = "final_stage_production_tons"
-    ccg_countries = pd.read_csv(os.path.join(processed_data_path,"admin_boundaries","ccg_country_codes.csv"))
-    ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
+    ccg_isos = country_codes
     link_color = "#525252"
     
     xmin_offset = -0.2
@@ -203,7 +202,7 @@ def main(
                 min_max_vals = min_max_vals[::-1]
                 key_1 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                 key_1["id"] = key_1.index.values.tolist()
-                key_2 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(1.01*np.ones(Nk)*xk, yk))
+                key_2 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(1.008*np.ones(Nk)*xk, yk))
                 key_2["id"] = key_2.index.values.tolist()
                 key = pd.concat([key_1,key_2],axis=0,ignore_index=False)
                 key = key.groupby(['id'])['geometry'].apply(lambda x: LineString(x.tolist())).reset_index()
