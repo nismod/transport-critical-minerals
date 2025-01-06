@@ -203,7 +203,7 @@ def main(
                 min_max_vals = min_max_vals[::-1]
                 key_1 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                 key_1["id"] = key_1.index.values.tolist()
-                key_2 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(1.1*np.ones(Nk)*xk, yk))
+                key_2 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(1.05*np.ones(Nk)*xk, yk))
                 key_2["id"] = key_2.index.values.tolist()
                 key = pd.concat([key_1,key_2],axis=0,ignore_index=False)
                 key = key.groupby(['id'])['geometry'].apply(lambda x: LineString(x.tolist())).reset_index()
