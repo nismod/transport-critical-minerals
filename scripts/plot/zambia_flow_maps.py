@@ -236,7 +236,7 @@ def main(
                     if key == 'node_tonnage':
                         n_tonnage_key = n_tonnage_key[::-1]
                         Nk = n_tonnage_key.size
-                        yk = yl[0] + np.linspace(0.1*dyl,0.4*dyl,Nk) + 0.4*ky*dyl
+                        yk = yl[0] + np.linspace(0.05*dyl,0.35*dyl,Nk) + 0.35*ky*dyl
                         yt = yk[-1]+np.diff(yk[-3:-1])
                         size_key = marker_size_max*(n_tonnage_key/n_tmax)**0.5
                         key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
@@ -287,7 +287,7 @@ def main(
                                     va='center')
                     else:
                         Nk = len(processing_types)
-                        yk = yl[0] + np.linspace(0.05*dyl,0.15*dyl,max(Nk,2)) + 0.45*ky*dyl
+                        yk = yl[0] + np.linspace(0.05*dyl,0.15*dyl,max(Nk,2)) + 0.35*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
                         ax.text(
                                 xt,yt,
