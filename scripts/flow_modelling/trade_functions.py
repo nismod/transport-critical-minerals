@@ -81,6 +81,9 @@ def get_common_input_dataframes(data_type,refining_year,trade_year):
                                             "final_refined_stage",
                                             "usage_factor"
                                             ]]
+    mineral_usage_factor_df = mineral_usage_factor_df.drop_duplicates(
+                                    subset=["reference_mineral","final_refined_stage"],
+                                    keep="first")
     # Read the data on how much metal content goes into ores and concentrates
     metal_content_factors_df = pd.read_csv(os.path.join(processed_data_path,
                                             "mineral_usage_factors",
@@ -112,6 +115,39 @@ def get_common_input_dataframes(data_type,refining_year,trade_year):
     return (pr_conv_factors_df, 
             metal_content_factors_df, ccg_countries, 
             mine_city_stages, trade_df, mineral_usage_factor_df)
+
+def modify_mineral_usage_factors(future_year=2030,baseline_year=2022):
+    (data_type, _, _,_, _, _,_,_) = get_columns_names()
+    (_, _, _,mcs_df,_, muf_df) = get_common_input_dataframes(
+                                        data_type,future_year,baseline_year)
+
+    muf_df["mod_usage_factor"
+        ] = muf_df.groupby(["reference_mineral"])["usage_factor"].cumprod()
+    muf_df = pd.merge(muf_df,mcs_df,how="left",on=["reference_mineral"])
+    muf_df["mod_usage_factor"
+        ] = np.where(
+                    muf_df["final_refined_stage"] > muf_df["mine_final_refined_stage"],
+                    0,
+                    muf_df["mod_usage_factor"])
+    muf_df = muf_df.sort_values(by=["reference_mineral","final_refined_stage"],ascending=False)
+    muf_df["final_usage_factor"
+        ] = muf_df.groupby(["reference_mineral"])["mod_usage_factor"].diff()
+    muf_df["final_usage_factor"] = muf_df["final_usage_factor"].fillna(muf_df["mod_usage_factor"])
+    muf_df["usage_factor"] = muf_df["final_usage_factor"]
+    muf_df["cum_usage_factor"
+        ] = muf_df[muf_df["final_refined_stage"] > 1.0
+            ].groupby(["reference_mineral"])["usage_factor"].transform("sum")
+    muf_df["cum_usage_factor"] = muf_df["cum_usage_factor"].fillna(0)
+    muf_df.drop(
+                [
+                    "mod_usage_factor",
+                    "final_usage_factor",
+                    "mine_final_refined_stage"
+                ],
+                axis=1,inplace=True)
+    print (muf_df[(muf_df["usage_factor"] > 0) & (muf_df["cum_usage_factor"] > 0)])
+    return muf_df[(muf_df["usage_factor"] > 0) & (muf_df["cum_usage_factor"] > 0)]
+
 
 def get_trade_exports_imports(trade_df,ccg_countries):
     export_df = trade_df[trade_df["export_country_code"].isin(ccg_countries)]
@@ -152,59 +188,7 @@ def get_mine_layer(reference_mineral,year,percentile,mine_id_col="id",return_col
     else:
         return mines_df[return_columns]
 
-# def get_mine_layer(reference_mineral,year,percentile,mine_id_col="id",return_columns=None):
-#     if year > 2022:
-#         layer = f"{reference_mineral}_{percentile}"
-#     else:
-#         layer = f"{reference_mineral}"
-#     # Mine locations in Africa with the mineral tonnages
-#     if year == 2022:
-#         mines_df = gpd.read_file(
-#                         os.path.join(
-#                             processed_data_path,
-#                             "minerals",
-#                             "ccg_mines_est_production.gpkg"))
-#         mines_crs = mines_df.crs
-#         mines_df["geometry"] = mines_df.geometry.centroid
-#         mines_df = gpd.GeoDataFrame(mines_df,geometry="geometry",crs=mines_crs)
-#         if mine_id_col not in mines_df.columns.values.tolist():
-#             mines_df[mine_id_col] = mines_df.index.values.tolist()
-#             mines_df[mine_id_col] = mines_df.progress_apply(lambda x:f"mine_{x[mine_id_col]}",axis=1)
-#         if f"{reference_mineral}_processed_ton" not in mines_df.columns.values.tolist():
-#             mines_df[f"{reference_mineral}_processed_ton"] = 0
-#         if f"{reference_mineral}_unprocessed_ton" not in mines_df.columns.values.tolist():
-#             mines_df[f"{reference_mineral}_unprocessed_ton"] = 0
-
-#         mines_df[f"{reference_mineral}"] = mines_df[f"{reference_mineral}"].astype(int)
-#         mines_df = mines_df[mines_df[f"{reference_mineral}"] == 1]
-#         mines_df.rename(columns={"country_code":"iso3"},inplace=True)
-#         mines_df["weight"] = mines_df[f"{reference_mineral}_processed_ton"] + mines_df[f"{reference_mineral}_unprocessed_ton"]
-        
-#     elif year > 2022:
-#         mines_df = gpd.read_file(
-#                         os.path.join(
-#                             processed_data_path,
-#                             "minerals",
-#                             "s_and_p_mines_estimates.gpkg"),
-#                         layer=f"{reference_mineral}_{percentile}")
-#         mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
-#         mines_df["weight"] = mines_df[str(year)]
-
-#     if return_columns is None:
-#         return mines_df
-#     else:
-#         return mines_df[return_columns]
-
 def bgs_tonnage_estimates():
-    # bgs_totals = pd.read_excel(
-    #                     os.path.join(
-    #                         processed_data_path,
-    #                         "baci","BGS_SnP_comparison.xlsx"),
-    #                     index_col=[0,1])
-    # bgs_totals = bgs_totals.reset_index()
-    # bgs_totals.rename(columns={"level_0":"reference_mineral","level_1":"export_country_code"},inplace=True)
-    # bgs_totals["reference_mineral"] = bgs_totals["reference_mineral"].str.lower()
-
     bgs_totals = pd.read_excel(
                         os.path.join(
                             processed_data_path,
@@ -233,3 +217,6 @@ def bgs_tonnage_estimates():
         )
     return bgs_totals_by_mineral, "SP_BGS_max"
 
+if __name__ == '__main__':
+    modify_mineral_usage_factors(future_year=2030)
+    

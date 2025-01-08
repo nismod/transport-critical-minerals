@@ -79,7 +79,7 @@ def main(config):
         print (args)
         subprocess.run(args)    
     
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -89,7 +89,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -105,7 +105,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -120,7 +120,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -152,7 +152,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 6
         all_scenarios = []
@@ -211,7 +211,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         c = "combined"
@@ -237,7 +237,7 @@ def main(config):
 
         f.close()
 
-    run_script = False
+    run_script = True
     if run_script is True:
         with open("combined_optimisation_set.txt","r") as r:
             for p in r:
@@ -254,7 +254,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 16
         args = [
@@ -286,7 +286,7 @@ def main(config):
         #         print (args)
         #         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 16
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
@@ -330,7 +330,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -349,7 +349,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         cx = "combined"
