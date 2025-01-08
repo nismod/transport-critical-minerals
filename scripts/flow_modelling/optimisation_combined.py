@@ -549,7 +549,7 @@ def main(
                             in_st = row.initial_processing_stage
                             f_st = row.final_processing_stage
                             m_st = row.mine_final_refined_stage
-                            if (in_st == 0.0) and (f_st == m_st):
+                            if (in_st == 0.0) and (f_st > 1.0):
                                 o_iso = row.export_country_code
                                 pidx = row.path_index
                                 in_tons = row.initial_stage_production_tons
