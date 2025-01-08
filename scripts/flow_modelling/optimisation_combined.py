@@ -222,14 +222,14 @@ def find_optimal_locations_combined(flow_dataframe,
         optimal_locations = defaultdict()
         # First get the sums by years and minerals
         for c in columns:
-                c_df_flows[f"combined_{c}"
+            c_df_flows[f"combined_{c}"
+                ] = c_df_flows.groupby(
+                            ["id"]
+                            )[c].transform('sum')
+            c_df_flows[f"total_{c}"
                     ] = c_df_flows.groupby(
-                                ["id"]
+                                ["id",year_column,reference_mineral_column]
                                 )[c].transform('sum')
-                c_df_flows[f"total_{c}"
-                        ] = c_df_flows.groupby(
-                                    ["id",year_column,reference_mineral_column]
-                                    )[c].transform('sum')
         c_df_flows = c_df_flows[c_df_flows[
                             f"total_{initial_tons_column}"
                             ] >= c_df_flows[production_size_column]
@@ -365,7 +365,7 @@ def update_od_dataframe(initial_df,optimal_df,modify_columns):
                             s_df["final_stage_production_tons"]/s_df["stage_factor"],
                             s_df["final_stage_production_tons"]
                             )
-                s_df["final_processing_stage"] = s_df["mine_final_refined_stage"]
+                # s_df["final_processing_stage"] = s_df["mine_final_refined_stage"]
                 for m in modify_columns:
                     s_df[m] = s_df.progress_apply(lambda x:x[m][x["nidx"]:],axis=1)
 

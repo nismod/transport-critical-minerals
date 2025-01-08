@@ -35,7 +35,7 @@ def main(config):
     (
         pr_conv_factors_df, 
         metal_content_factors_df, 
-        ccg_countries, mine_city_stages, trade_df
+        ccg_countries, mine_city_stages, trade_df, _
     ) = get_common_input_dataframes(data_type,baseline_year,baseline_year)
 
     # Get the total tonnage of exports and imports of each CCG country
