@@ -489,8 +489,19 @@ def main(
         (
             pr_conv_factors_df, 
             metal_content_factors_df, 
-            ccg_countries, mine_city_stages, _,_
+            ccg_countries,_,_,_
         ) = get_common_input_dataframes(data_type,year,baseline_year)
+        mine_city_stages = modify_mineral_usage_factors(future_year=year)
+        mine_city_stages["mine_final_refined_stage"
+            ] = mine_city_stages.groupby(["reference_mineral"])["final_refined_stage"].transform("min")
+        mine_city_stages = mine_city_stages[["reference_mineral","mine_final_refined_stage"]]
+        mine_city_stages = mine_city_stages.drop_duplicates(
+                            [
+                                "reference_mineral",
+                                "mine_final_refined_stage"
+                            ],
+                            keep="first")
+
         for reference_mineral in reference_minerals:
             metal_factor = metal_content_factors_df[
                         metal_content_factors_df["reference_mineral"] == reference_mineral
@@ -549,7 +560,7 @@ def main(
                             in_st = row.initial_processing_stage
                             f_st = row.final_processing_stage
                             m_st = row.mine_final_refined_stage
-                            if (in_st == 0.0) and (f_st > 1.0):
+                            if (in_st == 0.0) and (f_st >= m_st):
                                 o_iso = row.export_country_code
                                 pidx = row.path_index
                                 in_tons = row.initial_stage_production_tons

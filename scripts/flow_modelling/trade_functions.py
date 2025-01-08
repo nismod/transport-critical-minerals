@@ -145,7 +145,6 @@ def modify_mineral_usage_factors(future_year=2030,baseline_year=2022):
                     "mine_final_refined_stage"
                 ],
                 axis=1,inplace=True)
-    print (muf_df[(muf_df["usage_factor"] > 0) & (muf_df["cum_usage_factor"] > 0)])
     return muf_df[(muf_df["usage_factor"] > 0) & (muf_df["cum_usage_factor"] > 0)]
 
 
