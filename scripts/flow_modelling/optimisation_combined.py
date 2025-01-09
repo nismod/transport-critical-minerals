@@ -423,17 +423,17 @@ def main(
     # if os.path.exists(results_folder) == False:
     #     os.mkdir(results_folder)
 
-    os.mkdirs(results_folder,exist_ok=True)
+    os.makedirs(results_folder,exist_ok=True)
 
     flows_folder = os.path.join(results_folder,"processed_flows")
     # if os.path.exists(flows_folder) == False:
     #     os.mkdir(flows_folder)
-    os.mkdirs(flows_folder,exist_ok=True)
+    os.makedirs(flows_folder,exist_ok=True)
 
     modified_paths_folder = os.path.join(results_folder,"modified_flow_od_paths")
     # if os.path.exists(modified_paths_folder) == False:
     #     os.mkdir(modified_paths_folder)
-    os.mkdirs(modified_paths_folder,exist_ok=True)
+    os.makedirs(modified_paths_folder,exist_ok=True)
     
     """Step 1: Get the input datasets
     """

@@ -101,11 +101,11 @@ def main(
     results_folder = os.path.join(output_data_path,"carbon_emissions_summaries")
     # if os.path.exists(results_folder) == False:
     #     os.mkdir(results_folder)
-    os.mkdirs(results_folder,exist_ok=True)
+    os.makedirs(results_folder,exist_ok=True)
     flow_results_folder = os.path.join(output_data_path,"carbon_emissions_flows")
     # if os.path.exists(flow_results_folder) == False:
     #     os.mkdir(flow_results_folder)
-    os.mkdirs(flow_results_folder,exist_ok=True)
+    os.makedirs(flow_results_folder,exist_ok=True)
 
     baseline_year = 2022
     if year == baseline_year:

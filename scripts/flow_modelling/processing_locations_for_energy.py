@@ -55,7 +55,7 @@ def main(
     results_folder = os.path.join(output_data_path,"optimised_processing_locations")
     # if os.path.exists(results_folder) == False:
     #     os.mkdir(results_folder)
-    os.mkdirs(results_folder,exist_ok=True)
+    os.makedirs(results_folder,exist_ok=True)
 
     """Step 1: Get the input datasets
     """

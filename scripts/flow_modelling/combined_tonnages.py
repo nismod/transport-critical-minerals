@@ -138,7 +138,7 @@ def main(
     results_folder = os.path.join(output_data_path,"result_summaries")
     # if os.path.exists(results_folder) == False:
     #     os.mkdir(results_folder)
-    os.mkdirs(results_folder,exist_ok=True)
+    os.makedirs(results_folder,exist_ok=True)
     #  Get a number of input dataframes
     baseline_year = 2022
     years = [2022,2030,2040]
