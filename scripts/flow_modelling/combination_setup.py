@@ -89,7 +89,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -105,7 +105,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,percentile) in enumerate(year_percentile_combinations):
@@ -120,7 +120,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -154,7 +154,7 @@ def main(config):
 
     run_script = True
     if run_script is True:
-        num_blocks = 6
+        num_blocks = 3
         all_scenarios = []
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         print (distance_filters)
