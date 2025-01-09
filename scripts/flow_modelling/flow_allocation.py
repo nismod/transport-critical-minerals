@@ -24,8 +24,9 @@ def main(config,reference_mineral,year,percentile,efficient_scale):
 
     input_folder = os.path.join(output_data_path,"flow_node_ods")
     results_folder = os.path.join(output_data_path,"flow_od_paths")
-    if os.path.exists(results_folder) == False:
-        os.mkdir(results_folder)
+    # if os.path.exists(results_folder) == False:
+    #     os.mkdir(results_folder)
+    os.mkdirs(results_folder,exist_ok=True)
 
     # cargo_type = "Dry bulk"
     cargo_type = "General cargo"
