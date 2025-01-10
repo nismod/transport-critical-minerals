@@ -166,12 +166,14 @@ def main():
             legend_handles.append(plt.plot([],[],
                                             color="none",
                                             label=title)[0])
-            tags = ["motorway","trunk","primary","other"]
-            tag_buffers = [0.16,0.12,0.08,0.04]
-            tag_colors = ["#800026","#fd8d3c","#fc9272","#969696"]
+            tags = ["other","primary","motorway and trunk"]
+            tag_buffers = [0.04,0.08,0.12]
+            tag_colors = ["#969696","#fc9272","#800026"]
             for idx,(t,tb,tc) in enumerate(zip(tags,tag_buffers,tag_colors)):
                 if t == "other":
-                    df = e_df[~e_df["mode"].isin(tags[:-1])]
+                    df = e_df[~e_df["mode"].isin(["primary","motorway","trunk"])]
+                elif t == "motorway and trunk":
+                    df = e_df[e_df["mode"].isin(["motorway","trunk"])]
                 else:
                     df = e_df[e_df["mode"] == t]
                 df["geometry"] = df.progress_apply(lambda x:x.geometry.buffer(tb),axis=1)
