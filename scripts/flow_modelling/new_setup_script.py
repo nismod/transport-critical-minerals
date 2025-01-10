@@ -152,7 +152,7 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
@@ -208,7 +208,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 12
         args = [
@@ -241,7 +241,7 @@ def main(config):
         #         print (args)
         #         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         # reference_minerals = ["cobalt"]
         num_blocks = 0
@@ -280,7 +280,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = False
+    run_script = True
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -299,7 +299,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for lc in location_cases:
             for opt in optimisation_type:

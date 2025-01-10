@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 from map_plotting_utils import *
+from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -128,6 +129,7 @@ def main():
                             },
                         ]
     result_type = ["noncombined","combined"]
+    # result_type = ["combined"]
     stage_mapping_df = pd.read_excel(
                                 os.path.join(
                                     processed_data_path,
@@ -159,17 +161,21 @@ def main():
                                             "optimised_processing_locations",
                                             fname),
                                         layer=lyr)
+                mine_city_stages = modify_mineral_usage_factors(future_year=y)
                 dfs = []
                 for kdx,(rf,rc) in enumerate(zip(reference_minerals,reference_mineral_colors)):
                     if ton_type == "initial_stage_production_tons":
                         cols = [f"{rf}_{ton_type}_0.0_in_{sc_nm}"]
                     else:
-                        stages = stage_mapping_df[
-                                        (
-                                            stage_mapping_df["reference_mineral"] == rf
-                                        ) & (
-                                            stage_mapping_df["processing_type"].isin(st_type)
-                                        )]["processing_stage"].values.tolist()
+                        # stages = stage_mapping_df[
+                        #                 (
+                        #                     stage_mapping_df["reference_mineral"] == rf
+                        #                 ) & (
+                        #                     stage_mapping_df["processing_type"].isin(st_type)
+                        #                 )]["processing_stage"].values.tolist()
+                        stages = mine_city_stages[
+                                    mine_city_stages["reference_mineral"] == rf
+                                    ]["final_refined_stage"].values.tolist()
                         cols = [f"{rf}_{ton_type}_{float(st)}_in_{sc_nm}" for st in stages]
                         cols = [c for c in cols if c in mine_sites_df.columns.values.tolist()]
 
