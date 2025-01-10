@@ -397,16 +397,19 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 
     input_folder = os.path.join(output_data_path,"flow_od_paths")
     results_folder = os.path.join(output_data_path,f"flow_optimisation_{country_case}_{constraint}")
-    if os.path.exists(results_folder) == False:
-        os.mkdir(results_folder)
+    # if os.path.exists(results_folder) == False:
+    #     os.mkdir(results_folder)
+    os.makedirs(results_folder,exist_ok=True)
 
     flows_folder = os.path.join(results_folder,"processed_flows")
-    if os.path.exists(flows_folder) == False:
-        os.mkdir(flows_folder)
+    # if os.path.exists(flows_folder) == False:
+    #     os.mkdir(flows_folder)
+    os.makedirs(flows_folder,exist_ok=True)
 
     modified_paths_folder = os.path.join(results_folder,"modified_flow_od_paths")
-    if os.path.exists(modified_paths_folder) == False:
-        os.mkdir(modified_paths_folder)
+    # if os.path.exists(modified_paths_folder) == False:
+    #     os.mkdir(modified_paths_folder)
+    os.makedirs(modified_paths_folder,exist_ok=True)
     """Step 1: Get the input datasets
     """
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
@@ -439,8 +442,18 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     (
         pr_conv_factors_df, 
         metal_content_factors_df, 
-        ccg_countries, mine_city_stages, _,_
+        ccg_countries, _,_,_
     ) = get_common_input_dataframes(data_type,year,baseline_year)
+    mine_city_stages = modify_mineral_usage_factors(future_year=year)
+    mine_city_stages["mine_final_refined_stage"
+        ] = mine_city_stages.groupby(["reference_mineral"])["final_refined_stage"].transform("min")
+    mine_city_stages = mine_city_stages[["reference_mineral","mine_final_refined_stage"]]
+    mine_city_stages = mine_city_stages.drop_duplicates(
+                        [
+                            "reference_mineral",
+                            "mine_final_refined_stage"
+                        ],
+                        keep="first")
     """Step 1: get all the relevant nodes and find their distances 
                 to grid and bio-diversity layers 
     """
@@ -515,7 +528,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
                         in_st = row.initial_processing_stage
                         f_st = row.final_processing_stage
                         m_st = row.mine_final_refined_stage
-                        if (in_st == 0.0) and (f_st == m_st):
+                        if (in_st == 0.0) and (f_st >= m_st):
                             o_iso = row.export_country_code
                             pidx = row.path_index
                             in_tons = row.initial_stage_production_tons

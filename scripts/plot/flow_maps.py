@@ -42,13 +42,14 @@ def main(
 
 
     figures = os.path.join(figure_path,"regional_figures")
-    if os.path.exists(figures) is False:
-        os.mkdir(figures)
+    # if os.path.exists(figures) is False:
+    #     os.mkdir(figures)
+    os.makedirs(figures,exist_ok=True)
 
     figures = os.path.join(figure_path,"regional_figures","flow_figures")
-    if os.path.exists(figures) is False:
-        os.mkdir(figures)
-
+    # if os.path.exists(figures) is False:
+    #     os.mkdir(figures)
+    os.makedirs(figures,exist_ok=True)
 
     flow_data_folder = os.path.join(output_data_path,"node_edge_flows")
     node_data_folder = os.path.join(output_data_path,"optimised_processing_locations")

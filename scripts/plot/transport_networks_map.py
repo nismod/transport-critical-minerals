@@ -8,9 +8,8 @@ import pandas as pd
 import numpy as np
 pd.options.mode.copy_on_write = True
 import geopandas as gpd
-from shapely.geometry import LineString
+from matplotlib.lines import Line2D
 from map_plotting_utils import *
-from mapping_properties import *
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -18,6 +17,26 @@ config = load_config()
 processed_data_path = config['paths']['data']
 figure_path = config['paths']['figures']
 
+def create_legend(
+                legend_type,
+                width_by_range,
+                legend_colors,
+                legend_labels,marker='o'):
+    legend_weight = 0.05
+    legend_handles = []
+    for dx, (width,color,label) in enumerate(zip(width_by_range,legend_colors,legend_labels)):
+        if legend_type == 'marker':
+            legend_handles.append(plt.plot([],[],
+                                marker=marker, 
+                                ms=width/legend_weight, 
+                                ls="",
+                                color=color,
+                                label=label.title())[0])
+        else:
+            legend_handles.append(Line2D([0], [0], 
+                            color=color, lw=width/legend_weight, label=label.title()))
+
+    return legend_handles
 def add_geometries_to_flows(flows_dataframe,
                         merge_column="id",
                         modes=["rail","sea","road","IWW","mine","city"],
@@ -31,10 +50,10 @@ def add_geometries_to_flows(flows_dataframe,
                             "africa_railways_network.gpkg"
                                 ), layer=layer_type
                     )
-            if mode == "nodes":
-                edges["mode"] = edges[""]
+            if layer_type == "nodes":
+                edges["mode"] = edges["infra"]
             else:
-                edges["mode"] = edges[""]
+                edges["mode"] = edges["status"]
         elif mode == "road":
             if layer_type == "edges":
                 edges = gpd.read_parquet(os.path.join(
@@ -53,14 +72,16 @@ def add_geometries_to_flows(flows_dataframe,
             edges = gpd.read_file(
                     os.path.join(processed_data_path,
                         "infrastructure",
-                        "global_maritime_network.gpkg"
+                        "africa_maritime_network.gpkg"
                     ),layer=layer_type)
-
-            edges["mode"] = edges["infra"]
+            if layer_type == "edges":
+                edges["mode"] = "maritime routes"
+            else:
+                edges["mode"] = edges["infra"]
         if layer_type == "edges":
             edges = edges[[merge_column,"from_id","to_id","mode","geometry"]]
         else:
-            edges = edges[[merge_column,"iso3","infra","mode","geometry"]]
+            edges = edges[[merge_column,"iso3","mode","geometry"]]
         if merge is True:
             flow_edges.append(
                 edges[
@@ -83,12 +104,7 @@ def add_geometries_to_flows(flows_dataframe,
                         flow_edges,
                         geometry="geometry",
                         crs="EPSG:4326")
-def main(config):
-    processed_data_path = config['paths']['data']
-    output_data_path = config['paths']['results']
-    figure_path = config['paths']['figures']
-
-
+def main():
     figures = os.path.join(figure_path,"transport_networks")
     os.makedirs(figures,exist_ok=True)
     
@@ -110,6 +126,7 @@ def main(config):
     interpolation='fisher-jenks'
 
     modes = ["road","rail","sea"]
+    # modes = ["rail","sea"]
     networks = []
     for m in range(len(modes)):
         n_dfs = []
@@ -130,7 +147,7 @@ def main(config):
     fig = plt.figure(figsize=(figwidth,figheight))
     plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
     for jdx, (mode,e_df,n_df,pos,span) in enumerate(networks):
-        ax = plt.subplot2grid([1,6],[0,pos],1,colspan=span)
+        ax = plt.subplot2grid([1,2*len(modes)],[0,pos],1,colspan=span)
         ax.spines[['top','right','bottom','left']].set_visible(False)
         ax.set_aspect('equal')
         ax.set_xticks([])
@@ -142,14 +159,95 @@ def main(config):
                     include_countries=ccg_isos,
                     include_labels=True
                     )
-        ax.set_title(mode,fontsize=textfontsize,fontweight="bold")
-        e_df.geometry.plot(ax=ax,facecolor=link_color,edgecolor='none',linewidth=0,alpha=0.7)
-        n_df.geometry.plot(
-            ax=ax, 
-            color=n_df["color"], 
-            edgecolor='none',
-            markersize=n_df["markersize"],
-            alpha=0.7)
+        ax.set_title(f"{mode.title()} network",fontsize=textfontsize,fontweight="bold")
+        legend_handles = []
+        if mode == "road":
+            title = "$\\bf{Road \, class}$"
+            legend_handles.append(plt.plot([],[],
+                                            color="none",
+                                            label=title)[0])
+            tags = ["motorway","trunk","primary","other"]
+            tag_buffers = [0.16,0.12,0.08,0.04]
+            tag_colors = ["#800026","#fd8d3c","#fc9272","#969696"]
+            for idx,(t,tb,tc) in enumerate(zip(tags,tag_buffers,tag_colors)):
+                if t == "other":
+                    df = e_df[~e_df["mode"].isin(tags[:-1])]
+                else:
+                    df = e_df[e_df["mode"] == t]
+                df["geometry"] = df.progress_apply(lambda x:x.geometry.buffer(tb),axis=1)
+                df.geometry.plot(
+                            ax=ax,
+                            facecolor=tc,
+                            edgecolor='none',
+                            linewidth=0,
+                            alpha=0.7,
+                            label=t.title())
+            legend_handles += create_legend(
+                            "line",
+                            tag_buffers,
+                            tag_colors,
+                            tags)
+        else:
+            title = "$\\bf{Asset \, types}$"
+            legend_handles.append(plt.plot([],[],
+                                            color="none",
+                                            label=title)[0])
+            if mode == "rail":
+                e_df = e_df[e_df["mode"] == "open"]
+                nids = list(set(e_df["from_id"].values.tolist() + e_df["to_id"].values.tolist()))
+                t = "operational lines" 
+                tb = 0.08
+                tc = "#238b45"
+                n_df = n_df[(n_df["mode"] == "station") & (n_df["id"].isin(nids))]
+                nt = "station"
+                nc = "#737373"
+                ns = 6
+            elif mode == "sea":
+                t = "maritime routes" 
+                tb = 0.08
+                tc = "#3690c0"
+                n_df = n_df[(n_df["mode"] == "port") & (n_df["iso3"].isin(ccg_isos))]
+                nt = "port"
+                nc = "#6a51a3"
+                ns = 20
+
+            e_df["geometry"] = e_df.progress_apply(lambda x:x.geometry.buffer(tb),axis=1)
+            e_df.geometry.plot(
+                        ax=ax,
+                        facecolor=tc,
+                        edgecolor='none',
+                        linewidth=0,
+                        alpha=0.7,
+                        label=t.title())
+            legend_handles += create_legend(
+                            "line",
+                            [tb],
+                            [tc],
+                            [t])
+            n_df.geometry.plot(
+                ax=ax, 
+                color=nc, 
+                edgecolor='none',
+                markersize=ns,
+                label=nt.title())
+            legend_handles += create_legend(
+                                "marker",
+                                [0.5],
+                                [nc],
+                                [nt])
+
+        leg = ax.legend(
+                handles=legend_handles, 
+                fontsize=10, 
+                loc='lower right',
+                frameon=False)
+
+        # Move titles to the left 
+        for item, label in zip(leg.legend_handles, leg.texts):
+            if label._text in [title]:
+                width = item.get_window_extent(fig.canvas.get_renderer()).width
+                label.set_ha('left')
+                label.set_position((-4.0*width,0))
 
     plt.tight_layout()
     save_fig(os.path.join(figures,"ccg_transport_networks"))

@@ -23,13 +23,15 @@ figure_path = config['paths']['figures']
 
 def main():
     figures = os.path.join(figure_path,"regional_figures")
-    if os.path.exists(figures) is False:
-        os.mkdir(figures)
-
+    # if os.path.exists(figures) is False:
+    #     os.mkdir(figures)
+    os.makedirs(figures,exist_ok=True)
+    
     figures = os.path.join(figure_path,"regional_figures","mine_and_processing_locations")
-    if os.path.exists(figures) is False:
-        os.mkdir(figures)
-
+    # if os.path.exists(figures) is False:
+    #     os.mkdir(figures)
+    os.makedirs(figures,exist_ok=True)
+    
     ccg_countries = pd.read_csv(os.path.join(processed_data_path,"admin_boundaries","ccg_country_codes.csv"))
     ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
 
@@ -128,8 +130,8 @@ def main():
                                                 "2040 - Environmental constraints"]
                             },
                         ]
-    result_type = ["noncombined","combined"]
-    # result_type = ["combined"]
+    # result_type = ["noncombined","combined"]
+    result_type = ["combined"]
     stage_mapping_df = pd.read_excel(
                                 os.path.join(
                                     processed_data_path,

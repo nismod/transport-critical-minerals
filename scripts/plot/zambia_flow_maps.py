@@ -43,13 +43,13 @@ def main(
 
     country_codes = ["ZMB"]
     figures = os.path.join(figure_path,f"{'_'.join(country_codes)}_figures")
-    if os.path.exists(figures) is False:
-        os.mkdir(figures)
-
+    # if os.path.exists(figures) is False:
+    #     os.mkdir(figures)
+    os.makedirs(figures,exist_ok=True)
     figures = os.path.join(figure_path,f"{'_'.join(country_codes)}_figures","flow_figures")
-    if os.path.exists(figures) is False:
-        os.mkdir(figures)
-
+    # if os.path.exists(figures) is False:
+    #     os.mkdir(figures)
+    os.makedirs(figures,exist_ok=True)
 
     flow_data_folder = os.path.join(output_data_path,"node_edge_flows")
     node_data_folder = os.path.join(output_data_path,"optimised_processing_locations")
