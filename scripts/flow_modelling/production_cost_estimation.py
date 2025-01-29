@@ -65,7 +65,8 @@ def get_costs_constant_rates(years=[2022,2030,2040]):
 
 def unit_costs_calculations(x,constant_rate_df,curves_df):
     mineral = x.reference_mineral
-    stage = x.final_production_stage
+    stage = x.final_processing_stage
+    tons = x.final_stage_production_tons
     c_df = curves_df[
                         (
                             curves_df["reference_mineral"] == mineral
@@ -77,7 +78,7 @@ def unit_costs_calculations(x,constant_rate_df,curves_df):
         a = c_df["a"].values[0]
         b = c_df["b"].values[0]
         k = c_df["k"].values[0]
-        return a*np.exp(-k*x) + b
+        return a*np.exp(-k*tons) + b
     else:
         c_df = constant_rate_df[
                         (
