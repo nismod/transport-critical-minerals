@@ -58,7 +58,7 @@ def get_costs_constant_rates(years=[2022,2030,2040]):
                         axis=1)
         costs_df.append(pc_df.reset_index())
 
-    costs_df = pd.concat(price_costs_df,axis=0,ignore_index=True)
+    costs_df = pd.concat(costs_df,axis=0,ignore_index=True)
     costs_df["production_cost_usd_per_tonne"
         ] = costs_df["capex_usd_per_tonne"] + costs_df["opex_usd_per_tonne"]
     return costs_df
