@@ -40,21 +40,6 @@ def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
                             "production_costs",
                             "Final_Price_and_Costs_RP.xlsx"),
                     sheet_name = "Price_final",index_col=[0])
-    price_df = price_df.reset_index()
-    capex_df = pd.read_excel(
-                        os.path.join(
-                            processed_data_path,
-                            "production_costs",
-                            "Final_Price_and_Costs_RP.xlsx"),
-                    sheet_name = "CapEx_final",index_col=[0])
-    capex_df = capex_df.reset_index()
-    opex_df = pd.read_excel(
-                        os.path.join(
-                            processed_data_path,
-                            "production_costs",
-                            "Final_Price_and_Costs_RP.xlsx"),
-                    sheet_name = "OpEx_final",index_col=[0])
-    opex_df = opex_df.reset_index()
 
     gdp_df = pd.read_excel(
                         os.path.join(
@@ -70,23 +55,7 @@ def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
         pdf = price_df[["reference_mineral","processing_stage",y]]
         pdf["year"] = y
         pdf.rename(columns={y:"price_usd_per_tonne"},inplace=True)
-
-        cdf = capex_df[["reference_mineral","processing_stage",y]]
-        cdf["year"] = y
-        cdf.rename(columns={y:"capex_usd_per_tonne"},inplace=True)
-
-        odf = opex_df[["reference_mineral","processing_stage",y]]
-        odf["year"] = y
-        odf.rename(columns={y:"opex_usd_per_tonne"},inplace=True)
-
-        pc_df = pd.concat(
-                        [
-                            pdf.set_index(index_cols),
-                            cdf.set_index(index_cols),
-                            odf.set_index(index_cols)
-                        ],
-                        axis=1)
-        price_costs_df.append(pc_df.reset_index())
+        price_costs_df.append(pdf)
 
         g_df = gdp_df[["iso3",y]]
         g_df["year"] = y
@@ -137,8 +106,6 @@ def main(
     cost_input_folder = os.path.join(output_data_path,"production_costs")
 
     results_folder = os.path.join(output_data_path,"result_summaries")
-    # if os.path.exists(results_folder) == False:
-    #     os.mkdir(results_folder)
     os.makedirs(results_folder,exist_ok=True)
     #  Get a number of input dataframes
     baseline_year = 2022
@@ -156,7 +123,6 @@ def main(
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
     initial_tons_column = "initial_stage_production_tons"
     final_tons_column = "final_stage_production_tons" 
-    # tonnage_types = ["production","export","import_ccg","import_nonccg"]
     tonnage_types = ["production","export","import"] 
     cost_column = "total_gcosts_usd" 
     carbon_tons_column = "transport_total_tonkm"
@@ -177,7 +143,8 @@ def main(
                                             "production_tonnes",
                                             "stage_1_production_for_value_added_export_tonnes",
                                             "export_tonnes",
-                                            "import_tonnes"
+                                            "import_tonnes",
+                                            "production_tonnes_for_costs",
                                         ],
                             "carbon":[
                                         "transport_total_tonkm",
@@ -186,21 +153,23 @@ def main(
                                         "transport_import_tonsCO2eq"
                                     ],
                             "water":["water_usage_m3"],
+                            "production_costs":[
+                                            "production_cost_usd"
+                                            ],
                             "costs":[
                                         "revenue_usd",
                                         "expenditure_usd",
-                                        "production_cost_usd",
-                                        "stage1_production_cost_usd",
-                                        "stage1_production_cost_usd_opex_only",
                                         "gdp_usd"
                                     ],
                             "transport_costs":[
                                                 "export_transport_cost_usd",
                                                 "import_transport_cost_usd"
                                             ],
+                            "unit_production_costs":[
+                                                    "production_cost_usd_per_tonne"
+                                                ],
                             "unit_costs":[
-                                            "price_usd_per_tonne",
-                                            "production_cost_usd_per_tonne"
+                                            "price_usd_per_tonne"
                                         ],
                             "unit_transport_costs":[
                                                         "export_transport_cost_usd_per_tonne",
@@ -215,8 +184,10 @@ def main(
                         }
 
     all_sums = column_dictionary["tonnages"
+                    ] + column_dictionary["production_costs"
                     ] + column_dictionary["transport_costs"
                     ] + column_dictionary["carbon"
+                    ] + column_dictionary["unit_production_costs"
                     ] + column_dictionary["unit_transport_costs"]
 
     #  Get a number of input dataframes
@@ -481,8 +452,17 @@ def main(
             cst_df = pd.read_csv(
                     os.path.join(
                         carbon_input_folder,
-                        f"{fc}.csv"))
-
+                        f"{fcs}.csv"))
+            cst_df.rename(
+                    columns={
+                                "final_processing_stage":"processing_stage",
+                                "final_stage_production_tons":"production_tonnes_for_costs"
+                            }, 
+                    inplace=True
+                        )
+            c_df["scenario"] = l
+            c_df["year"] = y
+            all_dfs.append(cst_df)
 
 
     all_dfs = pd.concat(all_dfs,axis=0,ignore_index=True)
@@ -506,16 +486,8 @@ def main(
     all_dfs["water_usage_m3"] = 1.0e3*all_dfs["production_tonnes"]*all_dfs["water_intensity_m3_per_kg"]
     all_dfs["revenue_usd"] = all_dfs["export_tonnes"]*all_dfs["price_usd_per_tonne"]
     all_dfs["expenditure_usd"] = all_dfs["import_tonnes"]*all_dfs["price_usd_per_tonne"]
-    all_dfs["capex_usd"] = all_dfs["production_tonnes"]*all_dfs["capex_usd_per_tonne"]
-    all_dfs["opex_usd"] = all_dfs["production_tonnes"]*all_dfs["opex_usd_per_tonne"]
-    all_dfs["production_cost_usd"] = all_dfs["capex_usd"] + all_dfs["opex_usd"]
-    all_dfs["stage1_production_cost_usd"
-        ] = all_dfs["stage_1_production_for_value_added_export_tonnes"]*(
-            all_dfs["capex_usd_per_tonne"] + all_dfs["opex_usd_per_tonne"])
-    all_dfs["stage1_production_cost_usd_opex_only"
-        ] = all_dfs["stage_1_production_for_value_added_export_tonnes"]*all_dfs["opex_usd_per_tonne"]
     all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
-    for idx,(p,r) in enumerate(zip(["price","capex","opex"],["revenue","capex","opex"])):
+    for idx,(p,r) in enumerate(zip(["price"],["revenue"])):
         all_dfs[
             f"{p}_usd_per_tonne"
             ] = np.where(
@@ -530,29 +502,29 @@ def main(
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()
 
-    all_sums = ["stage1_production_cost_usd","stage1_production_cost_usd_opex_only","expenditure_usd"]
-    all_dfs = all_dfs.reset_index()
-    revenue_df = all_dfs[all_dfs["processing_stage"] > 1.0]
-    revenue_df = revenue_df.groupby(
-                        ["year","scenario","reference_mineral","iso3"]
-                        )["revenue_usd"].sum().reset_index()
-    all_dfs = all_dfs.groupby(
-                ["year","scenario","reference_mineral","iso3"]
-                ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
-    all_dfs = pd.merge(
-                        all_dfs,
-                        revenue_df,
-                        how="left",
-                        on=["year","scenario","reference_mineral","iso3"]
-                    ).fillna(0)
-    all_dfs["value_added_usd"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd"] - all_dfs["expenditure_usd"]
-    all_dfs["value_added_usd_opex_only"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd_opex_only"] - all_dfs["expenditure_usd"]
-    all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
-    all_dfs["value_added_gdp_ratio"] = all_dfs["value_added_usd"]/all_dfs["gdp_usd"]
-    all_dfs["value_added_opex_only_gdp_ratio"] = all_dfs["value_added_usd_opex_only"]/all_dfs["gdp_usd"]
-    all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3"])
-    all_dfs.to_excel(writer_t,sheet_name=f"{country_case}_{constraint}")
-    writer_t.close()
+    # all_sums = ["stage1_production_cost_usd","stage1_production_cost_usd_opex_only","expenditure_usd"]
+    # all_dfs = all_dfs.reset_index()
+    # revenue_df = all_dfs[all_dfs["processing_stage"] > 1.0]
+    # revenue_df = revenue_df.groupby(
+    #                     ["year","scenario","reference_mineral","iso3"]
+    #                     )["revenue_usd"].sum().reset_index()
+    # all_dfs = all_dfs.groupby(
+    #             ["year","scenario","reference_mineral","iso3"]
+    #             ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
+    # all_dfs = pd.merge(
+    #                     all_dfs,
+    #                     revenue_df,
+    #                     how="left",
+    #                     on=["year","scenario","reference_mineral","iso3"]
+    #                 ).fillna(0)
+    # all_dfs["value_added_usd"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd"] - all_dfs["expenditure_usd"]
+    # all_dfs["value_added_usd_opex_only"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd_opex_only"] - all_dfs["expenditure_usd"]
+    # all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
+    # all_dfs["value_added_gdp_ratio"] = all_dfs["value_added_usd"]/all_dfs["gdp_usd"]
+    # all_dfs["value_added_opex_only_gdp_ratio"] = all_dfs["value_added_usd_opex_only"]/all_dfs["gdp_usd"]
+    # all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3"])
+    # all_dfs.to_excel(writer_t,sheet_name=f"{country_case}_{constraint}")
+    # writer_t.close()
 
 
 

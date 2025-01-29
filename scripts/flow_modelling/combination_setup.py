@@ -254,7 +254,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 16
         args = [
@@ -366,7 +366,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         cx = "combined"
@@ -389,7 +389,7 @@ def main(config):
                 else:
                     args = [
                             "python",
-                            "combined_tonnages.py",
+                            "combined_tonnages_v2.py",
                             f"{lcx}",
                             f"{optx}",
                             f"{cx}",
