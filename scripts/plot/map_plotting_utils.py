@@ -180,10 +180,10 @@ def plot_basemap(ax,include_labels=False):
 def map_background_and_bounds(
                             include_continents=None,
                             include_countries=None,
-                            xmin_offset = -0.5,
-                            xmax_offset = 3.5,
-                            ymin_offset = 6.5,
-                            ymax_offset = 0.5
+                            xmin_offset = 0.0,
+                            xmax_offset = 0.0,
+                            ymin_offset = 0.0,
+                            ymax_offset = 0.0
                             ):
     boundary_gdf = gpd.read_file(os.path.join(
                     data_path,'admin_boundaries',
@@ -221,10 +221,11 @@ def plot_global_basemap(
                         include_continents=None,
                         include_countries=None,
                         include_labels=False,
-                        xmin_offset = -0.5,
-                        xmax_offset = 3.5,
-                        ymin_offset = 6.5,
-                        ymax_offset = 0.5
+                        xmin_offset = 0.0,
+                        xmax_offset = 0.0,
+                        ymin_offset = 0.0,
+                        ymax_offset = 0.0,
+                        facecolor = "#c6e0ff"
                         ):
     
     (
@@ -239,8 +240,9 @@ def plot_global_basemap(
                 xmax_offset = xmax_offset,
                 ymin_offset = ymin_offset,
                 ymax_offset = ymax_offset) 
+    if facecolor is not None:
+        ax.set_facecolor(facecolor)
 
-    ax.set_facecolor("#c6e0ff")  
     ax.set_ylim(ylims)
     ax.set_xlim(xlims)
     continent_gdf.plot(ax=ax, color='whitesmoke', edgecolor='white')
