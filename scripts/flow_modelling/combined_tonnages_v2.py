@@ -452,7 +452,7 @@ def main(
 
             cst_df = pd.read_csv(
                     os.path.join(
-                        carbon_input_folder,
+                        cost_input_folder,
                         f"{fcs}.csv"))
             cst_df.rename(
                     columns={
