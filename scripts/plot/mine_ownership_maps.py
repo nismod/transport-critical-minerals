@@ -10,6 +10,7 @@ pd.options.mode.copy_on_write = True
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Circle
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from map_plotting_utils import *
 from tqdm import tqdm
 tqdm.pandas()
@@ -201,7 +202,7 @@ def main():
                         include_countries=countries,
                         facecolor=None
                         )
-            gdf["markersize"] = marker_size_max*(df[sc_n]/tmax)**0.5
+            gdf["markersize"] = marker_size_max*(gdf[sc_n]/tmax)**0.5
             gdf = df.sort_values(by=sc_n,ascending=False)
             gdf.geometry.plot(
                 ax=ax, 
@@ -253,17 +254,6 @@ def main():
                 facecolor=None
                 )
     for row in df.itertuples():
-        # values = np.cumsum([row.Local,row.Foreign,row.Unknown])
-        # # values = values/values[-1]
-        # wedges = plt.pie(values)
-        # for j in range(len(pie_colors)):
-        #     ax.scatter(
-        #             [row.geometry.x],
-        #             [row.geometry.y],
-        #             marker=(wedges[0][j].get_path().vertices.tolist()),
-        #             facecolor=pie_colors[j], 
-        #             s=marker_size_max*(row.Total/tmax)**0.5
-        #             )
         values = [row.Local,row.Foreign,row.Unknown]
         pie_colors = ["#1f78b4","#e31a1c","#969696"]
         draw_pie(dist=values, 
@@ -276,6 +266,48 @@ def main():
                     [row.geometry.x],[row.geometry.y],
                     s=0.2*marker_size_max*(row.Total/tmax)**0.5,
                     color="#ffffff")
+
+    ins = ax.inset_axes([-0.05,-0.05,0.2,0.8])
+    pie_colors = ["#1f78b4","#e31a1c","#969696"]
+    # create inset plot
+    keys = ['tonnage','Ownership']
+    ins.set_ylim([-2.5,1.5])
+    ins.set_xlim([-1,1.5])
+    xk = -0.9
+    xt = -0.95
+    for ky in range(len(keys)):
+        key = keys[ky]
+        if key == 'tonnage':
+            tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)
+            tonnage_key = tonnage_key[::-1]
+            Nk = tonnage_key.size
+            yk = np.linspace(-2.45,1,Nk)
+            yt = 1.4*(yk[-1]+np.diff(yk[-3:-1]))
+            size_key = marker_size_max*(tonnage_key/tmax)**0.5
+            key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
+            key.geometry.plot(ax=ins,markersize=size_key,color='k')
+            ins.text(xt,yt,'Mine annual output (tonnes)',weight='bold',va='center',fontsize=8)
+            for k in range(Nk):
+                ins.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),va='center',fontsize=8)
+            # for n, p in enumerate(size_key):
+            #     circle = Circle(
+            #                         (xk, yk[n]), 
+            #                         radius=(p)**0.5, 
+            #                         fc='k')
+            #     ax.add_artist(circle)
+        else:
+            commodities = ["Local","Foreign","Unknown"]
+            Nk = len(commodities)
+            yk = np.linspace(1,1.5,Nk)
+            yt = yk[-1]+np.diff(yk[-3:-1])
+            ins.text(xt,yt,'Ownership',weight='bold',va='center',fontsize=8)
+            for k in range(Nk):
+                ins.text(xk,yk[k],'   '+commodities[k].capitalize(),va='center',fontsize=8)
+                ins.plot(xk,yk[k],'s',
+                        mfc=pie_colors[k],
+                        mec=pie_colors[k],
+                        ms=10)
+
 
     plt.tight_layout()
     save_fig(os.path.join(figures,"country_totals_by_ownership"))

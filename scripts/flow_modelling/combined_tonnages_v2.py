@@ -40,6 +40,7 @@ def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
                             "production_costs",
                             "Final_Price_and_Costs_RP.xlsx"),
                     sheet_name = "Price_final",index_col=[0])
+    price_df = price_df.reset_index()
 
     gdp_df = pd.read_excel(
                         os.path.join(
