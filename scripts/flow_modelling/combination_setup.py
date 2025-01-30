@@ -376,7 +376,7 @@ def main(config):
                     for ix,(opx,efx) in enumerate(distance_filters):
                         args = [
                                 "python",
-                                "combined_tonnages.py",
+                                "combined_tonnages_v2.py",
                                 f"{lcx}",
                                 f"{optx}",
                                 f"{cx}",
