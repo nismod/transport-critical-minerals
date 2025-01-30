@@ -461,8 +461,8 @@ def main(
                             }, 
                     inplace=True
                         )
-            c_df["scenario"] = l
-            c_df["year"] = y
+            cst_df["scenario"] = l
+            cst_df["year"] = y
             all_dfs.append(cst_df)
 
 
