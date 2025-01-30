@@ -232,13 +232,13 @@ def main(
     else:
         writer = pd.ExcelWriter(output_file)
 
-    output_file = os.path.join(
-                        results_folder,
-                        v_file_name)
-    if os.path.isfile(output_file) is True:
-        writer_t = pd.ExcelWriter(output_file,mode='a',engine="openpyxl",if_sheet_exists='replace')
-    else:
-        writer_t = pd.ExcelWriter(output_file)
+    # output_file = os.path.join(
+    #                     results_folder,
+    #                     v_file_name)
+    # if os.path.isfile(output_file) is True:
+    #     writer_t = pd.ExcelWriter(output_file,mode='a',engine="openpyxl",if_sheet_exists='replace')
+    # else:
+    #     writer_t = pd.ExcelWriter(output_file)
     
     if country_case == "country" and constraint == "unconstrained":
         combos = year_percentile_combinations
