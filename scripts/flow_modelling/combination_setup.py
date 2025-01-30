@@ -254,7 +254,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 16
         args = [

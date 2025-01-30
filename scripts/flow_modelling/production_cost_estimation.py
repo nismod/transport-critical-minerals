@@ -216,7 +216,13 @@ def main(
                             mine_id_col="id")
         
         export_df = pd.read_parquet(export_file_path)
-        od_df = export_df[export_df["trade_type"] == "Export"]
+        od_df = export_df[
+                            (
+                                export_df["export_country_code"].isin(ccg_countries)
+                            ) & (
+                                export_df["trade_type"] == "Export"
+                            )
+                        ]
         od_df = export_df[export_df["export_country_code"] != export_df["import_country_code"]]
 
         od_df["production_cost_usd_per_tonne"
