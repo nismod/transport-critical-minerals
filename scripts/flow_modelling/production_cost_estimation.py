@@ -218,7 +218,7 @@ def main(
         export_df = pd.read_parquet(export_file_path)
         od_df = export_df[export_df["export_country_code"].isin(ccg_countries)]
         od_df = od_df[od_df["trade_type"] == "Export"]
-        od_df = od_df[od_df["export_country_code"] != export_df["import_country_code"]]
+        od_df = od_df[od_df["export_country_code"] != od_df["import_country_code"]]
 
         od_df["production_cost_usd_per_tonne"
             ] = od_df.progress_apply(lambda x:unit_costs_calculations(x,costs_df,cost_curves_df),axis=1)
