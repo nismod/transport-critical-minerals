@@ -79,7 +79,7 @@ def main(
     width_step = 0.03
     interpolation='fisher-jenks'
     key_info = ["key",pd.DataFrame(),0,1]
-    max_flow = 4400000.0
+    e_range = [0,200000,600000,1000000,2000000,4400000]
 
     fig_scenario = [
                     years,
@@ -161,7 +161,7 @@ def main(
                         sc_dfs.append((title_name,edges_flows_df,panel_span*idx + 1,panel_span))
 
     if make_plot is True:
-        edges_range += [max_flow]
+        edges_range = e_range
         e_tonnage_weights = generate_weight_bins(edges_range, 
                                 width_step=width_step, 
                                 n_steps=line_steps,
