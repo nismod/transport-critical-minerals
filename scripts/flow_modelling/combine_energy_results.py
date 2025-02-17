@@ -103,7 +103,7 @@ def main(config):
             transport_df = pd.read_excel(
                                     os.path.join(
                                         results_folder,
-                                        "transport_totals_by_stage.xlsx"),
+                                        "combined_transport_totals_by_stage.xlsx"),
                                     sheet_name=f"{loc}_{opt}",index_col=[0,1,2,3,4,5])
             transport_df = transport_df.reset_index()
             df = dfs[dfs["location_constraint"] == f"{loc}_{opt}"]
