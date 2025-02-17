@@ -52,7 +52,7 @@ def main(config):
                                 (
                                     y,f"{y}_{s}",
                                     "country_unconstrained",
-                                    f"{y}_{s}_country_unconstrained_mineral_summary.xlsx"
+                                    f"{y}_{s}_country_unconstrained.csv_mineral_summary.xlsx"
                                 )
                             )
         else:
@@ -61,7 +61,7 @@ def main(config):
                     scenarios.append(
                                         (
                                             y,f"{y}_{s}_{thr}",f"{loc}_{opt}",
-                                            f"{y}_{s}_{thr}_{loc}_{opt}_mineral_summary.xlsx"
+                                            f"{y}_{s}_{thr}_{loc}_{opt}.csv_mineral_summary.xlsx"
                                         )
                                     )
 
