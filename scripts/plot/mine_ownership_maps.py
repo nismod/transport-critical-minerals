@@ -67,8 +67,8 @@ def main():
                         )
                     )
     centroid_df["geometry"] = gpd.points_from_xy(
-                                    centroid_df["longitude"],
-                                    centroid_df["latitude"])
+                                    centroid_df["longitude_shift"],
+                                    centroid_df["latitude_shift"])
     
         
     _,_,xl,yl = map_background_and_bounds(include_continents=continents)
@@ -203,12 +203,12 @@ def main():
                         facecolor=None
                         )
             gdf["markersize"] = marker_size_max*(gdf[sc_n]/tmax)**0.5
-            gdf = df.sort_values(by=sc_n,ascending=False)
+            gdf = gdf.sort_values(by=sc_n,ascending=False)
             gdf.geometry.plot(
                 ax=ax, 
                 color=df["color"], 
                 edgecolor='none',
-                markersize=df["markersize"],
+                markersize=gdf["markersize"],
                 alpha=0.8)
             ax.text(
                         0.95*xl[0],0.90*yl[1],
@@ -236,7 +236,8 @@ def main():
     df = df[df["Total"]>0]
     df = df.sort_values(by="Total",ascending=False)
     tmax = df["Total"].max()
-    pie_colors = ["#1f78b4","#e31a1c","#969696"]
+    threshold = tmax
+    pie_colors = ["#1f78b4","#e31a1c","#4d4d4d"]
     figwidth = 12
     figheight = figwidth/(1+1*w)/dxl*dyl/(1-dt)
     fig = plt.figure(figsize=(figwidth,figheight))
@@ -255,40 +256,45 @@ def main():
                 )
     for row in df.itertuples():
         values = [row.Local,row.Foreign,row.Unknown]
-        pie_colors = ["#1f78b4","#e31a1c","#969696"]
+        colors = pie_colors.copy()
         draw_pie(dist=values, 
                 xpos=row.geometry.x, 
                 ypos=row.geometry.y, 
                 size=marker_size_max*(row.Total/tmax)**0.5, 
-                color_map=pie_colors,
+                color_map=colors,
                 ax=ax)
         ax.scatter(
                     [row.geometry.x],[row.geometry.y],
                     s=0.2*marker_size_max*(row.Total/tmax)**0.5,
                     color="#ffffff")
+        if row.Total > threshold:
+            ax.text(row.geometry.x,row.geometry.y,row.ADM0_A3,ha='center',fontsize=5.5)
 
     ins = ax.inset_axes([-0.05,-0.05,0.2,0.8])
-    pie_colors = ["#1f78b4","#e31a1c","#969696"]
+    # pie_colors = ["#1f78b4","#e31a1c","#969696"]
     # create inset plot
     keys = ['tonnage','Ownership']
-    ins.set_ylim([-2.5,1.5])
+    ins.spines[['top','right','bottom','left']].set_visible(False)
+    ins.set_xticks([])
+    ins.set_yticks([])
+    ins.set_ylim([-3,2])
     ins.set_xlim([-1,1.5])
-    xk = -0.9
+    xk = -0.6
     xt = -0.95
     for ky in range(len(keys)):
         key = keys[ky]
         if key == 'tonnage':
-            tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)
+            tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)[:-1]
             tonnage_key = tonnage_key[::-1]
             Nk = tonnage_key.size
-            yk = np.linspace(-2.45,1,Nk)
-            yt = 1.4*(yk[-1]+np.diff(yk[-3:-1]))
+            yk = np.linspace(-2.45,0.8,Nk)
+            yt = 1.0
             size_key = marker_size_max*(tonnage_key/tmax)**0.5
             key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
             key.geometry.plot(ax=ins,markersize=size_key,color='k')
-            ins.text(xt,yt,'Mine annual output (tonnes)',weight='bold',va='center',fontsize=8)
+            ins.text(xt,yt,'Mine annual output (tonnes)',weight='bold',va='center',fontsize=10)
             for k in range(Nk):
-                ins.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),va='center',fontsize=8)
+                ins.text(xk,yk[k],'       {:,.0f}'.format(tonnage_key[k]),va='center',fontsize=10)
             # for n, p in enumerate(size_key):
             #     circle = Circle(
             #                         (xk, yk[n]), 
@@ -296,13 +302,14 @@ def main():
             #                         fc='k')
             #     ax.add_artist(circle)
         else:
-            commodities = ["Local","Foreign","Unknown"]
+            commodities = ["Unknown","Foreign","Local"]
+            pie_colors = ["#4d4d4d","#e31a1c","#1f78b4"]
             Nk = len(commodities)
-            yk = np.linspace(1,1.5,Nk)
-            yt = yk[-1]+np.diff(yk[-3:-1])
-            ins.text(xt,yt,'Ownership',weight='bold',va='center',fontsize=8)
+            yk = np.linspace(1.2,1.8,Nk)
+            yt = 2.0
+            ins.text(xt,yt,'Ownership',weight='bold',va='center',fontsize=10)
             for k in range(Nk):
-                ins.text(xk,yk[k],'   '+commodities[k].capitalize(),va='center',fontsize=8)
+                ins.text(xk,yk[k],'   '+commodities[k].capitalize(),va='center',fontsize=10)
                 ins.plot(xk,yk[k],'s',
                         mfc=pie_colors[k],
                         mec=pie_colors[k],

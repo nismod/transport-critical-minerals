@@ -104,6 +104,8 @@ def main(config):
         y += 4
 
     vals = pd.DataFrame(vals,columns=["Y","X","stage_type","reference_mineral","stage","kgs","color"])
+    vals.to_csv("test.csv",index=False)
+    
     vals["rad"] = (1.0/3.14)*(vals["kgs"]**0.5)
     ar = pd.DataFrame(arrows,columns=["Y","X0","X1"])
     ar["dx"] = ar["X1"] - ar["X0"]

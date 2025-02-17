@@ -49,7 +49,7 @@ def main(config,country_case,constraint):
 
     output_file = os.path.join(
                         results_folder,
-                        "enregy_totals.xlsx")
+                        "energy_totals.xlsx")
     if os.path.isfile(output_file) is True:
         writer_t = pd.ExcelWriter(output_file,mode='a',engine="openpyxl",if_sheet_exists='replace')
     else:

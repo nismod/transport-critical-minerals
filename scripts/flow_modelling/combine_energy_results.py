@@ -38,6 +38,12 @@ def main(config):
     optimisation_type = ["unconstrained","constrained"]
     baseline_year = 2022
 
+    energy_columns = [
+                        "energy_req_capacity_kW",
+                        "energy_tonsCO2eq",
+                        "energy_investment_usd",
+                        "energy_opex"
+                    ]
     dfs = []
     scenarios = []
     for idx, (y,s) in enumerate(year_percentile_combinations):
@@ -58,8 +64,6 @@ def main(config):
                                             f"{y}_{s}_{thr}_{loc}_{opt}_mineral_summary.xlsx"
                                         )
                                     )
-
-    print (len(scenarios))
 
     for idx,(y,sc,lc,fname) in enumerate(scenarios):
         fpath = os.path.join(
@@ -84,7 +88,7 @@ def main(config):
             dfs.append(df)
 
     dfs = pd.concat(dfs,axis=0,ignore_index=True)
-    print (dfs)
+    
 
     output_file = os.path.join(
                         results_folder,
@@ -104,9 +108,7 @@ def main(config):
             transport_df = transport_df.reset_index()
             df = dfs[dfs["location_constraint"] == f"{loc}_{opt}"]
             df.drop("location_constraint",axis=1,inplace=True)
-            print (df)
-            print (transport_df)
-
+            
             transport_df = pd.merge(
                                 transport_df,
                                 df,how="left",
@@ -116,6 +118,13 @@ def main(config):
                                     "iso3","processing_stage"
                                     ]
                                 ).fillna(0)
+            for e in energy_columns:
+                transport_df[f"{e}_per_tonne"
+                        ] = np.where(
+                                    transport_df["production_tonnes"] != 0,
+                                    transport_df[e]/transport_df["production_tonnes"],
+                                    0
+                                    )
             transport_df = transport_df.set_index(
                                         [
                                             "year","scenario",
