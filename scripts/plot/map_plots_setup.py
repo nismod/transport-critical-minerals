@@ -62,7 +62,7 @@ def main(config):
         subprocess.run(args)
 
     num_blocks = 12
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",
@@ -113,7 +113,7 @@ def main(config):
 
     num_blocks = 8
     
-    # run_script = True
+    run_script = True
     if run_script is True:
         args = [
                 "parallel",
