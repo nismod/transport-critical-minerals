@@ -22,7 +22,7 @@ def main(config):
     output_data_path = config['paths']['results']
 
     results_folder = os.path.join(output_data_path,"result_summaries")
-    energy_results_folder = os.path.join(output_data_path,"20241208_Run_NoGridBuffer")
+    energy_results_folder = os.path.join(output_data_path,"20250216_Run_No_GridBuffer")
 
     year_percentile_combinations = [
                                     (2022,"baseline"),
