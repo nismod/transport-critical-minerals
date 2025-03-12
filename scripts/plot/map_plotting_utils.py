@@ -305,6 +305,15 @@ def plot_ccg_country_basemap(ax,
     del global_map_df
     country_map_df.plot(ax=ax, color='lightgrey', edgecolor='white')
     if include_labels is True:
+        exclude_names = [
+                            "Zanzibar South and Central",
+                            "Kaskazini-Unguja",
+                            "Zanzibar West",
+                            "Kusini-Pemba",
+                            "Kaskazini-Pemba",
+                            "Bujumbura Mairie"]
+        country_map_df = country_map_df[~country_map_df["name"].isin(exclude_names)]
+        country_map_df["name"] = country_map_df["name"].replace("Bujumbura Rural","Bujumbura") 
         country_map_df.apply(
                 lambda x: ax.annotate(
                             text=x["name"], 

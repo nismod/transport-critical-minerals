@@ -142,7 +142,7 @@ def main():
 
     sc_dfs = [
                 ("Total","a. Total tonnage produced",df,0,1,1,panel_span),
-                ("Local","b. Tonnage produced by local owners",df,0,3,1,panel_span),
+                ("Local","b. Tonnage produced by domestic owners",df,0,3,1,panel_span),
                 ("Foreign","c. Tonnage produced by foreign owners",df,1,1,1,panel_span),
                 ("Unknown","d. Tonnage produced by unknown owners",df,1,3,1,panel_span),
                 ("key","key",pd.DataFrame(),0,0,2,1)]
@@ -178,12 +178,6 @@ def main():
                     ax.text(xt,yt,'Mine annual output (tonnes)',weight='bold',va='center',fontsize=16)
                     for k in range(Nk):
                         ax.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),va='center',fontsize=13)
-                    # for n, p in enumerate(size_key):
-                    #     circle = Circle(
-                    #                         (xk, yk[n]), 
-                    #                         radius=(p)**0.5, 
-                    #                         fc='k')
-                    #     ax.add_artist(circle)
                 else:
                     Nk = len(commodities)
                     yk = yl[0] + np.linspace(0.10*dyl,0.5*dyl,Nk) + 0.4*ky*dyl
@@ -215,13 +209,9 @@ def main():
                         sc_t,
                         fontsize=18,weight='bold',ha='left'
                     )
-            # for row in df.itertuples():
-            #     circle = Circle(xy=(row.geometry.x, row.geometry.y), radius=row.markersize**0.5, 
-            #                         edgecolor=None,fc=row.color,alpha= 0.8)
-            #     ax.add_artist(circle)
 
     plt.tight_layout()
-    save_fig(os.path.join(figures,"mine_totals"))
+    save_fig(os.path.join(figures,"mine_totals.svg"))
     plt.close()
 
     """Ownership Map"""
@@ -302,7 +292,7 @@ def main():
             #                         fc='k')
             #     ax.add_artist(circle)
         else:
-            commodities = ["Unknown","Foreign","Local"]
+            commodities = ["Unknown","Foreign","Domestic"]
             pie_colors = ["#4d4d4d","#e31a1c","#1f78b4"]
             Nk = len(commodities)
             yk = np.linspace(1.2,1.8,Nk)
@@ -317,7 +307,7 @@ def main():
 
 
     plt.tight_layout()
-    save_fig(os.path.join(figures,"country_totals_by_ownership"))
+    save_fig(os.path.join(figures,"country_totals_by_ownership.svg"))
     plt.close()
 
 if __name__ == '__main__':

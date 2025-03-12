@@ -6,6 +6,7 @@ from collections import OrderedDict
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
 import geopandas as gpd
+import ast
 import numpy as np
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -21,18 +22,17 @@ processed_data_path = config['paths']['data']
 output_path = config['paths']['results']
 figure_path = config['paths']['figures']
 
-def main():
-    country_codes = ["ZMB"]
+def main(country_codes,offsets,x_text,include_labels=True):
     figures = os.path.join(figure_path,f"{'_'.join(country_codes)}_figures")
     os.makedirs(figures,exist_ok=True)
 
     figures = os.path.join(figure_path,f"{'_'.join(country_codes)}_figures","mine_and_processing_locations")
     os.makedirs(figures,exist_ok=True)
 
-    xmin_offset = -0.2
-    ymin_offset = -0.2
-    xmax_offset = 0.1
-    ymax_offset = 0.1
+    xmin_offset = offsets[0]
+    ymin_offset = offsets[1]
+    xmax_offset = offsets[2]
+    ymax_offset = offsets[3]
     _,_,xl,yl = map_background_and_bounds(include_countries=country_codes,
                                             xmin_offset = xmin_offset,
                                             xmax_offset = xmax_offset,
@@ -132,7 +132,6 @@ def main():
                                                 "2040 - Environmental constraints"]
                             },
                         ]
-    # result_type = ["noncombined","combined"]
     result_type = ["combined"]
     stage_mapping_df = pd.read_excel(
                                 os.path.join(
@@ -140,9 +139,8 @@ def main():
                                     "mineral_usage_factors",
                                     "stage_mapping.xlsx"),
                                 sheet_name='stage_maps')
+    tmax = 2000000
     for rt in result_type:
-        # if rt == "combined":
-        #     plot_descriptions = [p for p in plot_descriptions if p["type"] == "final_stage_production_tons"]
         for plot in plot_descriptions:
             ton_type = plot["type"]
             st_type = plot["stage_type"]
@@ -153,7 +151,6 @@ def main():
             layers_names = plot["layers_names"]
             combos = enumerate(zip(years,scenarios,scenario_names,layers,layers_names))
             sc_dfs = []
-            tmax = []
             for idx, (y, sc, sc_nm, lyr, lyr_nm) in combos:
                 if rt == "combined":
                     fname = f"{rt}_node_locations_for_energy_conversion_{sc}.gpkg"
@@ -190,13 +187,13 @@ def main():
                     df["reference_mineral"] = rf
                     df["color"] = rc
                     dfs.append(df)
-                    tmax += df["total_tons"].values.tolist()
+                    # tmax += df["total_tons"].values.tolist()
                 dfs = pd.concat(dfs,axis=0,ignore_index=True)
                 sc_dfs.append((lyr_nm,dfs,panel_span*idx + 1,panel_span))
         
-            tmax = max(tmax)
-            print (tmax)
-            tmax = 3250000.0
+            # tmax = max(tmax)
+            # print (tmax)
+            # tmax = 3250000.0
             tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)
             sc_dfs.append(tuple(key_info))
             if len(scenarios) == 1:
@@ -252,7 +249,7 @@ def main():
                                         ax,
                                         include_continents=["Africa"],
                                         include_countries=country_codes,
-                                        include_labels=True,
+                                        include_labels=include_labels,
                                         xmin_offset = xmin_offset,
                                         xmax_offset = xmax_offset,
                                         ymin_offset = ymin_offset,
@@ -261,15 +258,19 @@ def main():
                     ax.set_title(sc_n,fontsize=16,fontweight="bold")
                     df["markersize"] = marker_size_max*(df["total_tons"]/tmax)**0.5
                     df = df.sort_values(by="total_tons",ascending=False)
-                    df.geometry.plot(
-                        ax=ax, 
-                        color=df["color"], 
-                        edgecolor='none',
-                        markersize=df["markersize"],
-                        alpha=0.7)
+                    if len(df.index) > 0:
+                        df.geometry.plot(
+                            ax=ax, 
+                            color=df["color"], 
+                            edgecolor='none',
+                            markersize=df["markersize"],
+                            alpha=0.7)
+                        total_tons = df["total_tons"].sum()/1e3
+                    else:
+                        total_tons = 0.0
                     ax.text(
-                        xl[0]+0.7*dxl,yl[0]+0.05*dyl,
-                        'Total = {:.2f} million tonnes'.format(df["total_tons"].sum()/1e6),
+                        xl[0]+x_text*dxl,yl[0]+0.05*dyl,
+                        "Total = {:,.1f} kilotonnes".format(total_tons),
                         fontsize=textfontsize,weight='bold',ha='center')  
             fig_nm = '_'.join(list(set(layers))).replace("_min_threshold_metal_tons","").replace("_max_threshold_metal_tons","")
             if ton_type == "initial_stage_production_tons":
@@ -283,4 +284,25 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    ccg_countries = ["AGO","BDI","BWA","COD","KEN","MDG","MOZ","MWI","NAM","TZA","UGA","ZAF","ZMB","ZWE"]
+    default_offset = [-0.2,-0.2,1.0,1.0]
+    zaf_offset = [0.0,10.0,0.0,0.0]
+    right_text = 0.72
+    left_text = 0.30 
+    for ccg in ccg_countries:
+        country_codes = [ccg]
+        if ccg in ["UGA"]:
+            include_labels = False
+        else:
+            include_labels = True
+        if ccg == "ZAF":
+            offsets = zaf_offset
+        elif ccg in ["UGA","MWI","BDI"]:
+            offsets = [-0.2,-0.2,0.0,0.0]
+        else:
+            offsets = default_offset
+        if ccg in ["COD","TZA","AGO","ZWE","MWI","KEN"]:
+            x_text = left_text
+        else:
+            x_text = right_text
+        main(country_codes,offsets,x_text,include_labels=include_labels)
