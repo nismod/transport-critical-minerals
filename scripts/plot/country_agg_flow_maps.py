@@ -32,6 +32,7 @@ def get_plotting_layers(
         flow_data_folder,
         flow_column,
         ccg_isos,
+        idx = 0,
         combination = None,
         distance_from_origin=0.0,
         environmental_buffer=0.0,
@@ -200,6 +201,7 @@ def main(
                                                 flow_data_folder,
                                                 flow_column,
                                                 ccg_isos,
+                                                idx = idx,
                                                 combination=combination,
                                                 distance_from_origin=distance_from_origin,
                                                 environmental_buffer=environmental_buffer)
