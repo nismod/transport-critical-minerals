@@ -91,8 +91,8 @@ def get_plotting_layers(
                 if len(edges_flows_df.index) > 0:
                     make_plot = True
                     e_range += edges_flows_df[flow_column].values.tolist()   
-                    sc_dfs.append((title_name,edges_flows_df,panel_span*idx + 1,panel_span))
-    return e_range,sc_dfs,make_plot
+                    sc_dataframe.append((title_name,edges_flows_df,panel_span*idx + 1,panel_span))
+    return e_range,sc_dataframe,make_plot
 
 def main(
         config,
