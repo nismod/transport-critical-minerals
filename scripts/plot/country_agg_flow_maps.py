@@ -34,7 +34,8 @@ def get_plotting_layers(
         ccg_isos,
         combination = None,
         distance_from_origin=0.0,
-        environmental_buffer=0.0
+        environmental_buffer=0.0,
+        panel_span=2
         ):
     ds = str(distance_from_origin).replace('.','p')
     eb = str(environmental_buffer).replace('.','p')
