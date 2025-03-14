@@ -262,7 +262,7 @@ def main(
                 key.geometry.plot(ax=ax,linewidth=0,facecolor='k',edgecolor='none')
                 ax.text(xt,yt,'Links annual output (tonnes)',weight='bold',fontsize=10,va='center')
                 for k in range(Nk):
-                    ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
+                    ax.text(xk,yk[k],'      {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
             else:
                 ax = plot_ccg_country_basemap(
                                         ax,
@@ -328,17 +328,17 @@ if __name__ == '__main__':
         else:
             offsets = default_offset
         
-    main(
-            CONFIG,
-            country_codes,
-            offsets,
-            years,
-            percentiles,
-            efficient_scales,
-            country_cases,
-            constraints,
-            combination = combination,
-            distance_from_origin=distance_from_origin,
-            environmental_buffer=environmental_buffer,
-            include_labels=include_labels
-            )
+        main(
+                CONFIG,
+                country_codes,
+                offsets,
+                years,
+                percentiles,
+                efficient_scales,
+                country_cases,
+                constraints,
+                combination = combination,
+                distance_from_origin=distance_from_origin,
+                environmental_buffer=environmental_buffer,
+                include_labels=include_labels
+                )
