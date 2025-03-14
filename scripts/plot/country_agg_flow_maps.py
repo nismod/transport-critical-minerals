@@ -275,12 +275,13 @@ def main(
                                         ymax_offset = ymax_offset
                                         )
                 ax.set_title(sc_n,fontsize=textfontsize,fontweight="bold")
-                e_df["linewidth"] = e_df.progress_apply(
-                                        lambda x:set_geometry_buffer(
-                                            x,flow_column,e_tonnage_weights),
-                                        axis=1)
-                e_df["geometry"] = e_df.progress_apply(lambda x:x.geometry.buffer(x.linewidth),axis=1)
-                e_df.geometry.plot(ax=ax,facecolor=link_color,edgecolor='none',linewidth=0,alpha=0.7)
+                if len(e_df.index) > 0:
+                    e_df["linewidth"] = e_df.progress_apply(
+                                            lambda x:set_geometry_buffer(
+                                                x,flow_column,e_tonnage_weights),
+                                            axis=1)
+                    e_df["geometry"] = e_df.progress_apply(lambda x:x.geometry.buffer(x.linewidth),axis=1)
+                    e_df.geometry.plot(ax=ax,facecolor=link_color,edgecolor='none',linewidth=0,alpha=0.7)
 
         plt.tight_layout()
         save_fig(os.path.join(figures,figure_result_file))
