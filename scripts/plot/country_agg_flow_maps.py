@@ -280,6 +280,7 @@ def main(
                                             lambda x:set_geometry_buffer(
                                                 x,flow_column,e_tonnage_weights),
                                             axis=1)
+                    print (e_df)
                     e_df["geometry"] = e_df.progress_apply(lambda x:x.geometry.buffer(x.linewidth),axis=1)
                     e_df.geometry.plot(ax=ax,facecolor=link_color,edgecolor='none',linewidth=0,alpha=0.7)
 
