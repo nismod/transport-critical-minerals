@@ -25,6 +25,14 @@ tqdm.pandas()
 # mpl.rcParams['xtick.labelsize'] = 10.
 # mpl.rcParams['ytick.labelsize'] = 10.
 
+# Define the directory
+output_dir = os.path.expanduser('~/critical_minerals_Africa/transport-outputs/figures/regional_figures')
+
+# Create the folder if it doesn't exist
+os.makedirs(output_dir, exist_ok=True)
+# Main logic here
+print(f"Output directory created or already exists: {output_dir}")
+
 
 def plot_clustered_stacked(fig,axe,
                             dfall,
@@ -361,6 +369,9 @@ def main(config):
                     f"MN_scenarios_unconstrained_constrained_side_by_side.png"))
         plt.close()
 
+        print("This is delta_df")
+        print(delta_df[0])
+
         fig, ax = plt.subplots(1,1,figsize=(18,9),dpi=500)
         ax = plot_clustered_stacked(
                                 fig,ax,delta_df,reference_mineral_colors,
@@ -437,5 +448,7 @@ def main(config):
 
 
 if __name__ == '__main__':
+    
+
     CONFIG = load_config()
     main(CONFIG)
