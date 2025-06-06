@@ -62,7 +62,7 @@ def main(config):
                         "years":["2030","2040"]
                     }
                 ]       
-    all_years = [str(y) for y in np.arange(1980,2041,1)]
+    all_years = [str(y) for y in np.arange(2000,2041,1)]
     mineral_dfs = defaultdict()
     all_mines = []
     mine_id_column = "PROP_ID"
