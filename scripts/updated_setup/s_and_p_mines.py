@@ -132,7 +132,7 @@ def main(config):
                     metal_factors = metal_conversion_df[metal_conversion_df["reference_mineral"] == mineral]
                     ccg_mines = pd.merge(ccg_mines,metal_factors,how="left",on=["ISO_A3"])
                     for y in baseline_years + future_years:
-                        if y in ccg_mines.columns.values.tolist()
+                        if y in ccg_mines.columns.values.tolist():
                             ccg_mines[f"{y}_metal_content"] = ccg_mines[y]*ccg_mines["mine_conversion_factor"]
 
                     ccg_mines.drop(["reference_mineral","mine_conversion_factor"],axis=1,inplace=True)
