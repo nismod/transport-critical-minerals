@@ -18,15 +18,15 @@ def main(config):
     processed_data_path = config['paths']['data']
     year_percentile_combinations = [
                                     (2022,"baseline","baseline"),
-                                    (2040,"BAU","low"),
-                                    (2040,"BAU","mid"),
-                                    (2040,"BAU","high"),
-                                    (2040,"Early Refining","low"),
-                                    (2040,"Early Refining","mid"),
-                                    (2040,"Early Refining","high"),
-                                    (2040,"Precursor","low"),
-                                    (2040,"Precursor","mid"),
-                                    (2040,"Precursor","high")
+                                    (2040,"bau","low"),
+                                    (2040,"bau","mid"),
+                                    (2040,"bau","high"),
+                                    (2040,"early refining","low"),
+                                    (2040,"early refining","mid"),
+                                    (2040,"early refining","high"),
+                                    (2040,"precursor","low"),
+                                    (2040,"precursor","mid"),
+                                    (2040,"precursor","high")
                                     ]
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]

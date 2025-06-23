@@ -228,7 +228,7 @@ def main(config,
                                     "reference_mineral"]
                                 ).fillna(0)
     mine_exports_df = mine_exports_df[mine_exports_df["future_metal_content_tons"]>0]
-    if efficient_scale == "min_threshold_metal_tons" and scenario != "BAU":
+    if efficient_scale == "min_threshold_metal_tons" and scenario != "bau":
         mine_exports_df["final_processing_stage"
         ] = mine_exports_df.progress_apply(
             lambda x:x["final_refined_stage"
@@ -240,7 +240,7 @@ def main(config,
     
     # mine_exports_df.to_csv("test2.csv")
 
-    if scenario != "BAU":
+    if scenario != "bau":
         mine_exports_df["usage_factor"
         ] = np.where(
                     mine_exports_df["final_processing_stage"] > 1.0,
