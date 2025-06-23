@@ -84,6 +84,8 @@ def main(config):
         print (args)
         subprocess.run(args)
 
+    run_script = True
+    if run_script is True:
         args = [
                 "python",
                 "global_trade_balancing.py"
