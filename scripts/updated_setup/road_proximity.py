@@ -43,7 +43,7 @@ def main(config):
                             {
                                 'type':'population',
                                 'data_path':os.path.join(processed_data_path,
-                                                        "admin_boudaries",
+                                                        "admin_boundaries",
                                                         "un_urban_population",
                                                         "un_pop_df.gpkg"),
                                 'layer_name':None,
