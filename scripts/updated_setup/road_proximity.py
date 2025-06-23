@@ -111,7 +111,7 @@ def main(config):
                                                     "africa_railways_network.gpkg"
                                                     ),
                                 'layer_name':'nodes',
-                                'node_type_column':'type',
+                                'node_type_column':'infra',
                                 'node_type':['stop','station'],
                                 'id_column':'id',
                                 'iso_column': "iso3",
