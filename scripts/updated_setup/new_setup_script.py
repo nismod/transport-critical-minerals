@@ -38,6 +38,16 @@ def main(config):
     if run_script is True:
         args = [
                 "python",
+                "trade_functions.py"
+                ]
+        print ("* Update the material conversion factors")
+        print (args)
+        subprocess.run(args)
+
+    run_script = True
+    if run_script is True:
+        args = [
+                "python",
                 "s_and_p_mines.py"
                 ]
         print ("* Clean the S&P mine data and store new mines")

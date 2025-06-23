@@ -38,7 +38,7 @@ def main(config):
     if run_script is True:
         args = [
                 "python",
-                "trade_fuctions.py"
+                "trade_functions.py"
                 ]
         print ("* Update the material conversion factors")
         print (args)
