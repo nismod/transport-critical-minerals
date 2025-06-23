@@ -14,8 +14,7 @@ def main(config):
     output_data_path = config['paths']['results']
 
     results_folder = os.path.join(output_data_path,"baci_trade_matrices")
-    if os.path.exists(results_folder) == False:
-        os.mkdir(results_folder)
+    os.makedirs(results_folder,exist_ok=True)
 
     baseline_year = 2022
 
@@ -34,12 +33,17 @@ def main(config):
     #  Get a number of input dataframes
     (
         pr_conv_factors_df, 
-        metal_content_factors_df, 
+        _, 
         ccg_countries, mine_city_stages, trade_df, _
-    ) = get_common_input_dataframes(data_type,baseline_year,baseline_year)
+    ) = get_common_input_dataframes(data_type,"baseline",baseline_year,baseline_year)
 
     # Get the total tonnage of exports and imports of each CCG country
     trade_balance_df, export_df, import_df = get_trade_exports_imports(trade_df,ccg_countries)
+    trade_balance_df = add_conversion_factors(
+                                trade_balance_df,
+                                pr_conv_factors_df,
+                                ccg_countries,
+                                trade_iso_column="export_country_code")
 
     # Get the tonnage of extra metal content production  + stage 1 export 
     # required to satisfy the exports of each mineral stage tonnage
@@ -47,10 +51,10 @@ def main(config):
     # consumed to produce a higher stage export tonnage of each mineral stage 
     mineral_balance_df = []
     for reference_mineral in reference_minerals:
-        conv_factor_df = pr_conv_factors_df[pr_conv_factors_df["reference_mineral"] == reference_mineral]
-        metal_content = metal_content_factors_df[
-                                metal_content_factors_df["reference_mineral"] == reference_mineral
-                                ]["metal_content_factor"].values[0]
+        # conv_factor_df = pr_conv_factors_df[pr_conv_factors_df["reference_mineral"] == reference_mineral]
+        # metal_content = metal_content_factors_df[
+        #                         metal_content_factors_df["reference_mineral"] == reference_mineral
+        #                         ]["metal_content_factor"].values[0]
         mb_df = trade_balance_df[
                                 trade_balance_df["reference_mineral"] == reference_mineral
                                 ]
@@ -67,11 +71,23 @@ def main(config):
                 import_consumed = 0.0
                 import_st = st
                 ex_st = mb_df[
+                                (
+                                    mb_df["export_country_code"] == cnt
+                                ) & (
+                                    mb_df["refining_stage_cam"] == st
+                                )]["trade_quantity_tons_export"].values[0]
+                metal_content = mb_df[
                                     (
                                         mb_df["export_country_code"] == cnt
                                     ) & (
                                         mb_df["refining_stage_cam"] == st
-                                    )]["trade_quantity_tons_export"].values[0]
+                                    )]["metal_content_factor"].values[0]
+                st_conv_factor = mb_df[
+                                    (
+                                        mb_df["export_country_code"] == cnt
+                                    ) & (
+                                        mb_df["refining_stage_cam"] == st
+                                    )]["aggregate_ratio"].values[0]
                 lower_stages = [lst for lst in stages if lst < st]
                 if len(lower_stages) > 0:
                     domestic_prods = []
@@ -82,16 +98,19 @@ def main(config):
                                         ) & (
                                             mb_df["refining_stage_cam"] == l_st
                                         )]["trade_quantity_tons_import"].values[0]
-                        conversion_factor = conv_factor_df[
-                                                conv_factor_df["final_refined_stage"] == str(st).replace(".0","")
-                                                ][conversion_factor_column].values[0]/conv_factor_df[
-                                                conv_factor_df["final_refined_stage"] == str(l_st).replace(".0","")
-                                                ][conversion_factor_column].values[0] 
+                        lst_conv_factor = mb_df[
+                                    (
+                                        mb_df["export_country_code"] == cnt
+                                    ) & (
+                                        mb_df["refining_stage_cam"] == l_st
+                                    )]["aggregate_ratio"].values[0]
+                        conversion_factor = 1.0*lst_conv_factor/st_conv_factor
                         domestic_prods.append(
                                         (
                                             l_st,
                                             im_l_st,
                                             ex_st*conversion_factor,
+                                            lst_conv_factor,
                                             ex_st*conversion_factor - im_l_st
                                         )
                                         )
@@ -103,13 +122,9 @@ def main(config):
                     import_consumed = min(min_import,needed_import)
                     if domestic_prods[0][-1] > 0:
                         min_prod = domestic_prods[0][-1]
-                        conversion_factor = conv_factor_df[
-                                                conv_factor_df["final_refined_stage"] == str(import_st).replace(".0","")
-                                                ][conversion_factor_column].values[0]/conv_factor_df[
-                                                conv_factor_df["final_refined_stage"] == '1'
-                                                ][conversion_factor_column].values[0]
-                        domestic_prod = metal_content*min_prod*conversion_factor
-                        stage_1_prod = min_prod*conversion_factor
+                        conversion_factor = domestic_prods[0][3]
+                        domestic_prod = 1.0*min_prod/conversion_factor
+                        stage_1_prod = 1.0*(min_prod*metal_content)/conversion_factor
                     
                     mb_df.loc[
                             (
@@ -118,17 +133,11 @@ def main(config):
                                     mb_df["refining_stage_cam"] == import_st
                         ),"trade_quantity_tons_import"] = max(0,min_import - import_consumed)
                 elif st != 1:
-                    conversion_factor = conv_factor_df[
-                                                conv_factor_df["final_refined_stage"] == str(st).replace(".0","")
-                                                ][conversion_factor_column].values[0]/conv_factor_df[
-                                                conv_factor_df["final_refined_stage"] == '1'
-                                                ][conversion_factor_column].values[0]
-
-                    domestic_prod = metal_content*ex_st*conversion_factor
-                    stage_1_prod = ex_st*conversion_factor
+                    domestic_prod = 1.0*ex_st/st_conv_factor
+                    stage_1_prod = 1.0*(metal_content*ex_st)/st_conv_factor
                 else:
-                	domestic_prod = ex_st*metal_content
-                	stage_1_prod = ex_st
+                    domestic_prod = 1.0*ex_st/metal_content
+                    stage_1_prod = ex_st
 
                 mineral_balance_df.append(
                                             (
@@ -204,7 +213,7 @@ def main(config):
                 domestic_df_copy[trade_balance_columns]
             ],axis=0,ignore_index=True)
 
-    # export_balance_df.to_csv("export_trade_breakdown.csv",index=False)
+    export_balance_df.to_csv("export_trade_breakdown.csv",index=False)
 
     # Get the fraction of the import that goes to a country for
     #     Mine level processing

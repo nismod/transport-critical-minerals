@@ -157,39 +157,6 @@ def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral,additiona
     
     return flows_df
 
-# def find_optimal_locations(opt_list,flows_df,path_df,
-#                             reference_mineral,
-#                             loc_type,
-#                             columns,
-#                             mine_stage):
-#     if len(flows_df.index) > 0:
-#         path_df = path_df[path_df["final_processing_stage"] == mine_stage]
-#         node_path_indexes = get_flow_paths_indexes_and_edges_dataframe(path_df,"full_node_path")
-
-#         all_ids = flows_df["id"].values.tolist()
-#         node_path_indexes = node_path_indexes[node_path_indexes["id"].isin(all_ids)]
-#         c_df_flows = pd.merge(node_path_indexes,flows_df,how="left",on=["id"]).fillna(0)
-
-#         while len(c_df_flows.index) > 0:
-#             optimal_locations = defaultdict()
-#             c_df_flows = c_df_flows.sort_values(
-#                                         by=columns,
-#                                         ascending=[False,True,True,True])
-#             nid = c_df_flows["id"].values[0]
-#             optimal_locations["iso3"] = c_df_flows["iso3"].values[0]
-#             optimal_locations["id"] = c_df_flows["id"].values[0]
-#             optimal_locations[
-#                 f"{reference_mineral}_{loc_type}"
-#                 ] = c_df_flows[f"{reference_mineral}_{loc_type}"].values[0]
-#             for c in columns:
-#                 optimal_locations[c] = c_df_flows[c].values[0]
-
-#             opt_list.append(optimal_locations)
-#             pth_idx = list(set(c_df_flows[c_df_flows["id"] == nid]["path_index"].values.tolist()))
-#             c_df_flows = c_df_flows[~c_df_flows["path_index"].isin(pth_idx)]
-
-#     return opt_list
-
 def find_optimal_locations(flow_dataframe,
                             nodes_dataframe,
                             iso_list,
@@ -229,15 +196,6 @@ def find_optimal_locations(flow_dataframe,
                 distance_column,
                 time_column
                 ]
-    # for c in columns:
-    #     flow_dataframe[c] = flow_dataframe.groupby(["id"])[c].transform('sum')
-    
-    # c_df_flows = flow_dataframe[
-    #                     (
-    #                         flow_dataframe["initial_processing_stage"] == 0
-    #                     ) & (
-    #                         flow_dataframe[initial_tons_column] >= production_size
-    #                     )]
     opt_list = []
     c_df_flows = flow_dataframe[flow_dataframe["initial_processing_stage"] == 0]
     while len(c_df_flows.index) > 0:
@@ -390,26 +348,22 @@ def update_od_dataframe(initial_df,optimal_df,metal_factor,modify_columns):
 
     return u_df
 
-def main(config,year,percentile,efficient_scale,country_case,constraint):
+def main(config,scenario,year,percentile,efficient_scale,country_case,constraint):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
 
     input_folder = os.path.join(output_data_path,"flow_od_paths")
     results_folder = os.path.join(output_data_path,f"flow_optimisation_{country_case}_{constraint}")
-    # if os.path.exists(results_folder) == False:
-    #     os.mkdir(results_folder)
     os.makedirs(results_folder,exist_ok=True)
 
     flows_folder = os.path.join(results_folder,"processed_flows")
-    # if os.path.exists(flows_folder) == False:
-    #     os.mkdir(flows_folder)
     os.makedirs(flows_folder,exist_ok=True)
 
     modified_paths_folder = os.path.join(results_folder,"modified_flow_od_paths")
-    # if os.path.exists(modified_paths_folder) == False:
-    #     os.mkdir(modified_paths_folder)
     os.makedirs(modified_paths_folder,exist_ok=True)
+
+    scenario = scenario.replace(" ","_")
     """Step 1: Get the input datasets
     """
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
@@ -431,11 +385,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
     grid_threshold = 5.0
     non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas","waterstress"]
     non_grid_thresholds = [0.0,0.0,0.0,0.0]
-    # filter_layers = ["grid","keybiodiversityareas","lastofwild","protectedareas"]
-    # filter_layers = [f"distance_to_{l}_km" for l in filter_layers]
-    # distance_thresholds = [2.0,0.0,0.0,0.0]
-    # layers_thresholds = list(zip(filter_layers,distance_thresholds))
-
+    
     #  Get a number of input dataframes
     baseline_year = 2022
     data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
@@ -472,7 +422,7 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
             file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}"
             production_size = 0
         else:
-            file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}"
+            file_name = f"{reference_mineral}_flow_paths_{scenario}_{year}_{percentile}_{efficient_scale}"
             # Read data on production scales
             production_size_df = pd.read_excel(
                                         os.path.join(
@@ -663,12 +613,13 @@ def main(config,year,percentile,efficient_scale,country_case,constraint):
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        year = int(sys.argv[1])
-        percentile = str(sys.argv[2])
-        efficient_scale = str(sys.argv[3])
-        country_case = str(sys.argv[4])
-        constraint = str(sys.argv[5])
+        scenario = str(sys.argv[1])
+        year = int(sys.argv[2])
+        percentile = str(sys.argv[3])
+        efficient_scale = str(sys.argv[4])
+        country_case = str(sys.argv[5])
+        constraint = str(sys.argv[6])
     except IndexError:
         print("Got arguments", sys.argv)
         exit()
-    main(CONFIG,year,percentile,efficient_scale,country_case,constraint)
+    main(CONFIG,scenario,year,percentile,efficient_scale,country_case,constraint)

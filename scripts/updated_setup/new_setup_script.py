@@ -95,11 +95,12 @@ def main(config):
     run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                 if year > 2022:
                     args = [
                         "python",
                         "future_trade_balancing.py",
+                        f"{scenario}",
                         f"{year}",
                         f"{percentile}",
                         f"{th}",
@@ -111,10 +112,11 @@ def main(config):
     run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                 args = [
                     "python",
                     "mineral_node_ods.py",
+                    f"{scenario}",
                     f"{year}",
                     f"{percentile}",
                     f"{th}",
@@ -129,13 +131,13 @@ def main(config):
         with open("parameter_set.txt","w+") as f:
             for rf in reference_minerals:
                 num_blocks += 1
-                for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                     if year == baseline_year:
                         th = "none"
-                        f.write(f"{rf},{year},{percentile},{th}\n")
+                        f.write(f"{rf},{scenario},{year},{percentile},{th}\n")
                     else:
                         for th in tonnage_thresholds:
-                            f.write(f"{rf},{year},{percentile},{th}\n")                    
+                            f.write(f"{rf},{scenario},{year},{percentile},{th}\n")                    
         f.close()
 
         """Next we call the flow analysis script and loop through the scenarios
@@ -159,13 +161,13 @@ def main(config):
     if run_script is True:
         num_blocks = 0
         with open("optimisation_set.txt","w+") as f:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                 num_blocks += 1
                 if year == baseline_year:
                     th = "none"
                     loc = "country"
                     opt = "unconstrained"
-                    f.write(f"{year},{percentile},{th},{loc},{opt}\n")
+                    f.write(f"{scenario},{year},{percentile},{th},{loc},{opt}\n")
                 else:
                     for loc in location_cases:
                         if loc == "country":
@@ -173,7 +175,7 @@ def main(config):
                         else:
                             th = "max_threshold_metal_tons"
                         for opt in optimisation_type:
-                            f.write(f"{year},{percentile},{th},{loc},{opt}\n")                    
+                            f.write(f"{scenario},{year},{percentile},{th},{loc},{opt}\n")                    
         f.close()
 
         """Next we call the flow analysis script and loop through the scenarios

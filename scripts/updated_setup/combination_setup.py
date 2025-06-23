@@ -17,13 +17,16 @@ def main(config):
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     year_percentile_combinations = [
-                                    (2022,"baseline"),
-                                    (2030,"low"),
-                                    (2030,"mid"),
-                                    (2030,"high"),
-                                    (2040,"low"),
-                                    (2040,"mid"),
-                                    (2040,"high")
+                                    (2022,"baseline","baseline"),
+                                    (2040,"BAU","low"),
+                                    (2040,"BAU","mid"),
+                                    (2040,"BAU","high"),
+                                    (2040,"Early Refining","low"),
+                                    (2040,"Early Refining","mid"),
+                                    (2040,"Early Refining","high"),
+                                    (2040,"Precursor","low"),
+                                    (2040,"Precursor","mid"),
+                                    (2040,"Precursor","high")
                                     ]
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
@@ -31,7 +34,17 @@ def main(config):
     optimisation_type = ["unconstrained","constrained"]
     baseline_year = 2022
 
-    run_script = False
+    run_script = True
+    if run_script is True:
+        args = [
+                "python",
+                "trade_fuctions.py"
+                ]
+        print ("* Update the material conversion factors")
+        print (args)
+        subprocess.run(args)
+
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -41,7 +54,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -51,7 +64,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -79,7 +92,7 @@ def main(config):
         print (args)
         subprocess.run(args)    
     
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -89,14 +102,15 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                 if year > 2022:
                     args = [
                         "python",
                         "future_trade_balancing.py",
+                        f"{scenario}",
                         f"{year}",
                         f"{percentile}",
                         f"{th}",
@@ -105,13 +119,14 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
-            for idx, (year,percentile) in enumerate(year_percentile_combinations):
+            for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                 args = [
                     "python",
                     "mineral_node_ods.py",
+                    f"{scenario}",
                     f"{year}",
                     f"{percentile}",
                     f"{th}",
@@ -120,19 +135,19 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
             for rf in reference_minerals:
                 num_blocks += 1
-                for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                     if year == baseline_year:
                         th = "none"
-                        f.write(f"{rf},{year},{percentile},{th}\n")
+                        f.write(f"{rf},{scenario},{year},{percentile},{th}\n")
                     else:
                         for th in tonnage_thresholds:
-                            f.write(f"{rf},{year},{percentile},{th}\n")                    
+                            f.write(f"{rf},{scenario},{year},{percentile},{th}\n")                    
         f.close()
 
         """Next we call the flow analysis script and loop through the scenarios
@@ -165,7 +180,7 @@ def main(config):
         ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
         p = "min_threshold_metal_tons"
         c = "country"
-        yrs = [2030,2040]
+        yrs = [2040]
         for rf in ref_mins:
             for s in ["low","mid","high"]:
                 for o in ["unconstrained","constrained"]:
@@ -176,7 +191,7 @@ def main(config):
                         all_scenarios.append([rf] + [yrs] + [s,p,c,o])
         p = "max_threshold_metal_tons"
         c = "region"
-        yrs = [2030,2040]
+        yrs = [2040]
         for rf in ref_mins:
             for s in ["low","mid","high"]:
                 for o in ["unconstrained","constrained"]:
@@ -254,7 +269,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 16
         args = [
@@ -366,7 +381,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         cx = "combined"
