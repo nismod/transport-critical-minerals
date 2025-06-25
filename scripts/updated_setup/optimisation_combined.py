@@ -156,7 +156,7 @@ def existing_processing(od_dataframe,baseline_dataframe):
                     (
                         m_df["extra_tons"] > 0
                     ) & (
-                    m_df["final_processing_stage"] <= m_df["baseline_highest_stage"]
+                    m_df["final_processing_stage"] <= m_df["baseline_stage"]
                 )]
     ext_df = ms_df.copy()
     ext_df["initial_stage_production_tons"
@@ -182,7 +182,7 @@ def existing_processing(od_dataframe,baseline_dataframe):
         ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
     res_df.append(ms_df)
 
-    ms_df = m_df[m_df["final_processing_stage"] > m_df["baseline_highest_stage"]]
+    ms_df = m_df[m_df["final_processing_stage"] > m_df["baseline_stage"]]
     ms_df.drop(
                 [
                     "baseline_metal_tons",
