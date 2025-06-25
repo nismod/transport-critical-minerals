@@ -613,7 +613,7 @@ def main(
             pr_conv_factors_df, 
             _, 
             ccg_countries,_,_,_
-        ) = get_common_input_dataframes(data_type,scenario,year,baseline_year)
+        ) = get_common_input_dataframes("none",scenario,year,baseline_year)
         mine_city_stages = modify_mineral_usage_factors(scenario,future_year=year)
         mine_city_stages["mine_final_refined_stage"
             ] = mine_city_stages.groupby(
@@ -828,7 +828,7 @@ def main(
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        if len(sys.argv) > 7:
+        if len(sys.argv) > 8:
             minerals = ast.literal_eval(str(sys.argv[1]))
             scenario = str(sys.argv[2])
             years = ast.literal_eval(str(sys.argv[3]))
