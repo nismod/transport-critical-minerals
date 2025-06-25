@@ -122,7 +122,9 @@ def existing_processing(od_dataframe,baseline_dataframe):
                                     baseline_dataframe["final_processing_stage"] > 1.0
                                 )
                                 ]
-    b_df["baseline_stage"] = b_df["final_processing_stage"].transform("max")                          
+    b_df["baseline_stage"] = b_df.groupby(
+                                ["export_country_code","reference_mineral"]
+                                )["final_processing_stage"].transform("max")                          
     b_df = b_df.groupby(
                     [
                         "origin_id",
