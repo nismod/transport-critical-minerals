@@ -442,7 +442,7 @@ def update_od_dataframe(initial_df,optimal_df,pcf_df,modify_columns):
                                             "initial_processing_stage",
                                             "baseline_stage"),axis=1
                             )
-    initial_df[["baseline_factor","mf"]] = od_df["baseline_stage_factors"].apply(pd.Series)
+    initial_df[["baseline_factor","mf"]] = initial_df["baseline_stage_factors"].apply(pd.Series)
     initial_df["baseline_tons"] = initial_df["initial_stage_production_tons"]/initial_df["baseline_factor"]
     initial_df.drop(["baseline_factor","mf","baseline_stage_factors"],axis=1,inplace=True)
 
