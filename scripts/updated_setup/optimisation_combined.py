@@ -635,14 +635,18 @@ def main(
                                     mine_id_col="id")
             mines_df["year"] = year
             mines_df["reference_mineral"] = reference_mineral
-            production_size = production_size_df[
+            if year == baseline_year:
+                file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}"
+                production_size = production_size_df[
+                                            production_size_df[
+                                                "reference_mineral"] == reference_mineral
+                                                ]["min_threshold_metal_tons"].values[0]
+            else:
+                file_name = f"{reference_mineral}_flow_paths_{scenario}_{year}_{percentile}_{efficient_scale}"
+                production_size = production_size_df[
                                             production_size_df[
                                                 "reference_mineral"] == reference_mineral
                                                 ][efficient_scale].values[0]
-            if year == baseline_year:
-                file_name = f"{reference_mineral}_flow_paths_{year}_{percentile}"
-            else:
-                file_name = f"{reference_mineral}_flow_paths_{scenario}_{year}_{percentile}_{efficient_scale}"
 
             od_df = pd.read_parquet(
                             os.path.join(
@@ -661,8 +665,8 @@ def main(
                                     lambda x:get_mine_conversion_factors(
                                         x,
                                         pr_conv_factors_df,
-                                        x["final_processing_stage"],
-                                        x["mine_final_refined_stage"]),axis=1)
+                                        "final_processing_stage",
+                                        "mine_final_refined_stage"),axis=1)
             od_df[["stage_factor","metal_factor"]] = od_df["stage_metal_factors"].apply(pd.Series)
             od_df.drop("stage_metal_factors",axis=1,inplace=True)
             if year == baseline_year or scenario == "bau":
