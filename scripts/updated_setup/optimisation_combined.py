@@ -395,7 +395,7 @@ def add_mines_remaining_tonnages(df,mines_df,year):
     if len(m_df.index) > 0:
         m_df["final_processing_stage"] = 1.0
         m_df["final_stage_production_tons"] = m_df["initial_stage_production_tons"]/m_df["metal_factor"]
-        m_df.drop(["id",str(year)],axis=1,inplace=True)
+        m_df.drop(["id",f"{year}_metal_content"],axis=1,inplace=True)
         df = pd.concat([df,m_df],axis=0,ignore_index=True)
 
         sum_cols = ["initial_stage_production_tons","final_stage_production_tons"]
