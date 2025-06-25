@@ -34,7 +34,7 @@ def main(config):
     optimisation_type = ["unconstrained","constrained"]
     baseline_year = 2022
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -84,7 +84,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -94,7 +94,7 @@ def main(config):
         print (args)
         subprocess.run(args)    
     
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -104,7 +104,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -121,7 +121,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -137,7 +137,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -169,39 +169,41 @@ def main(config):
         subprocess.run(args)
 
 
-    run_script = False
+    run_script = True
     if run_script is True:
-        num_blocks = 3
+        num_blocks = 8
         all_scenarios = []
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
-        print (distance_filters)
         ref_mins = [["cobalt"],["copper"],["nickel"],["graphite"],["manganese"],["lithium"]]
-        baseline_scenario = [[2022],"baseline","none","country","unconstrained"]
+        baseline_scenario = ["baseline",[2022],"baseline","none","country","unconstrained"]
         for rf in ref_mins:    
             all_scenarios.append([rf] + baseline_scenario)
         ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
+        scenarios = ["bau","early refining","precursor"]
         p = "min_threshold_metal_tons"
         c = "country"
         yrs = [2040]
         for rf in ref_mins:
-            for s in ["low","mid","high"]:
-                for o in ["unconstrained","constrained"]:
-                    if o == "constrained":
-                        for idx,(op,ef) in enumerate(distance_filters):
-                            all_scenarios.append([rf] + [yrs] + [s,p,c,o,baseline_year,op,ef])
-                    else:
-                        all_scenarios.append([rf] + [yrs] + [s,p,c,o])
+            for sc in scenarios:
+                for s in ["low","mid","high"]:
+                    for o in ["unconstrained","constrained"]:
+                        if o == "constrained":
+                            for idx,(op,ef) in enumerate(distance_filters):
+                                all_scenarios.append([rf,sc] + [yrs] + [s,p,c,o,baseline_year,op,ef])
+                        else:
+                            all_scenarios.append([rf,sc] + [yrs] + [s,p,c,o])
         p = "max_threshold_metal_tons"
         c = "region"
         yrs = [2040]
         for rf in ref_mins:
-            for s in ["low","mid","high"]:
-                for o in ["unconstrained","constrained"]:
-                    if o == "constrained":
-                        for idx,(op,ef) in enumerate(distance_filters):
-                            all_scenarios.append([rf] + [yrs] + [s,p,c,o,baseline_year,op,ef])
-                    else:
-                        all_scenarios.append([rf] + [yrs] + [s,p,c,o])
+            for sc in scenarios:
+                for s in ["low","mid","high"]:
+                    for o in ["unconstrained","constrained"]:
+                        if o == "constrained":
+                            for idx,(op,ef) in enumerate(distance_filters):
+                                all_scenarios.append([rf,sc] + [yrs] + [s,p,c,o,baseline_year,op,ef])
+                        else:
+                            all_scenarios.append([rf,sc] + [yrs] + [s,p,c,o])
 
         with open("combination_set.txt","w+") as f:
             for row in all_scenarios:
