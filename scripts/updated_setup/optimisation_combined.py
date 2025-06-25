@@ -368,7 +368,7 @@ def find_optimal_locations_combined(flow_dataframe,
     # return opt_list, opt_list_y_rf_df
     return opt_list
 
-def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
+def add_mines_remaining_tonnages(df,mines_df,year):
     m_df = df[
                 (
                     df["initial_processing_location"] == "mine"
@@ -406,6 +406,7 @@ def add_mines_remaining_tonnages(df,mines_df,year,metal_factor):
                         "initial_processing_stage",
                         "final_processing_stage",
                         "initial_processing_location",
+                        "metal_factor",
                         "origin_id"]
                         ).agg(dict([(c,"sum") for c in sum_cols])).reset_index()
 
@@ -795,7 +796,7 @@ def main(
                             "initial_processing_location",
                             "metal_factor",
                             "origin_id"]).agg(dict([(c,"sum") for c in trade_ton_columns])).reset_index()
-            df_year_rf = add_mines_remaining_tonnages(df_year_rf,mines_df,year,metal_factor)
+            df_year_rf = add_mines_remaining_tonnages(df_year_rf,mines_df,year)
             all_flows.append(df_year_rf)
             flows_df = assign_node_flows(df_year_rf,trade_ton_columns,reference_mineral)
             flows_df = pd.merge(flows_df,nodes,how="left",on=["id"])
