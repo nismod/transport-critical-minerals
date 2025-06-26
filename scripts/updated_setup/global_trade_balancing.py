@@ -137,16 +137,35 @@ def main(config):
     final_trade_columns = trade_df.columns.values.tolist()
     trade_df = trade_df[~((trade_df["refining_stage_cam"] == 4.0) & (trade_df["reference_mineral"] == "nickel"))]
     trade_df = trade_df[trade_df["trade_quantity_tons"]>0]
+    stage_1_factors = pr_conv_factors_df[
+                        ["iso3","reference_mineral",
+                        "metal_content_factor"]].copy()
+    stage_1_factors = stage_1_factors.drop_duplicates(keep="first")
     trade_df = pd.merge(
                     trade_df,
-                    metal_content_factors_df[
-                        ["reference_mineral",
-                        "metal_content_factor"]],
-                    how="left",on=["reference_mineral"])
-    trade_df["trade_quantity_tons"] = np.where(trade_df["refining_stage_cam"] == 1,
-                                        trade_df["trade_quantity_tons"]/trade_df["metal_content_factor"],
+                    stage_1_factors,
+                    how="left",left_on=["export_country_code","reference_mineral"],
+                    right_on=["iso3","reference_mineral"])
+    trade_df["trade_quantity_tons"] = np.where(
+                                        (
+                                            trade_df["refining_stage_cam"] == 1
+                                        ) & (
+                                            trade_df["reference_mineral"].isin(["cobalt","copper","nickel"])
+                                            ),
+                                        trade_df["trade_quantity_tons"]*trade_df["metal_content_factor"],
                                         trade_df["trade_quantity_tons"])
-    trade_df.drop("metal_content_factor",axis=1,inplace=True)
+    trade_df.drop(["iso3","metal_content_factor"],axis=1,inplace=True)
+    del stage_1_factors
+    # trade_df = pd.merge(
+    #                 trade_df,
+    #                 metal_content_factors_df[
+    #                     ["reference_mineral",
+    #                     "metal_content_factor"]],
+    #                 how="left",on=["reference_mineral"])
+    # trade_df["trade_quantity_tons"] = np.where(trade_df["refining_stage_cam"] == 1,
+    #                                     trade_df["trade_quantity_tons"]/trade_df["metal_content_factor"],
+    #                                     trade_df["trade_quantity_tons"])
+    # trade_df.drop("metal_content_factor",axis=1,inplace=True)
 
     # Get the total tonnage of exports and imports of each country
     sum_columns = ["reference_mineral","refining_stage_cam"]
