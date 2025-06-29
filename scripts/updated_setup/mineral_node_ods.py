@@ -166,7 +166,10 @@ def main(config,
         # mines_df["reference_mineral"] = reference_mineral
         mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
         mines_df["weight"] = mines_df[f"{year}_metal_content"]
-        mines_df["processing"] = np.where(mines_df["weight"] >= process_threshold,1,0)
+        if year == 2022:
+            mines_df["processing"] = np.where(mines_df["weight"] >= process_threshold,1,0)
+        else:
+            mines_df["processing"] = 1.0
         
         for prdt in ["unprocessed","processed"]:
             if prdt == "processed":
@@ -177,6 +180,8 @@ def main(config,
                             ) & (
                                 trade_df["final_processing_stage"] > 1 
                             )]
+                if len(t_df.index) > 0 and len(m_df.index) == 0:
+                    m_df = mines_df.copy()
             else:
                 t_df = trade_df[
                             (
@@ -217,25 +222,26 @@ def main(config,
                                 },
                             inplace=True)
             destinations = destinations[destinations["destination_weight"] > 0]
-            t_df = pd.merge(t_df,
-                            origins,
-                            how="left",
-                            on=["export_country_code","initial_processing_location"]).fillna(0)
-            t_df = pd.merge(t_df,
-                            destinations,
-                            how="left",
-                            on=["import_country_code","final_processing_location"]).fillna(0)
+            if len(t_df.index) > 0:
+                t_df = pd.merge(t_df,
+                                origins,
+                                how="left",
+                                on=["export_country_code","initial_processing_location"]).fillna(0)
+                t_df = pd.merge(t_df,
+                                destinations,
+                                how="left",
+                                on=["import_country_code","final_processing_location"]).fillna(0)
 
-            t_df["initial_stage_production_tons"
-                ] = t_df["initial_stage_production_tons"
-                ]*t_df["origin_weight"]*t_df["destination_weight"]
+                t_df["initial_stage_production_tons"
+                    ] = t_df["initial_stage_production_tons"
+                    ]*t_df["origin_weight"]*t_df["destination_weight"]
 
-            t_df["final_stage_production_tons"
-                ] = t_df["final_stage_production_tons"
-                ]*t_df["origin_weight"]*t_df["destination_weight"]
+                t_df["final_stage_production_tons"
+                    ] = t_df["final_stage_production_tons"
+                    ]*t_df["origin_weight"]*t_df["destination_weight"]
 
-            combined_trade_df.append(
-                t_df[["origin_id","destination_id"]+od_columns])
+                combined_trade_df.append(
+                    t_df[["origin_id","destination_id"]+od_columns])
         
 
     if year > 2022:
