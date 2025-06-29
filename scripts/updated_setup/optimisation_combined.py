@@ -510,16 +510,17 @@ def update_od_dataframe(initial_df,optimal_df,pcf_df,modify_columns):
         remaining_df = initial_df.copy()
         remaining_df["nidx"] = 1
     
-    remaining_df["final_stage_values"
-                    ] = remaining_df.progress_apply(lambda x:get_final_stage_values(x),axis=1)
-    remaining_df[
-            [
-                "final_processing_stage",
-                "final_stage_production_tons"
-            ]
-        ] = remaining_df["final_stage_values"].apply(pd.Series)
-    remaining_df.drop("final_stage_values",axis=1,inplace=True)
-    u_df.append(remaining_df)
+    if len(remaining_df.index) > 0:
+        remaining_df["final_stage_values"
+                        ] = remaining_df.progress_apply(lambda x:get_final_stage_values(x),axis=1)
+        remaining_df[
+                [
+                    "final_processing_stage",
+                    "final_stage_production_tons"
+                ]
+            ] = remaining_df["final_stage_values"].apply(pd.Series)
+        remaining_df.drop("final_stage_values",axis=1,inplace=True)
+        u_df.append(remaining_df)
     u_df = pd.concat(u_df,axis=0,ignore_index=True).fillna(0)
     u_df.drop(["stage_1_tons","baseline_tons","baseline_stage","nidx"],axis=1,inplace=True)
 
@@ -742,7 +743,7 @@ def main(
                     else:
                         df.append(l_df)
 
-    if optimise is True:
+    if optimise is True and len(country_df_flows.index) > 0:
         country_df_flows = pd.concat(country_df_flows_combined,axis=0,ignore_index=True)
         l_df = pd.concat(l_dfs,axis=0,ignore_index=True)
         optimal_df = find_optimal_locations_combined(
