@@ -743,7 +743,7 @@ def main(
                     else:
                         df.append(l_df)
 
-    if optimise is True and len(country_df_flows.index) > 0:
+    if optimise is True and len(country_df_flows) > 0:
         country_df_flows = pd.concat(country_df_flows_combined,axis=0,ignore_index=True)
         l_df = pd.concat(l_dfs,axis=0,ignore_index=True)
         optimal_df = find_optimal_locations_combined(
