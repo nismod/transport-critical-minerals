@@ -240,25 +240,28 @@ def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral,additiona
                             inplace=True)
                 nodes_flows_df.append(dataframe)
 
-    sum_add = []
-    for k,v in sum_dict.items():
-        sum_add += list(zip(list(set(v)),["sum"]*len(v)))
+    if len(nodes_flows_df) > 0:
+        sum_add = []
+        for k,v in sum_dict.items():
+            sum_add += list(zip(list(set(v)),["sum"]*len(v)))
 
-    flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
-    flows_df.rename(columns={"origin_id":"id"},inplace=True)
-    flows_df = flows_df.groupby(["id"]).agg(dict(sum_add)).reset_index()
+        flows_df = pd.concat(nodes_flows_df,axis=0,ignore_index=True).fillna(0)
+        flows_df.rename(columns={"origin_id":"id"},inplace=True)
+        flows_df = flows_df.groupby(["id"]).agg(dict(sum_add)).reset_index()
 
-    # for flow_column in [trade_ton_column,trade_usd_column]:
-    for flow_column,stages in sum_dict.items():
-        flow_sums = []
-        stage_sums = defaultdict(list)
-        for stage in stages:
-            stage_sums[stage.split("_origin")[0]].append(stage)
-        for k,v in stage_sums.items():
-            flows_df[k] = flows_df[list(set(v))].sum(axis=1)
-            flow_sums.append(k)
+        # for flow_column in [trade_ton_column,trade_usd_column]:
+        for flow_column,stages in sum_dict.items():
+            flow_sums = []
+            stage_sums = defaultdict(list)
+            for stage in stages:
+                stage_sums[stage.split("_origin")[0]].append(stage)
+            for k,v in stage_sums.items():
+                flows_df[k] = flows_df[list(set(v))].sum(axis=1)
+                flow_sums.append(k)
 
-        flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[list(set(flow_sums))].sum(axis=1) 
+            flows_df[f"{reference_mineral}_{flow_column}"] = flows_df[list(set(flow_sums))].sum(axis=1) 
+    else:
+        flows_df = pd.DataFrame()
     
     return flows_df
 
@@ -802,20 +805,21 @@ def main(
             df_year_rf = add_mines_remaining_tonnages(df_year_rf,mines_df,year)
             all_flows.append(df_year_rf)
             flows_df = assign_node_flows(df_year_rf,trade_ton_columns,reference_mineral)
-            flows_df = pd.merge(flows_df,nodes,how="left",on=["id"])
-            if year > baseline_year:
-                flows_df[f"{reference_mineral}_{efficient_scale}"] = production_size
+            if len(flows_df.index) > 0:
+                flows_df = pd.merge(flows_df,nodes,how="left",on=["id"])
+                if year > baseline_year:
+                    flows_df[f"{reference_mineral}_{efficient_scale}"] = production_size
 
-            flows_df = gpd.GeoDataFrame(flows_df,
-                                    geometry="geometry",
-                                    crs="EPSG:4326")
-            if year == baseline_year:
-                layer_name = f"{reference_mineral}_{percentile}"
-            else:
-                layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
-            
-            flows_df.to_parquet(os.path.join(flows_folder,
-                                f"{layer_name}_{year}_{country_case}.geoparquet"))
+                flows_df = gpd.GeoDataFrame(flows_df,
+                                        geometry="geometry",
+                                        crs="EPSG:4326")
+                if year == baseline_year:
+                    layer_name = f"{year}_{country_case}_{reference_mineral}_{percentile}"
+                else:
+                    layer_name = f"{scenario}_{year}_{country_case}_{reference_mineral}_{percentile}_{efficient_scale}"
+                
+                flows_df.to_parquet(os.path.join(flows_folder,
+                                    f"{layer_name}.geoparquet"))
 
         all_flows = pd.concat(all_flows,axis=0,ignore_index=True)
         reference_mineral_string = "_".join(reference_minerals)
