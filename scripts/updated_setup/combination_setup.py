@@ -171,7 +171,7 @@ def main(config):
 
     run_script = True
     if run_script is True:
-        num_blocks = 8
+        num_blocks = 4
         all_scenarios = []
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         ref_mins = [["cobalt"],["copper"],["nickel"],["graphite"],["manganese"],["lithium"]]
