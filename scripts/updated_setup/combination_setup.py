@@ -121,7 +121,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -137,7 +137,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
