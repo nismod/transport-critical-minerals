@@ -182,7 +182,49 @@ def existing_processing(od_dataframe,baseline_dataframe):
         ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
     res_df.append(ms_df)
 
-    ms_df = m_df[m_df["final_processing_stage"] > m_df["baseline_stage"]]
+    ms_df = m_df[
+                    (
+                        m_df["extra_tons"] <= 0
+                    ) & (
+                    m_df["final_processing_stage"] > m_df["baseline_stage"]
+                )]
+    ms_df.drop(
+                [
+                    "baseline_metal_tons",
+                    "scenario_metal_tons",
+                    "extra_tons"
+                ],axis=1,inplace=True
+            )
+    opt_df.append(ms_df)
+
+    ms_df = m_df[
+                    (
+                        m_df["extra_tons"] > 0
+                    ) & (
+                    m_df["final_processing_stage"] > m_df["baseline_stage"]
+                )]
+    ext_df = ms_df.copy()
+    ext_df["initial_stage_production_tons"
+        ] = ext_df["initial_stage_production_tons"
+        ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
+    ext_df["final_stage_production_tons"
+        ] = ext_df["final_stage_production_tons"
+        ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
+    ext_df.drop(
+                [
+                    "baseline_metal_tons",
+                    "scenario_metal_tons",
+                    "extra_tons"
+                ],axis=1,inplace=True
+            )
+    ext_df["baseline_stage"] = 1.0
+    opt_df.append(ext_df)
+    ms_df["initial_stage_production_tons"
+        ] = ms_df["initial_stage_production_tons"
+        ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
+    ms_df["final_stage_production_tons"
+        ] = ms_df["final_stage_production_tons"
+        ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
     ms_df.drop(
                 [
                     "baseline_metal_tons",
@@ -204,7 +246,6 @@ def existing_processing(od_dataframe,baseline_dataframe):
             )
 
     return opt_df, res_df
-
 
 
 def assign_node_flows(od_dataframe,trade_ton_columns,reference_mineral,additional_columns=[]):
@@ -676,19 +717,17 @@ def main(
                                         "mine_final_refined_stage"),axis=1)
             od_df[["stage_factor","metal_factor"]] = od_df["stage_metal_factors"].apply(pd.Series)
             od_df.drop("stage_metal_factors",axis=1,inplace=True)
+            if constraint == "constrained":
+                od_df, mines_df = filter_out_future_mines(od_df,nodes,
+                                                mines_df,year,
+                                                non_grid_columns,
+                                                non_grid_thresholds)
+            mines_dfs.append(mines_df)
             if year == baseline_year or scenario == "bau":
                 optimise = False
                 df.append(od_df.copy())
                 del od_df
-                mines_dfs.append(mines_df)
             else:
-                if constraint == "constrained":
-                    od_df, mines_df = filter_out_future_mines(od_df,nodes,
-                                                    mines_df,year,
-                                                    non_grid_columns,
-                                                    non_grid_thresholds)
-
-                mines_dfs.append(mines_df)
                 for lt in location_types:
                     l_df = od_df[od_df["initial_processing_location"] == lt]
                     if lt == "mine":
