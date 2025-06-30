@@ -240,7 +240,7 @@ def main(config):
                     th = "none"
                     loc = "country"
                     opt = "unconstrained"
-                    f.write(scenario,f"{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
+                    f.write(f"{scenario},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
                 else:
                     for loc in location_cases:
                         if loc == "country":
@@ -250,9 +250,9 @@ def main(config):
                         for opt in optimisation_type:
                             if opt == "constrained":
                                 for idx,(op,ef) in enumerate(distance_filters):
-                                    f.write(scenario,f"{year},{percentile},{th},{loc},{opt},{c},{op},{ef}\n")
+                                    f.write(f"{scenario},{year},{percentile},{th},{loc},{opt},{c},{op},{ef}\n")
                             else:
-                                f.write(scenario,f"{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
+                                f.write(f"{scenario},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
 
         f.close()
 
