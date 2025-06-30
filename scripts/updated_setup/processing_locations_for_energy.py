@@ -14,6 +14,7 @@ tqdm.pandas()
     
 def main(
             config,
+            scenario,
             year,
             percentile,
             efficient_scale,
@@ -26,6 +27,8 @@ def main(
     incoming_data_path = config['paths']['incoming_data']
     processed_data_path = config['paths']['data']
     output_data_path = config['paths']['results']
+
+    scenario = scenario.replace(" ","_")
 
     baseline_year = 2022
     if combination is None:
@@ -53,8 +56,6 @@ def main(
             results_file = f"{combination}_node_locations_for_energy_conversion_{country_case}_{constraint}.gpkg"
 
     results_folder = os.path.join(output_data_path,"optimised_processing_locations")
-    # if os.path.exists(results_folder) == False:
-    #     os.mkdir(results_folder)
     os.makedirs(results_folder,exist_ok=True)
 
     """Step 1: Get the input datasets
@@ -84,21 +85,12 @@ def main(
     for reference_mineral in reference_minerals:
         # Find year locations
         if year == baseline_year:
-            layer_name = f"{reference_mineral}_{percentile}"
+            layer_name = f"{year}_{country_case}_{reference_mineral}_{percentile}"
         else:
-            layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
+            layer_name = f"{scenario}_{year}_{country_case}_{reference_mineral}_{percentile}_{efficient_scale}"
         
-        # gpkg_file = os.path.join(
-        #                     input_folder,
-        #                     f"processing_nodes_flows_{year}_{country_case}.gpkg"
-        #                     )
-        # layers = fiona.listlayers(gpkg_file)
-        # if layer_name in layers:
-            # flows_df = gpd.read_file(os.path.join(input_folder,
-            #                     f"processing_nodes_flows_{year}_{country_case}.gpkg"),
-            #                     layer=layer_name)
         pq_file = os.path.join(flows_folder,
-                            f"{layer_name}_{year}_{country_case}.geoparquet")
+                            f"{layer_name}.geoparquet")
         if os.path.exists(pq_file):
             flows_df = gpd.read_parquet(pq_file)
 
@@ -130,7 +122,7 @@ def main(
     if year == baseline_year:
         layer_name = f"{year}_{percentile}"
     else:
-        layer_name = f"{year}_{percentile}_{efficient_scale}"
+        layer_name = f"{scenario}_{year}_{percentile}_{efficient_scale}"
 
     all_flows.to_file(os.path.join(results_folder,
                         results_file),
@@ -140,21 +132,23 @@ def main(
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        if len(sys.argv) > 6:
-            year = int(sys.argv[1])
-            percentile = str(sys.argv[2])
-            efficient_scale = str(sys.argv[3])
-            country_case = str(sys.argv[4])
-            constraint = str(sys.argv[5])
-            combination = str(sys.argv[6])
-            distance_from_origin = float(sys.argv[7])
-            environmental_buffer = float(sys.argv[8])
+        if len(sys.argv) > 7:
+            scenario = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
+            combination = str(sys.argv[7])
+            distance_from_origin = float(sys.argv[8])
+            environmental_buffer = float(sys.argv[9])
         else:
-            year = int(sys.argv[1])
-            percentile = str(sys.argv[2])
-            efficient_scale = str(sys.argv[3])
-            country_case = str(sys.argv[4])
-            constraint = str(sys.argv[5])
+            scenario = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
             combination = None
             distance_from_origin = 0.0
             environmental_buffer = 0.0
@@ -163,6 +157,7 @@ if __name__ == '__main__':
         exit()
     main(
             CONFIG,
+            scenario,
             year,
             percentile,
             efficient_scale,
