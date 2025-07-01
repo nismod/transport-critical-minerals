@@ -228,7 +228,6 @@ def modify_mineral_usage_factors(scenario,future_year=2030,baseline_year=2022):
                         "reference_mineral"]
                         )["usage_factor"].transform("sum")
     muf_df["cum_usage_factor"] = muf_df["cum_usage_factor"].fillna(0)
-
     return muf_df[(muf_df["usage_factor"] > 0) & (muf_df["cum_usage_factor"] > 0)]
 
 def get_mine_layer(reference_mineral,year,percentile,mine_id_col="id",return_columns=None):
