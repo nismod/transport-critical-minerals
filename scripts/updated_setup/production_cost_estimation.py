@@ -263,7 +263,7 @@ def main(
     (
         pr_conv_factors_df, 
         _, 
-        ccg_countries, _, _
+        ccg_countries, _, _, _
     ) = get_common_input_dataframes(data_type,scenario,year,baseline_year)
 
 
