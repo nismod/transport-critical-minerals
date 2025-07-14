@@ -309,17 +309,17 @@ def main(config):
         
     run_script = False
     if run_script is True:
-        num_blocks = 16
+        num_blocks = 8
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         c = "combined"
         with open("combined_flow_set.txt","w+") as f:
             for rf in reference_minerals:
-                for idx, (year,percentile) in enumerate(year_percentile_combinations):
+                for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
                     if year == baseline_year:
                         th = "none"
                         loc = "country"
                         opt = "unconstrained"
-                        f.write(f"{rf},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
+                        f.write(f"{rf},{scenario},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
                     else:
                         for loc in location_cases:
                             if loc == "country":
@@ -329,9 +329,9 @@ def main(config):
                             for opt in optimisation_type:
                                 if opt == "constrained":
                                     for idx,(op,ef) in enumerate(distance_filters):
-                                        f.write(f"{rf},{year},{percentile},{th},{loc},{opt},{c},{op},{ef}\n")
+                                        f.write(f"{rf},{scenario},{year},{percentile},{th},{loc},{opt},{c},{op},{ef}\n")
                                 else:
-                                    f.write(f"{rf},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
+                                    f.write(f"{rf},{scenario},{year},{percentile},{th},{loc},{opt},{c},0.0,0.0\n")
 
         f.close()
 

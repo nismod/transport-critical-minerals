@@ -28,6 +28,7 @@ def find_country_edges(edges,network_edges):
 def main(
             config,
             reference_mineral,
+            scenario,
             year,
             percentile,
             efficient_scale,
@@ -42,6 +43,7 @@ def main(
     output_data_path = config['paths']['results']
 
     baseline_year = 2022
+    scenario_rename = scenario.replace(" ","_")
     # Read the finalised version of the BACI trade data
     ccg_countries = pd.read_csv(
                         os.path.join(processed_data_path,
@@ -63,7 +65,7 @@ def main(
                                     output_data_path,
                                     f"flow_optimisation_{country_case}_{constraint}",
                                     "modified_flow_od_paths")
-        results_gpq = f"flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+        results_gpq = f"flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}.geoparquet"
     else:
         if distance_from_origin > 0.0 or environmental_buffer > 0.0:
             modified_paths_folder = os.path.join(
@@ -83,8 +85,6 @@ def main(
             results_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
     
     results_folder = os.path.join(output_data_path,"node_edge_flows")
-    # if os.path.exists(results_folder) == False:
-    #     os.mkdir(results_folder)
     os.makedirs(results_folder,exist_ok=True)
 
     """Step 1: Get the input datasets
@@ -104,13 +104,13 @@ def main(
     else:
         export_file_path = os.path.join(
                         modified_paths_folder,
-                        f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet")
+                        f"{reference_mineral}_flow_paths_{scenario_rename}_{year}_{percentile}_{efficient_scale}.parquet")
         export_df = pd.read_parquet(export_file_path)
         export_df = export_df[export_df["trade_type"] != "Import"]
         import_file_path = os.path.join(
                         output_data_path,
                         "flow_od_paths",
-                        f"{reference_mineral}_flow_paths_{year}_{percentile}_{efficient_scale}.parquet")
+                        f"{reference_mineral}_flow_paths_{scenario_rename}_{year}_{percentile}_{efficient_scale}.parquet")
         import_df = pd.read_parquet(import_file_path)
         import_df = import_df[import_df["trade_type"] == "Import"]
         od_df = pd.concat([export_df,import_df],axis=0,ignore_index=True)
@@ -249,23 +249,25 @@ def main(
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        if len(sys.argv) > 7:
+        if len(sys.argv) > 8:
             reference_mineral = str(sys.argv[1])
-            year = int(sys.argv[2])
-            percentile = str(sys.argv[3])
-            efficient_scale = str(sys.argv[4])
-            country_case = str(sys.argv[5])
-            constraint = str(sys.argv[6])
-            combination = str(sys.argv[7])
-            distance_from_origin = float(sys.argv[8])
-            environmental_buffer = float(sys.argv[9])
+            scenario = str(sys.argv[2])
+            year = int(sys.argv[3])
+            percentile = str(sys.argv[4])
+            efficient_scale = str(sys.argv[5])
+            country_case = str(sys.argv[6])
+            constraint = str(sys.argv[7])
+            combination = str(sys.argv[8])
+            distance_from_origin = float(sys.argv[9])
+            environmental_buffer = float(sys.argv[10])
         else:
             reference_mineral = str(sys.argv[1])
-            year = int(sys.argv[2])
-            percentile = str(sys.argv[3])
-            efficient_scale = str(sys.argv[4])
-            country_case = str(sys.argv[5])
-            constraint = str(sys.argv[6])
+            scenario = str(sys.argv[2])
+            year = int(sys.argv[3])
+            percentile = str(sys.argv[4])
+            efficient_scale = str(sys.argv[5])
+            country_case = str(sys.argv[6])
+            constraint = str(sys.argv[7])
             combination = None
             distance_from_origin = 0.0
             environmental_buffer = 0.0
@@ -275,6 +277,7 @@ if __name__ == '__main__':
     main(
             CONFIG,
             reference_mineral,
+            scenario,
             year,
             percentile,
             efficient_scale,
