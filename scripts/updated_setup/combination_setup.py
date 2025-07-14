@@ -273,7 +273,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         args = [
@@ -290,9 +290,9 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
-        num_blocks = 16
+        num_blocks = 8
         args = [
                 "parallel",
                 "-j", str(num_blocks),
@@ -307,21 +307,6 @@ def main(config):
         print (args)
         subprocess.run(args)
         
-        # with open("combined_optimisation_set.txt","r") as r:
-        #     for p in r:
-        #         pv = p.split(",")
-        #         ls = pv[-1].strip('\n')
-        #         args = [
-        #                 "python",
-        #                 "country_totals_tons_and_costs.py"
-        #                 ]
-        #         for v in pv[:-1]:
-        #             args.append(v)
-        #         args.append(ls)
-        #         print ("* Start the processing of tonnage summaries")
-        #         print (args)
-        #         subprocess.run(args)
-
     run_script = False
     if run_script is True:
         num_blocks = 16
