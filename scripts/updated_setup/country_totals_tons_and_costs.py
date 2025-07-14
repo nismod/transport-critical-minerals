@@ -302,6 +302,7 @@ if __name__ == '__main__':
         exit()
     main(
             CONFIG,
+            scenario,
             year,
             percentile,
             efficient_scale,
