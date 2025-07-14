@@ -290,7 +290,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         args = [
@@ -307,7 +307,7 @@ def main(config):
         print (args)
         subprocess.run(args)
         
-    run_script = False
+    run_script = True
     if run_script is True:
         num_blocks = 8
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list

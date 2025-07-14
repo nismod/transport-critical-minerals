@@ -75,14 +75,14 @@ def main(
                                 )
             ds = str(distance_from_origin).replace('.','p')
             eb = str(environmental_buffer).replace('.','p')
-            results_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
+            results_gpq = f"{combination}_flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
         else:
             modified_paths_folder = os.path.join(
                                     output_data_path,
                                     f"{combination}_flow_optimisation_{country_case}_{constraint}",
                                     "modified_flow_od_paths"
                                     )
-            results_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+            results_gpq = f"{combination}_flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}.geoparquet"
     
     results_folder = os.path.join(output_data_path,"node_edge_flows")
     os.makedirs(results_folder,exist_ok=True)
@@ -228,20 +228,10 @@ def main(
             degree_df = flows_df[["from_id","to_id"]].stack().value_counts().rename_axis('id').reset_index(name='degree')
         elif path_type == "nodes" and len(degree_df.index) > 0:
             flows_df = pd.merge(flows_df,degree_df,how="left",on=["id"])
-            # if year > 2022:
-            #     flows_df[f"{reference_mineral}_{efficient_scale}"] = production_size
-            # flows_df["min_production_size_global_tons"] = min_production_size_global
 
         flows_df = gpd.GeoDataFrame(flows_df,
                                 geometry="geometry",
                                 crs="EPSG:4326")
-        if year == 2022:
-            layer_name = f"{reference_mineral}_{percentile}"
-        else:
-            layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
-        # flows_df.to_file(os.path.join(results_folder,
-        #                     f"{path_type}_flows_{year}_{country_case}_{constraint}.gpkg"),
-        #                     layer=layer_name,driver="GPKG")
         flows_df.to_parquet(os.path.join(results_folder,
                             f"{path_type}_{results_gpq}"))
 
