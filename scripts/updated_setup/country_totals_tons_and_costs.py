@@ -187,13 +187,12 @@ def main(
                     pr_conv_factors_df["reference_mineral"] == reference_mineral
                     ][["iso3","reference_mineral","metal_content_factor"]]
         metal_factor = metal_factor.drop_duplicates(subset=["iso3","reference_mineral"],keep="first")
+        mines_df = get_mine_layer(reference_mineral,year,percentile,
+                            mine_id_col="id")
         mines_df["year"] = year
         mines_df["reference_mineral"] = reference_mineral
         mines_df["initial_processing_location"] = "mine"
         mines_df = pd.merge(mines_df,metal_factor,how="left",on=["iso3","reference_mineral"])
-
-        mines_df = get_mine_layer(reference_mineral,year,percentile,
-                            mine_id_col="id")
         
         export_df = pd.read_parquet(export_file_path)
         import_df = pd.read_parquet(import_file_path)
