@@ -132,6 +132,7 @@ def add_mines_remaining_tonnages(df,mines_df,year,location_df,costs_df,cost_curv
                                 "export_country_code",
                                 "reference_mineral",
                                 "initial_processing_location",
+                                "metal_content_factor",
                                 f"{year}_metal_content"
                             ]
                         ],
