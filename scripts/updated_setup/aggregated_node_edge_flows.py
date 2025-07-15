@@ -40,6 +40,7 @@ def get_export_import_columns(
 
 def main(
             config,
+            scenario,
             year,
             percentile,
             efficient_scale,
@@ -54,9 +55,8 @@ def main(
     figure_path = config['paths']['figures']
 
     baseline_year = 2022
+    scenario_rename = scenario.replace(" ","_")
     results_folder = os.path.join(output_data_path,"aggregated_node_edge_flows")
-    # if os.path.exists(results_folder) == False:
-    #     os.mkdir(results_folder)
     os.makedirs(results_folder,exist_ok=True)
 
     flow_data_folder = os.path.join(output_data_path,"node_edge_flows")
@@ -82,14 +82,14 @@ def main(
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         
         if combination is None:
-            input_gpq = f"flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+            input_gpq = f"flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}.geoparquet"
         else:
             if distance_from_origin > 0.0 or environmental_buffer > 0.0:
                 ds = str(distance_from_origin).replace('.','p')
                 eb = str(environmental_buffer).replace('.','p')
-                input_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
+                input_gpq = f"{combination}_flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
             else:
-                input_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+                input_gpq = f"{combination}_flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}.geoparquet"
         
         edge_file_path = os.path.join(flow_data_folder,
                             f"edges_{input_gpq}")
@@ -143,7 +143,7 @@ def main(
     if year == baseline_year:
         layer_name = f"{percentile}"
     else:
-        layer_name = f"{percentile}_{efficient_scale}"
+        layer_name = f"{percentile}_{efficient_scale}_{scenario_rename}"
     if combination is None:
         output_gpq = f"flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
     else:
@@ -162,21 +162,23 @@ def main(
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        if len(sys.argv) > 6:
-            year = int(sys.argv[1])
-            percentile = str(sys.argv[2])
-            efficient_scale = str(sys.argv[3])
-            country_case = str(sys.argv[4])
-            constraint = str(sys.argv[5])
-            combination = str(sys.argv[6])
-            distance_from_origin = float(sys.argv[7])
-            environmental_buffer = float(sys.argv[8])
+        if len(sys.argv) > 7:
+            scenario = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
+            combination = str(sys.argv[7])
+            distance_from_origin = float(sys.argv[8])
+            environmental_buffer = float(sys.argv[9])
         else:
-            year = int(sys.argv[1])
-            percentile = str(sys.argv[2])
-            efficient_scale = str(sys.argv[3])
-            country_case = str(sys.argv[4])
-            constraint = str(sys.argv[5])
+            scenario = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
             combination = None
             distance_from_origin = 0.0
             environmental_buffer = 0.0
@@ -185,6 +187,7 @@ if __name__ == '__main__':
         exit()
     main(
             CONFIG,
+            scenario,
             year,
             percentile,
             efficient_scale,

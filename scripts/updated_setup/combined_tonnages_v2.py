@@ -23,16 +23,6 @@ incoming_data_path = config['paths']['incoming_data']
 processed_data_path = config['paths']['data']
 output_data_path = config['paths']['results']
 
-def get_stage_one_conversion_factors(x,pcf_df,cf_column="aggregate_ratio"):
-    ref_min = x["reference_mineral"]
-    exp_st = x["final_processing_stage"]
-    cf_df = pcf_df[pcf_df["reference_mineral"] == ref_min]
-    cf_val = cf_df[cf_df["final_refined_stage"] == str(exp_st).replace(".0","")
-                    ][cf_column].values[0]/cf_df[
-                    cf_df["final_refined_stage"] == '1'
-                    ][cf_column].values[0]
-    return cf_val
-
 def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
     price_df = pd.read_excel(
                         os.path.join(
@@ -67,12 +57,18 @@ def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
     price_costs_df = pd.concat(price_costs_df,axis=0,ignore_index=True)
     regional_gdp_df = pd.concat(regional_gdp_df,axis=0,ignore_index=True)
 
-    water_intensity_df = pd.read_csv(
+    water_intensity_df = pd.read_excel(
                             os.path.join(
                                 processed_data_path,
                                 "mineral_usage_factors",
-                                "water_intensities_final.csv")
-                            )[["reference_mineral","processing_stage","water_intensity_m3_per_kg"]]
+                                "mineral_extraction_country_intensities (final units w Co edits).xlsx"
+                                ), sheet_name = "Country water ratios"
+                            )[["iso3","reference_mineral","processing_stage","water intensity (m3/kg)"]]
+    water_intensity_df.rename(
+                                columns={
+                                            "water intensity (m3/kg)":"water_intensity_m3_per_kg"
+                                        },
+                                inplace=True)
     return (price_costs_df,regional_gdp_df,water_intensity_df)
 
 def get_full_file_name(
@@ -243,6 +239,7 @@ def main(
             pr_conv_factors_df, 
             _, _, _, _
         ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
+        scenario_rename = scenario.replace(" ","_")
         if year == baseline_year:
             tons_file_name = get_full_file_name(
                                     f"location_totals_{year}_baseline",
@@ -277,7 +274,7 @@ def main(
         else:
             for th in tonnage_thresholds:
                 tons_file_name = get_full_file_name(
-                                    f"location_totals_{year}_{percentile}_{th}",
+                                    f"location_totals_{scenario_rename}_{year}_{percentile}_{th}",
                                     country_case,
                                     constraint,
                                     combination=combination,
@@ -285,7 +282,7 @@ def main(
                                     environmental_buffer=environmental_buffer
                                     )
                 carbon_file_name = get_full_file_name(
-                                    f"carbon_emission_totals_{year}_{percentile}_{th}",
+                                    f"carbon_emission_totals_{scenario_rename}_{year}_{percentile}_{th}",
                                     country_case,
                                     constraint,
                                     combination=combination,
@@ -293,14 +290,14 @@ def main(
                                     environmental_buffer=environmental_buffer
                                     )
                 cost_file_name = get_full_file_name(
-                                    f"location_costs_{year}_{percentile}_{th}",
+                                    f"location_costs_{scenario_rename}_{year}_{percentile}_{th}",
                                     country_case,
                                     constraint,
                                     combination=combination,
                                     distance_from_origin=distance_from_origin,
                                     environmental_buffer=environmental_buffer
                                     )
-                layer_name = f"{year}_{percentile}_{th}"
+                layer_name = f"{scenario_rename}_{year}_{percentile}_{th}"
                 all_tons_files.append(tons_file_name)
                 all_carbon_files.append(carbon_file_name)
                 all_cost_files.append(cost_file_name)
@@ -389,12 +386,6 @@ def main(
                     st_1_export_df["scenario"] = l
                     st_1_export_df["year"] = y
                     all_dfs.append(st_1_export_df)
-                # elif pt == "import_ccg":
-                #     p_df = t_df[t_df["trade_type"] == "Import_CCG"]
-                #     tr_df = p_df.copy()
-                # else:
-                #     p_df = t_df[t_df["trade_type"] == "Import_NonCCG"]
-                #     tr_df = p_df.copy()
                 else:
                     p_df = t_df[t_df["trade_type"].isin(["Import_NonCCG","Import_CCG"])]
                     tr_df = p_df.copy()
@@ -474,7 +465,7 @@ def main(
     all_dfs = pd.merge(all_dfs,price_costs_df,how="left",on=index_cols).fillna(0)
     all_dfs = pd.merge(all_dfs,water_intensity_df,
                         how="left",
-                        on=["reference_mineral","processing_stage"]
+                        on=["iso3","reference_mineral","processing_stage"]
                     ).fillna(0)
     all_dfs["water_usage_m3"] = 1.0e3*all_dfs["production_tonnes"]*all_dfs["water_intensity_m3_per_kg"]
     all_dfs["revenue_usd"] = all_dfs["export_tonnes"]*all_dfs["price_usd_per_tonne"]
