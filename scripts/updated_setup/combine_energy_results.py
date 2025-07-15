@@ -22,16 +22,19 @@ def main(config):
     output_data_path = config['paths']['results']
 
     results_folder = os.path.join(output_data_path,"result_summaries")
-    energy_results_folder = os.path.join(output_data_path,"20250216_Run_No_GridBuffer")
+    energy_results_folder = os.path.join(output_data_path,"20250717_Run","Final_Output_per_scenario")
 
     year_percentile_combinations = [
-                                    (2022,"baseline"),
-                                    (2030,"low"),
-                                    (2030,"mid"),
-                                    (2030,"high"),
-                                    (2040,"low"),
-                                    (2040,"mid"),
-                                    (2040,"high")
+                                    (2022,"baseline","baseline"),
+                                    (2040,"bau","low"),
+                                    (2040,"bau","mid"),
+                                    (2040,"bau","high"),
+                                    (2040,"early refining","low"),
+                                    (2040,"early refining","mid"),
+                                    (2040,"early refining","high"),
+                                    (2040,"precursor","low"),
+                                    (2040,"precursor","mid"),
+                                    (2040,"precursor","high")
                                     ]
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
     location_cases = ["country","region"]
@@ -46,7 +49,7 @@ def main(config):
                     ]
     dfs = []
     scenarios = []
-    for idx, (y,s) in enumerate(year_percentile_combinations):
+    for idx, (y,scn,s) in enumerate(year_percentile_combinations):
         if y == baseline_year:
             scenarios.append(
                                 (
@@ -60,8 +63,8 @@ def main(config):
                 for opt in optimisation_type:
                     scenarios.append(
                                         (
-                                            y,f"{y}_{s}_{thr}",f"{loc}_{opt}",
-                                            f"{y}_{s}_{thr}_{loc}_{opt}.csv_mineral_summary.xlsx"
+                                            y,f"{scn}_{y}_{s}_{thr}",f"{loc}_{opt}",
+                                            f"{scn}_{y}_{s}_{thr}_{loc}_{opt}.csv_mineral_summary.xlsx"
                                         )
                                     )
 
