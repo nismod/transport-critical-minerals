@@ -153,7 +153,7 @@ def main(
             if y == 2022:
                 layer_name = f"{y}_{p}"
             else:
-                layer_name = f"{scn}_{y}_{p}_{e}"          
+                layer_name = f"{scn_rename}_{y}_{p}_{e}"          
             nodes_flows_df = gpd.read_file(
                                 os.path.join(
                                     node_data_folder,
