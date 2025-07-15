@@ -84,6 +84,7 @@ def get_columns(
 
 def main(
             config,
+            scenario,
             year,
             percentile,
             efficient_scale,
@@ -99,19 +100,16 @@ def main(
 
     input_folder = os.path.join(output_data_path,"node_edge_flows")
     results_folder = os.path.join(output_data_path,"carbon_emissions_summaries")
-    # if os.path.exists(results_folder) == False:
-    #     os.mkdir(results_folder)
     os.makedirs(results_folder,exist_ok=True)
     flow_results_folder = os.path.join(output_data_path,"carbon_emissions_flows")
-    # if os.path.exists(flow_results_folder) == False:
-    #     os.mkdir(flow_results_folder)
     os.makedirs(flow_results_folder,exist_ok=True)
 
     baseline_year = 2022
+    scenario_rename = scenario.replace(" ","_")
     if year == baseline_year:
         file_name = f"carbon_emission_totals_{year}_{percentile}"
     else:
-        file_name = f"carbon_emission_totals_{year}_{percentile}_{efficient_scale}"
+        file_name = f"carbon_emission_totals_{scenario_rename}_{year}_{percentile}_{efficient_scale}"
     if combination is None:
         results_file = f"{file_name}_{country_case}_{constraint}"
     else:
@@ -171,14 +169,14 @@ def main(
         else:
             layer_name = f"{reference_mineral}_{percentile}_{efficient_scale}"
         if combination is None:
-            input_gpq = f"flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+            input_gpq = f"flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}.geoparquet"
         else:
             if distance_from_origin > 0.0 or environmental_buffer > 0.0:
                 ds = str(distance_from_origin).replace('.','p')
                 eb = str(environmental_buffer).replace('.','p')
-                input_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
+                input_gpq = f"{combination}_flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}_op_{ds}km_eb_{eb}km.geoparquet"
             else:
-                input_gpq = f"{combination}_flows_{layer_name}_{year}_{country_case}_{constraint}.geoparquet"
+                input_gpq = f"{combination}_flows_{layer_name}_{scenario_rename}_{year}_{country_case}_{constraint}.geoparquet"
         flows_gdf = gpd.read_parquet(
                             os.path.join(
                                 input_folder,
@@ -250,12 +248,6 @@ def main(
             df.rename(columns={col:rename_column},inplace=True)
             rename_columns.append(rename_column)
 
-            # gdf = df.groupby(
-            #             [
-            #                 "reference_mineral",
-            #                 "iso3","mode",
-            #                 "processing_stage"
-            #             ]).agg(dict([(rename_column,"sum")])).reset_index()
             all_flows.append(df[[
                                 "reference_mineral",
                                 "iso3","mode",
@@ -277,11 +269,6 @@ def main(
                         "iso3","mode",
                         "processing_stage"
                     ]).agg(dict([(rc,"sum") for rc in rename_columns])).reset_index()
-    # all_flows = all_flows.reset_index()
-    # if year == 2022:
-    #     file_name = f"carbon_emission_totals_{year}_{percentile}"
-    # else:
-    #     file_name = f"carbon_emission_totals_{year}_{percentile}_{efficient_scale}"
     all_flows.to_csv(
             os.path.join(
                 results_folder,
@@ -292,21 +279,23 @@ def main(
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        if len(sys.argv) > 6:
-            year = int(sys.argv[1])
-            percentile = str(sys.argv[2])
-            efficient_scale = str(sys.argv[3])
-            country_case = str(sys.argv[4])
-            constraint = str(sys.argv[5])
-            combination = str(sys.argv[6])
-            distance_from_origin = float(sys.argv[7])
-            environmental_buffer = float(sys.argv[8])
+        if len(sys.argv) > 7:
+            scenario = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
+            combination = str(sys.argv[7])
+            distance_from_origin = float(sys.argv[8])
+            environmental_buffer = float(sys.argv[9])
         else:
-            year = int(sys.argv[1])
-            percentile = str(sys.argv[2])
-            efficient_scale = str(sys.argv[3])
-            country_case = str(sys.argv[4])
-            constraint = str(sys.argv[5])
+            scenario = str(sys.argv[1])
+            year = int(sys.argv[2])
+            percentile = str(sys.argv[3])
+            efficient_scale = str(sys.argv[4])
+            country_case = str(sys.argv[5])
+            constraint = str(sys.argv[6])
             combination = None
             distance_from_origin = 0.0
             environmental_buffer = 0.0
@@ -315,6 +304,7 @@ if __name__ == '__main__':
         exit()
     main(
             CONFIG,
+            scenario,
             year,
             percentile,
             efficient_scale,

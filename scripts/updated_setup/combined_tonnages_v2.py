@@ -110,15 +110,18 @@ def main(
     os.makedirs(results_folder,exist_ok=True)
     #  Get a number of input dataframes
     baseline_year = 2022
-    years = [2022,2030,2040]
+    years = [2022,2040]
     year_percentile_combinations = [
-                                    (2022,"baseline"),
-                                    (2030,"low"),
-                                    (2030,"mid"),
-                                    (2030,"high"),
-                                    (2040,"low"),
-                                    (2040,"mid"),
-                                    (2040,"high")
+                                    (2022,"baseline","baseline"),
+                                    (2040,"bau","low"),
+                                    (2040,"bau","mid"),
+                                    (2040,"bau","high"),
+                                    (2040,"early refining","low"),
+                                    (2040,"early refining","mid"),
+                                    (2040,"early refining","high"),
+                                    (2040,"precursor","low"),
+                                    (2040,"precursor","mid"),
+                                    (2040,"precursor","high")
                                     ]
     tonnage_thresholds = ["min_threshold_metal_tons","max_threshold_metal_tons"]
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
@@ -192,13 +195,6 @@ def main(
                     ] + column_dictionary["unit_transport_costs"]
 
     #  Get a number of input dataframes
-    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
-    (
-        pr_conv_factors_df, 
-        metal_content_factors_df, 
-        _, _, _, _
-    ) = get_common_input_dataframes(data_type,baseline_year,baseline_year)
-
     (
         price_costs_df,
         regional_gdp_df,
@@ -232,14 +228,6 @@ def main(
     else:
         writer = pd.ExcelWriter(output_file)
 
-    # output_file = os.path.join(
-    #                     results_folder,
-    #                     v_file_name)
-    # if os.path.isfile(output_file) is True:
-    #     writer_t = pd.ExcelWriter(output_file,mode='a',engine="openpyxl",if_sheet_exists='replace')
-    # else:
-    #     writer_t = pd.ExcelWriter(output_file)
-    
     if country_case == "country" and constraint == "unconstrained":
         combos = year_percentile_combinations
     else:
@@ -250,7 +238,11 @@ def main(
     all_cost_files = []
     all_layers = []
     all_years = []
-    for idx, (year,percentile) in enumerate(combos):
+    for idx, (year,scenario,percentile) in enumerate(combos):
+        (
+            pr_conv_factors_df, 
+            _, _, _, _
+        ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
         if year == baseline_year:
             tons_file_name = get_full_file_name(
                                     f"location_totals_{year}_baseline",
@@ -502,30 +494,6 @@ def main(
     all_dfs = all_dfs.set_index(anchor_columns)
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()
-
-    # all_sums = ["stage1_production_cost_usd","stage1_production_cost_usd_opex_only","expenditure_usd"]
-    # all_dfs = all_dfs.reset_index()
-    # revenue_df = all_dfs[all_dfs["processing_stage"] > 1.0]
-    # revenue_df = revenue_df.groupby(
-    #                     ["year","scenario","reference_mineral","iso3"]
-    #                     )["revenue_usd"].sum().reset_index()
-    # all_dfs = all_dfs.groupby(
-    #             ["year","scenario","reference_mineral","iso3"]
-    #             ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
-    # all_dfs = pd.merge(
-    #                     all_dfs,
-    #                     revenue_df,
-    #                     how="left",
-    #                     on=["year","scenario","reference_mineral","iso3"]
-    #                 ).fillna(0)
-    # all_dfs["value_added_usd"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd"] - all_dfs["expenditure_usd"]
-    # all_dfs["value_added_usd_opex_only"] = all_dfs["revenue_usd"] - all_dfs["stage1_production_cost_usd_opex_only"] - all_dfs["expenditure_usd"]
-    # all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
-    # all_dfs["value_added_gdp_ratio"] = all_dfs["value_added_usd"]/all_dfs["gdp_usd"]
-    # all_dfs["value_added_opex_only_gdp_ratio"] = all_dfs["value_added_usd_opex_only"]/all_dfs["gdp_usd"]
-    # all_dfs = all_dfs.set_index(["year","scenario","reference_mineral","iso3"])
-    # all_dfs.to_excel(writer_t,sheet_name=f"{country_case}_{constraint}")
-    # writer_t.close()
 
 
 
