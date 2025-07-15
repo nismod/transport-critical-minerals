@@ -235,10 +235,12 @@ def main(
     all_layers = []
     all_years = []
     for idx, (year,scenario,percentile) in enumerate(combos):
-        # (
-        #     pr_conv_factors_df, 
-        #     _, _, _, _,_
-        # ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
+        (
+            pr_conv_factors_df, 
+            _, _, _, _,_
+        ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
+        metal_content_factors_df = pr_conv_factors_df[["iso3","reference_mineral","metal_content_factor"]]
+        metal_content_factors_df = metal_content_factors_df.drop_duplicates(subset=["iso3","reference_mineral"],keep="first")
         scenario_rename = scenario.replace(" ","_")
         if year == baseline_year:
             tons_file_name = get_full_file_name(
@@ -330,9 +332,9 @@ def main(
                     metal_df["scenario"] = l
                     metal_df["year"] = y
                     all_dfs.append(metal_df)
-                    st_1_df = pd.merge(metal_df,metal_content_factors_df,how="left",on=["reference_mineral"])
+                    st_1_df = pd.merge(metal_df,metal_content_factors_df,how="left",on=["iso3","reference_mineral"])
                     st_1_df[f"{pt}_tonnes"
-                        ] = st_1_df[f"{pt}_tonnes"]/st_1_df["metal_content_factor"]
+                        ] = st_1_df[f"{pt}_tonnes"]*st_1_df["metal_content_factor"]
                     st_1_df["processing_stage"] = 1.0
                     st_1_df.drop("metal_content_factor",axis=1,inplace=True)
                     all_dfs.append(st_1_df)
@@ -373,9 +375,9 @@ def main(
                                             "initial_processing_stage":"processing_stage",
                                             initial_tons_column:"stage_1_production_for_value_added_export_tonnes"},
                                     inplace=True)
-                        st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["reference_mineral"])
+                        st_1_df = pd.merge(st_1_df,metal_content_factors_df,how="left",on=["iso3","reference_mineral"])
                         st_1_df["stage_1_production_for_value_added_export_tonnes"
-                            ] = st_1_df["stage_1_production_for_value_added_export_tonnes"]/st_1_df["metal_content_factor"]
+                            ] = st_1_df["stage_1_production_for_value_added_export_tonnes"]*st_1_df["metal_content_factor"]
                         st_1_df["processing_stage"] = 1.0
                         st_1_df.drop("metal_content_factor",axis=1,inplace=True)
                         st_1_export_df.append(st_1_df)
