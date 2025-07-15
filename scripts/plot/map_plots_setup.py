@@ -10,26 +10,29 @@ def main(config):
     processed_data_path = config['paths']['data']
     
     reference_minerals = ["graphite","lithium","cobalt","manganese","nickel","copper"]
-    baseline_scenario = [[2022],["baseline"],["none"],["country"],["unconstrained"]]
+    scenarios = ["bau","early refining","precursor"]
+    baseline_scenario = [["baseline"],[2022],["baseline"],["none"],["country"],["unconstrained"]]
     future_scenarios = []
     future_scenarios.append(baseline_scenario)
     p = "min_threshold_metal_tons"
     c = "country"
-    for y in [2030,2040]:
-        fsc = []
-        for o in ["unconstrained","constrained"]:
-            for s in ["mid"]:
-                fsc.append((y,s,p,c,o))
+    for scn in scenarios:
+        for y in [2040]:
+            fsc = []
+            for o in ["unconstrained","constrained"]:
+                for s in ["mid"]:
+                    fsc.append((scn,y,s,p,c,o))
 
         future_scenarios.append(list(map(list,zip(*fsc))))
 
     p = "max_threshold_metal_tons"
     c = "region"
-    for y in [2030,2040]:
-        fsc = []
-        for o in ["unconstrained","constrained"]:
-            for s in ["mid"]:
-                fsc.append((y,s,p,c,o))
+    for scn in scenarios:
+        for y in [2040]:
+            fsc = []
+            for o in ["unconstrained","constrained"]:
+                for s in ["mid"]:
+                    fsc.append((scn,y,s,p,c,o))
 
         future_scenarios.append(list(map(list,zip(*fsc))))
 
@@ -61,8 +64,28 @@ def main(config):
         print (args)
         subprocess.run(args)
 
+    run_script = True
+    if run_script is True:
+        args = [
+                "python",
+                "location_maps_scenarios.py"
+                ]
+        print ("* Plot regional location maps")
+        print (args)
+        subprocess.run(args)
+
+    run_script = True
+    if run_script is True:
+        args = [
+                "python",
+                "zambia_location_maps.py"
+                ]
+        print ("* Plot Zambia location maps")
+        print (args)
+        subprocess.run(args)
+
     num_blocks = 12
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "parallel",
@@ -78,7 +101,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "parallel",
@@ -113,7 +136,7 @@ def main(config):
 
     num_blocks = 8
     
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "parallel",
@@ -129,23 +152,23 @@ def main(config):
         print (args)
         subprocess.run(args)               
 
-    run_script = False
-    if run_script is True:
-        args = [
-                "parallel",
-                "-j", str(num_blocks),
-                "--colsep", ";",
-                "-a",
-                "aggregated_map_plots_set.txt",
-                "python",
-                "zambia_agg_flow_maps.py",
-                "{}"
-                ]
-        print ("* Start the processing of plotting flows")
-        print (args)
-        subprocess.run(args)
+    # run_script = False
+    # if run_script is True:
+    #     args = [
+    #             "parallel",
+    #             "-j", str(num_blocks),
+    #             "--colsep", ";",
+    #             "-a",
+    #             "aggregated_map_plots_set.txt",
+    #             "python",
+    #             "zambia_agg_flow_maps.py",
+    #             "{}"
+    #             ]
+    #     print ("* Start the processing of plotting flows")
+    #     print (args)
+    #     subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",

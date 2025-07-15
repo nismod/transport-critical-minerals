@@ -26,6 +26,7 @@ def set_geometry_buffer(x,value_column,width_by_range):
 
 def main(
         config,
+        scenarios,
         years,
         percentiles,
         efficient_scales,
@@ -41,13 +42,9 @@ def main(
 
 
     figures = os.path.join(figure_path,"regional_figures")
-    # if os.path.exists(figures) is False:
-    #     os.mkdir(figures)
     os.makedirs(figures,exist_ok=True)
 
     figures = os.path.join(figure_path,"regional_figures","aggregated_flow_figures")
-    # if os.path.exists(figures) is False:
-    #     os.mkdir(figures)
     os.makedirs(figures,exist_ok=True)
 
 
@@ -75,7 +72,7 @@ def main(
     max_flow = 21000000.00
 
     fig_scenario = [
-                    years,
+                    scenarios,
                     percentiles,
                     country_cases
                 ]
@@ -94,15 +91,20 @@ def main(
         else:
             figure_result_file = f"{combination}_{figure_result_file}_scenarios.png"
 
-    combinations = list(zip(years,percentiles,efficient_scales,country_cases,constraints))
+    combinations = list(zip(scenarios,years,percentiles,efficient_scales,country_cases,constraints))
     sc_dfs = []
     edges_range = []
-    for idx, (y,p,e,cnt,con) in enumerate(combinations):
-        title_name = f"{y} - {p.title()}"
+    for idx, (scn,y,p,e,cnt,con) in enumerate(combinations):
+        scn_rename = scn.replace(" ","_")
+        if scn == "bau":
+            scn_title = "BAU"
+        else:
+            scn_title = scn.title()
+        title_name = f"{scn_title} - {p.title()}"
         if y == 2022:
             layer_name = f"{p}"
         else:
-            layer_name = f"{p}_{e}"
+            layer_name = f"{p}_{e}_{scn_rename}"
             if con == "unconstrained":
                 title_name = f"{title_name} - No Environmental constraints"
             else:
@@ -158,11 +160,11 @@ def main(
         if sc_l == 1:
             figwidth = 8
             figheight = figwidth/(2+sc_l*w)/dxl*dyl/(1-dt)
-            textfontsize = 12
+            textfontsize = 10
         else:
             figwidth = 16
             figheight = figwidth/(2.5+sc_l*w)/dxl*dyl/(1-dt)
-            textfontsize = 12
+            textfontsize = 10
         fig = plt.figure(figsize=(figwidth,figheight))
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
         for jdx, (sc_n,e_df,pos,span) in enumerate(sc_dfs):
@@ -225,21 +227,23 @@ def main(
 if __name__ == '__main__':
     CONFIG = load_config()
     try:
-        if len(sys.argv) > 6:
-            years = ast.literal_eval(str(sys.argv[1]))
-            percentiles = ast.literal_eval(str(sys.argv[2]))
-            efficient_scales = ast.literal_eval(str(sys.argv[3]))
-            country_cases = ast.literal_eval(str(sys.argv[4]))
-            constraints = ast.literal_eval(str(sys.argv[5]))
-            combination = str(sys.argv[6])
-            distance_from_origin = float(sys.argv[7])
-            environmental_buffer = float(sys.argv[8])
+        if len(sys.argv) > 7:
+            scenarios = ast.literal_eval(str(sys.argv[1]))
+            years = ast.literal_eval(str(sys.argv[2]))
+            percentiles = ast.literal_eval(str(sys.argv[3]))
+            efficient_scales = ast.literal_eval(str(sys.argv[4]))
+            country_cases = ast.literal_eval(str(sys.argv[5]))
+            constraints = ast.literal_eval(str(sys.argv[6]))
+            combination = str(sys.argv[7])
+            distance_from_origin = float(sys.argv[8])
+            environmental_buffer = float(sys.argv[9])
         else:
-            years = ast.literal_eval(str(sys.argv[1]))
-            percentiles = ast.literal_eval(str(sys.argv[2]))
-            efficient_scales = ast.literal_eval(str(sys.argv[3]))
-            country_cases = ast.literal_eval(str(sys.argv[4]))
-            constraints = ast.literal_eval(str(sys.argv[5]))
+            scenarios = ast.literal_eval(str(sys.argv[1]))
+            years = ast.literal_eval(str(sys.argv[2]))
+            percentiles = ast.literal_eval(str(sys.argv[3]))
+            efficient_scales = ast.literal_eval(str(sys.argv[4]))
+            country_cases = ast.literal_eval(str(sys.argv[5]))
+            constraints = ast.literal_eval(str(sys.argv[6]))
             combination = None
             distance_from_origin = 0.0
             environmental_buffer = 0.0
@@ -248,6 +252,7 @@ if __name__ == '__main__':
         exit()
     main(
             CONFIG,
+            scenarios,
             years,
             percentiles,
             efficient_scales,

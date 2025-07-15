@@ -23,13 +23,9 @@ figure_path = config['paths']['figures']
 
 def main():
     figures = os.path.join(figure_path,"regional_figures")
-    # if os.path.exists(figures) is False:
-    #     os.mkdir(figures)
     os.makedirs(figures,exist_ok=True)
     
     figures = os.path.join(figure_path,"regional_figures","mine_and_processing_locations")
-    # if os.path.exists(figures) is False:
-    #     os.mkdir(figures)
     os.makedirs(figures,exist_ok=True)
     
     ccg_countries = pd.read_csv(os.path.join(processed_data_path,"admin_boundaries","ccg_country_codes.csv"))
@@ -132,12 +128,12 @@ def main():
                         ]
     # result_type = ["noncombined","combined"]
     result_type = ["combined"]
-    stage_mapping_df = pd.read_excel(
-                                os.path.join(
-                                    processed_data_path,
-                                    "mineral_usage_factors",
-                                    "stage_mapping.xlsx"),
-                                sheet_name='stage_maps')
+    # stage_mapping_df = pd.read_excel(
+    #                             os.path.join(
+    #                                 processed_data_path,
+    #                                 "mineral_usage_factors",
+    #                                 "stage_mapping.xlsx"),
+    #                             sheet_name='stage_maps')
     for rt in result_type:
         if rt == "combined":
             plot_descriptions = [p for p in plot_descriptions if p["type"] == "final_stage_production_tons"]
