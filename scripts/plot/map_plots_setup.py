@@ -38,7 +38,8 @@ def main(config):
 
     with open("map_plots_set.txt","w+") as f:
         for rf in reference_minerals:
-            for case in ["noncombined","combined"]:
+            # for case in ["noncombined","combined"]:
+            for case in ["combined"]:
                 for row in future_scenarios:
                     st = f"{rf};"
                     if case == "noncombined":
@@ -168,7 +169,7 @@ def main(config):
     #     print (args)
     #     subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "parallel",

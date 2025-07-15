@@ -111,8 +111,8 @@ def main():
     #                                 "stage_mapping.xlsx"),
     #                             sheet_name='stage_maps')
     for rt in result_type:
-        if rt == "combined":
-            plot_descriptions = [p for p in plot_descriptions if p["type"] == "final_stage_production_tons"]
+        # if rt == "combined":
+        #     plot_descriptions = [p for p in plot_descriptions if p["type"] == "final_stage_production_tons"]
         for plot in plot_descriptions:
             ton_type = plot["type"]
             st_type = plot["stage_type"]
