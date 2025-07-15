@@ -235,10 +235,10 @@ def main(
     all_layers = []
     all_years = []
     for idx, (year,scenario,percentile) in enumerate(combos):
-        (
-            pr_conv_factors_df, 
-            _, _, _, _
-        ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
+        # (
+        #     pr_conv_factors_df, 
+        #     _, _, _, _,_
+        # ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
         scenario_rename = scenario.replace(" ","_")
         if year == baseline_year:
             tons_file_name = get_full_file_name(
