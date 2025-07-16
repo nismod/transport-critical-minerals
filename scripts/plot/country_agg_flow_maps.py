@@ -204,7 +204,7 @@ def main(
                                                 sc_dfs,
                                                 er,
                                                 make_plot,
-                                                y,p,e,cnt,con,
+                                                scn,y,p,e,cnt,con,
                                                 flow_data_folder,
                                                 flow_column,
                                                 ccg_isos,
