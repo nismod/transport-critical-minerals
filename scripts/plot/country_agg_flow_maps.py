@@ -176,7 +176,7 @@ def main(
         else:
             figure_result_file = f"{combination}_{figure_result_file}_scenarios.png"
 
-    combinations = list(zip(scenario,years,percentiles,efficient_scales,country_cases,constraints))
+    combinations = list(zip(scenarios,years,percentiles,efficient_scales,country_cases,constraints))
     sc_dfs = []
     edges_range = []
     for scn in ["baseline","bau","early refining","precursor"]:
