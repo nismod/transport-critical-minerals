@@ -65,7 +65,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -75,7 +75,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -86,7 +86,7 @@ def main(config):
         subprocess.run(args)
 
     num_blocks = 12
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",
@@ -102,7 +102,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",
@@ -137,7 +137,7 @@ def main(config):
 
     num_blocks = 8
     
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",
