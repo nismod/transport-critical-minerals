@@ -62,7 +62,7 @@ def plot_clustered_stacked(fig,axe,
     n_ind = len(dfall[0].index)
     # axe = plt.subplot(111)
 
-    for df in dfall : # for each data frame
+    for df in dfall: # for each data frame
         bar_colors = list(islice(cycle(bar_colors), None, len(df)))
         # bar_colors = list(zip(bar_colors["stages"],bar_colors["stage_colors"]))
         axe = df.plot(kind="bar",
