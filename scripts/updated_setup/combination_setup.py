@@ -34,7 +34,7 @@ def main(config):
     optimisation_type = ["unconstrained","constrained"]
     baseline_year = 2022
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -74,17 +74,17 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
-                "baci_cleaning.py"
+                "baci_source_cleaning.py"
                 ]
         print ("* Clean the BACI matrices in the baseline")
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -94,7 +94,7 @@ def main(config):
         print (args)
         subprocess.run(args)    
     
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -104,7 +104,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -120,8 +120,18 @@ def main(config):
                     print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
                     print (args)
                     subprocess.run(args)
+    run_script = True
+    if run_script is True:
+        args = [
+                "python",
+                "baci_trade_check.py",
+                "BACI"
+                ]
+        print ("* Check the sums and revenues of high-level OD matrices")
+        print (args)
+        subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -136,6 +146,17 @@ def main(config):
                 print (f"* Start the creation of the {year} {percentile} percentile node OD matrices under {th} limits")
                 print (args)
                 subprocess.run(args)
+
+    run_script = True
+    if run_script is True:
+        args = [
+                "python",
+                "baci_trade_check.py",
+                "OD"
+                ]
+        print ("* Check the sums and revenues of node-level OD matrices")
+        print (args)
+        subprocess.run(args)
 
     run_script = False
     if run_script is True:
@@ -370,7 +391,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         cx = "combined"

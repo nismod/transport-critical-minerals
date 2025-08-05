@@ -22,7 +22,7 @@ processed_data_path = config['paths']['data']
 output_path = config['paths']['results']
 figure_path = config['paths']['figures']
 
-def main(country_codes,offsets,x_text,include_labels=True):
+def main(country_codes,offsets,x_text,y_text,include_labels=True):
     figures = os.path.join(figure_path,f"{'_'.join(country_codes)}_figures")
     os.makedirs(figures,exist_ok=True)
 
@@ -71,42 +71,6 @@ def main(country_codes,offsets,x_text,include_labels=True):
                                 "layers_names":["2040 - No Environmental constraints",
                                                 "2040 - Environmental constraints"]
                             },
-                            {
-                                "type":"final_stage_production_tons",
-                                "stage_type":["BAU"],
-                                "scenarios":["country_unconstrained","country_constrained"],
-                                "scenario_names":["country","country"],
-                                "years":[2040,2040],
-                                "layers":[
-                                            "bau_2040_mid_min_threshold_metal_tons",
-                                            "bau_2040_mid_min_threshold_metal_tons"],
-                                "layers_names":["BAU - No Environmental constraints",
-                                                "BAU - Environmental constraints"]
-                            },
-                            {
-                                "type":"final_stage_production_tons",
-                                "stage_type":["Early refining"],
-                                "scenarios":["country_unconstrained","country_constrained"],
-                                "scenario_names":["country","country"],
-                                "years":[2040,2040],
-                                "layers":[
-                                            "early_refining_2040_mid_min_threshold_metal_tons",
-                                            "early_refining_2040_mid_min_threshold_metal_tons"],
-                                "layers_names":["Early Refining - No Environmental constraints",
-                                                "Early Refining - Environmental constraints"]
-                            },
-                            {
-                                "type":"final_stage_production_tons",
-                                "stage_type":["Precursor related product"],
-                                "scenarios":["region_unconstrained","region_constrained"],
-                                "scenario_names":["region","region"],
-                                "years":[2040,2040],
-                                "layers":[
-                                            "precursor_2040_mid_max_threshold_metal_tons",
-                                            "precursor_2040_mid_max_threshold_metal_tons"],
-                                "layers_names":["Precursor - No Environmental constraints",
-                                                "Precursor - Environmental constraints"]
-                            },
                         ]
     result_type = ["combined"]
     stage_mapping_df = pd.read_excel(
@@ -153,7 +117,25 @@ def main(country_codes,offsets,x_text,include_labels=True):
 
                     mine_sites_df["total_tons"] = mine_sites_df[cols].sum(axis=1)
                     df = mine_sites_df[mine_sites_df["total_tons"] > 0]
-                    df = df[["total_tons","geometry"]]
+                    df["env_filter"
+                    ] = np.where(
+                                    ((
+                                        df["distance_to_keybiodiversityareas_km"] == 0
+                                    ) | (
+                                        df["distance_to_lastofwild_km"] == 0
+                                    ) | (
+                                        df["distance_to_protectedareas_km"] == 0
+                                    )),1,0
+                                    )
+                    df["water_filter"
+                    ] = np.where(
+                                    df["distance_to_waterstress_km"] == 0,1,0
+                                )
+                    df["total_filter"
+                    ] = np.where(
+                                    (df["env_filter"] == 1) & (df["water_filter"] == 0),1,0
+                                )
+                    df = df[["total_tons","env_filter","water_filter","total_filter","geometry"]]
                     df["reference_mineral"] = rf
                     df["color"] = rc
                     dfs.append(df)
@@ -170,12 +152,18 @@ def main(country_codes,offsets,x_text,include_labels=True):
                 figwidth = 12
                 figheight = figwidth/(2+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 5
-                textfontsize = 10
+                textfontsize = 6.5
+                textfontsize_heading = 7.5
+                textfontsize_title = 12
+                textfontsize_legend = 8
             else:
                 figwidth = 16
                 figheight = figwidth/(2.5+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 8
-                textfontsize = 12
+                textfontsize = 9
+                textfontsize_heading = 10
+                textfontsize_title = 16
+                textfontsize_legend = 10
             fig = plt.figure(figsize=(figwidth,figheight))
             plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
             for jdx, (sc_n,df,pos,span) in enumerate(sc_dfs):
@@ -186,30 +174,51 @@ def main(country_codes,offsets,x_text,include_labels=True):
                 ax.set_yticks([])
                 if sc_n == "key":
                     ax.set_ylim(yl)
-                    ax.set_xlim(xl[0]+0.5*dxl,xl[1])
-                    xk = xl[0] + 0.65*dxl
+                    ax.set_xlim(xl[0]+0.58*dxl,xl[1])
+                    xk = xl[0] + 0.63*dxl
                     xt = xk-0.04*dxl
-                    keys = ['tonnage','mineral']
+                    keys = ['tonnage','filter_type','mineral']
                     for ky in range(len(keys)):
                         key = keys[ky]
                         if key == 'tonnage':
                             tonnage_key = tonnage_key[::-1]
                             Nk = tonnage_key.size
-                            yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk) + 0.4*ky*dyl
+                            yk = yl[0] + np.linspace(0.15*dyl,0.45*dyl,Nk) + 0.4*ky*dyl
                             yt = yk[-1]+np.diff(yk[-3:-1])
                             size_key = marker_size_max*(tonnage_key/tmax)**0.5
                             key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                             key.geometry.plot(ax=ax,markersize=size_key,color='k')
                             ax.text(xt,yt,'Mine annual output (tonnes)',weight='bold',va='center')
                             for k in range(Nk):
-                                ax.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),va='center')
+                                ax.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),
+                                        fontsize=textfontsize_legend,va='center')
+                        elif key == 'filter_type':
+                            ftyp = [
+                                    "Protected areas only",
+                                    "Water stress areas only",
+                                    "Protected and water stress areas"
+                                    ]
+                            htyp = ["||||||","++++++","xxxxxx"]
+                            Nk = len(ftyp)
+                            yk = yl[0] + np.linspace(0.15*dyl,0.25*dyl,Nk) + 0.4*ky*dyl
+                            yt = yk[-1]+np.diff(yk[-3:-1])
+                            ax.text(xt,yt,'Mine and area overlaps',weight='bold',va='center')
+                            for k in range(Nk):
+                                ax.text(xk,yk[k],'   '+ftyp[k].capitalize(),
+                                    fontsize=textfontsize_legend,va='center')
+                                ax.scatter(xk,yk[k],marker='s',
+                                        facecolor='none',
+                                        edgecolor='k',
+                                        hatch=htyp[k],
+                                        s=100)
                         else:
                             Nk = len(reference_minerals)
-                            yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk) + 0.4*ky*dyl
+                            yk = yl[0] + np.linspace(0.15*dyl,0.3*dyl,Nk) + 0.3*ky*dyl
                             yt = yk[-1]+np.diff(yk[-3:-1])
                             ax.text(xt,yt,'Mineral produced',weight='bold',va='center')
                             for k in range(Nk):
-                                ax.text(xk,yk[k],'   '+reference_minerals[k].capitalize(),va='center')
+                                ax.text(xk,yk[k],'   '+reference_minerals[k].capitalize(),
+                                        fontsize=textfontsize_legend,va='center')
                                 ax.plot(xk,yk[k],'s',
                                         mfc=reference_mineral_colors[k],
                                         mec=reference_mineral_colors[k],
@@ -228,26 +237,83 @@ def main(country_codes,offsets,x_text,include_labels=True):
                     ax.set_title(sc_n,fontsize=16,fontweight="bold")
                     df["markersize"] = marker_size_max*(df["total_tons"]/tmax)**0.5
                     df = df.sort_values(by="total_tons",ascending=False)
-                    if len(df.index) > 0:
-                        df.geometry.plot(
-                            ax=ax, 
-                            color=df["color"], 
-                            edgecolor='none',
-                            markersize=df["markersize"],
-                            alpha=0.7)
-                        total_tons = df["total_tons"].sum()/1e3
-                    else:
-                        total_tons = 0.0
+                    total_tons = 0.0
+                    total_filter_tons = 0.0
+                    env_filter_tons = 0.0
+                    water_filter_tons = 0.0  
                     ax.text(
-                        xl[0]+x_text*dxl,yl[0]+0.05*dyl,
-                        "Total = {:,.1f} kilotonnes".format(total_tons),
-                        fontsize=textfontsize,weight='bold',ha='center')  
+                            xl[0]+x_text*dxl,yl[0]+y_text*dyl,
+                            'Annual Production (kilotonnes)',
+                            fontsize=textfontsize_heading,weight='bold',ha='left'
+                            )
+                    if len(df.index) > 0:
+                        total_tons = df["total_tons"].sum()/1e3
+                        total_filter_df = df[df["total_filter"] == 1]
+                        if len(total_filter_df.index)>0:
+                            total_filter_df.geometry.plot(
+                                ax=ax, 
+                                color=df["color"], 
+                                edgecolor='none',
+                                markersize=df["markersize"],
+                                linewidth=0.5,
+                                hatch = "xxxxxx",
+                                alpha=0.7)
+                            total_filter_tons = total_filter_df["total_tons"].sum()/1e3
+                        env_filter_df = df[(df["total_filter"] != 1) & (df["env_filter"] == 1)]
+                        if len(env_filter_df.index)>0:
+                            env_filter_df.geometry.plot(
+                                ax=ax, 
+                                color=df["color"], 
+                                edgecolor='none',
+                                markersize=df["markersize"],
+                                linewidth=0.5,
+                                hatch = "||||||",
+                                alpha=0.7)
+                            env_filter_tons = env_filter_df["total_tons"].sum()/1e3
+                        water_filter_df = df[(df["total_filter"] != 1) & (df["water_filter"] == 1)]
+                        if len(water_filter_df.index) > 0:
+                            water_filter_df.geometry.plot(
+                                ax=ax, 
+                                color=df["color"], 
+                                edgecolor='none',
+                                markersize=df["markersize"],
+                                linewidth=0.5,
+                                hatch = "++++++",
+                                alpha=0.7)
+                            water_filter_tons = water_filter_df["total_tons"].sum()/1e3
+                        df = df[(df["env_filter"] == 0) & (df["water_filter"] == 0)]
+                        if len(df.index) > 0:
+                            df.geometry.plot(
+                                ax=ax, 
+                                color=df["color"], 
+                                edgecolor='none',
+                                markersize=df["markersize"],
+                                alpha=0.7)
+
+                    ax.text(
+                        xl[0]+x_text*dxl,yl[0]+(y_text - 0.03)*dyl,
+                        'Total = {:,.1f}'.format(total_tons),
+                        fontsize=textfontsize,weight='bold',ha='left') 
+                    if total_tons > 0:       
+                        ax.text(
+                            xl[0]+x_text*dxl,yl[0]+(y_text - 2*0.03)*dyl,
+                            'Protected and water stress areas = {:,.1f}'.format(total_filter_tons),
+                            fontsize=textfontsize,weight='bold',ha='left')
+                        ax.text(
+                            xl[0]+x_text*dxl,yl[0]+(y_text - 3*0.03)*dyl,
+                            'Protected areas only = {:,.1f}'.format(env_filter_tons),
+                            fontsize=textfontsize,weight='bold',ha='left')
+                        ax.text(
+                            xl[0]+x_text*dxl,yl[0]+(y_text - 4*0.03)*dyl,
+                            'Water stress areas only = {:,.1f}'.format(water_filter_tons),
+                            fontsize=textfontsize,weight='bold',ha='left')
+
             fig_nm = '_'.join(list(set(layers))).replace("_min_threshold_metal_tons","").replace("_max_threshold_metal_tons","")
             if ton_type == "initial_stage_production_tons":
-                fig_file = f"mine_metal_content_maps_{fig_nm}.png"
+                fig_file = f"mine_metal_content_maps_{fig_nm}_with_filters.png"
             else:
                 fig_nm = fig_nm + '_' + '_'.join(list(set(scenario_names)))
-                fig_file = f"{rt}_processing_locations_maps_{fig_nm}.png"
+                fig_file = f"{rt}_processing_locations_maps_{fig_nm}_with_filters.png"
             plt.tight_layout()
             save_fig(os.path.join(figures,fig_file))
             plt.close()          
@@ -259,7 +325,8 @@ if __name__ == '__main__':
     default_offset = [-0.2,-0.2,1.0,1.0]
     zaf_offset = [0.0,10.0,0.0,0.0]
     right_text = 0.72
-    left_text = 0.30 
+    left_text = 0.06
+    y_text = 0.95 
     for ccg in ccg_countries:
         country_codes = [ccg]
         if ccg in ["UGA"]:
@@ -272,8 +339,8 @@ if __name__ == '__main__':
             offsets = [-0.2,-0.2,0.0,0.0]
         else:
             offsets = default_offset
-        if ccg in ["COD","TZA","AGO","ZWE","MWI","KEN"]:
+        if ccg in ["COD","TZA","AGO","ZWE","MWI","KEN","ZMB"]:
             x_text = left_text
         else:
             x_text = right_text
-        main(country_codes,offsets,x_text,include_labels=include_labels)
+        main(country_codes,offsets,x_text,y_text,include_labels=include_labels)

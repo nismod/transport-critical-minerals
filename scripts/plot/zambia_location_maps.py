@@ -172,7 +172,7 @@ def main():
         
             tmax = max(tmax)
             print (tmax)
-            tmax = 3250000.0
+            tmax = 2430000.0
             tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)
             sc_dfs.append(tuple(key_info))
             if len(scenarios) == 1:
@@ -245,7 +245,7 @@ def main():
                         alpha=0.7)
                     ax.text(
                         xl[0]+0.7*dxl,yl[0]+0.05*dyl,
-                        'Total = {:.2f} million tonnes'.format(df["total_tons"].sum()/1e6),
+                        'Total = {:,.0f} kilotonnes'.format(df["total_tons"].sum()/1e3),
                         fontsize=textfontsize,weight='bold',ha='center')  
             fig_nm = '_'.join(list(set(layers))).replace("_min_threshold_metal_tons","").replace("_max_threshold_metal_tons","")
             if ton_type == "initial_stage_production_tons":

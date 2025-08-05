@@ -146,14 +146,14 @@ def main(config):
                     stage_1_factors,
                     how="left",left_on=["export_country_code","reference_mineral"],
                     right_on=["iso3","reference_mineral"])
-    trade_df["trade_quantity_tons"] = np.where(
-                                        (
-                                            trade_df["refining_stage_cam"] == 1
-                                        ) & (
-                                            trade_df["reference_mineral"].isin(["cobalt","copper","nickel"])
-                                            ),
-                                        trade_df["trade_quantity_tons"]*trade_df["metal_content_factor"],
-                                        trade_df["trade_quantity_tons"])
+    # trade_df["trade_quantity_tons"] = np.where(
+    #                                     (
+    #                                         trade_df["refining_stage_cam"] == 1
+    #                                     ) & (
+    #                                         trade_df["reference_mineral"].isin(["cobalt","copper","nickel"])
+    #                                         ),
+    #                                     trade_df["trade_quantity_tons"]*trade_df["metal_content_factor"],
+    #                                     trade_df["trade_quantity_tons"])
     trade_df.drop(["iso3","metal_content_factor"],axis=1,inplace=True)
     del stage_1_factors
     # trade_df = pd.merge(
@@ -290,6 +290,7 @@ def main(config):
                                         )
 
                     domestic_prods = sorted(domestic_prods,key=lambda x:x[-1])
+                    # print (cnt,st,domestic_prods)
                     import_st = domestic_prods[0][0]
                     min_import = domestic_prods[0][1]
                     needed_import = domestic_prods[0][2]

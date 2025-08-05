@@ -357,6 +357,10 @@ def add_conversion_factors(df_trade,df_factors,ccg_countries,trade_iso_column="i
     df_factors_non_ccg = df_factors.groupby(
                                         ["reference_mineral","final_refined_stage"]
                                         )[["aggregate_ratio","metal_content_factor"]].agg(pd.Series.mode).reset_index()
+    df_factors_non_ccg["aggregate_ratio"
+        ] = df_factors_non_ccg["aggregate_ratio"].progress_apply(lambda x:min(x) if isinstance(x,float) is False else x)
+    df_factors_non_ccg["metal_content_factor"
+        ] = df_factors_non_ccg["metal_content_factor"].progress_apply(lambda x:min(x) if isinstance(x,float) is False else x)
     df_factors_non_ccg["refining_stage_cam"] = df_factors_non_ccg["final_refined_stage"]
     df_non_ccg = pd.merge(df_non_ccg,df_factors_non_ccg,how="left")
 
