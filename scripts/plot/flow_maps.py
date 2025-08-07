@@ -219,7 +219,7 @@ def main(
                     if key == 'node_tonnage':
                         n_tonnage_key = n_tonnage_key[::-1]
                         Nk = n_tonnage_key.size
-                        yk = yl[0] + np.linspace(0.05*dyl,0.3*dyl,Nk) + 0.4*ky*dyl
+                        yk = yl[0] + np.linspace(0.01*dyl,0.3*dyl,Nk) + 0.4*ky*dyl
                         yt = yk[-1]+np.diff(yk[-3:-1])
                         size_key = marker_size_max*(n_tonnage_key/n_tmax)**0.5
                         key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
@@ -235,7 +235,7 @@ def main(
                             min_max_vals.append((nmin,nmax))
                         min_max_vals = min_max_vals[::-1]
                         Nk = len(e_tonnage_weights)
-                        yk = yl[0] + np.linspace(0.05*dyl,0.3*dyl,Nk) + 0.3*ky*dyl
+                        yk = yl[0] + np.linspace(0.01*dyl,0.3*dyl,Nk) + 0.3*ky*dyl
                         yt = yk[-1]+np.diff(yk[-3:-1])
                         key_1 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                         key_1["id"] = key_1.index.values.tolist()
@@ -253,7 +253,7 @@ def main(
                             ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
                     elif key == "mode":
                         Nk = len(mode_types)
-                        yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.4*ky*dyl
+                        yk = yl[0] + np.linspace(0.01*dyl,0.12*dyl,Nk) + 0.4*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
                         ax.text(xt,yt,'Mode type',weight='bold',fontsize=10,va='center')
                         for k in range(Nk): 
@@ -264,7 +264,7 @@ def main(
                                     ms=10)
                     else:
                         Nk = len(processing_types)
-                        yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.35*ky*dyl
+                        yk = yl[0] + np.linspace(0.01*dyl,0.12*dyl,Nk) + 0.35*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
                         ax.text(xt,yt,'Location type',weight='bold',fontsize=10,va='center')
                         for k in range(Nk):
