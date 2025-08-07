@@ -40,7 +40,6 @@ def main(
     output_data_path = config['paths']['results']
     figure_path = config['paths']['figures']
 
-
     figures = os.path.join(figure_path,"regional_figures")
     os.makedirs(figures,exist_ok=True)
 
@@ -163,7 +162,7 @@ def main(
         if sc_l == 1:
             figwidth = 8
             figheight = figwidth/(2+sc_l*w)/dxl*dyl/(1-dt)
-            textfontsize = 10
+            textfontsize = 9
         else:
             figwidth = 16
             figheight = figwidth/(2.5+sc_l*w)/dxl*dyl/(1-dt)
@@ -207,16 +206,16 @@ def main(
                         key["geometry"] = key.progress_apply(lambda x:x.geometry.buffer(x.buffersize),axis=1)
                         key = gpd.GeoDataFrame(key, geometry='geometry')
                         key.geometry.plot(ax=ax,linewidth=0,facecolor='k',edgecolor='none')
-                        ax.text(xt,yt,'Links annual output (tonnes)',weight='bold',fontsize=10,va='center')
+                        ax.text(xt,yt,'Links annual output (tonnes)',weight='bold',fontsize=textfontsize,va='center')
                         for k in range(Nk):
-                            ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
+                            ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),fontsize=textfontsize,va='center')
                     else:
                         Nk = len(mode_types)
                         yk = yl[0] + np.linspace(0.15*dyl,0.20*dyl,Nk) + 0.4*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
-                        ax.text(xt,yt,'Mode type',weight='bold',fontsize=10,va='center')
+                        ax.text(xt,yt,'Mode type',weight='bold',fontsize=textfontsize,va='center')
                         for k in range(Nk): 
-                            ax.text(xk,yk[k],'   '+mode_types[k].capitalize(),va='center')
+                            ax.text(xk,yk[k],'   '+mode_types[k].capitalize(),fontsize=textfontsize,va='center')
                             ax.plot(xk,yk[k],'s',
                                     mfc=mode_colors[k],
                                     mec=mode_colors[k],
@@ -230,6 +229,7 @@ def main(
                             )
                 ax.set_title(sc_n,fontsize=textfontsize,fontweight="bold")
                 # e_df["linewidth"] = line_width_max*(np.log10(e_df[flow_column])/np.log10(e_tmax))
+                e_df = e_df.sort_values(by=flow_column,ascending=False)
                 e_df["linewidth"] = e_df.progress_apply(
                                         lambda x:set_geometry_buffer(
                                             x,flow_column,e_tonnage_weights),

@@ -129,7 +129,7 @@ def main(
 
     nodes = nodes_dfs[["id","geometry"]].drop_duplicates(subset=["id"],keep="first")
     nodes_flows_df = nodes_dfs.groupby(
-                            ["id","iso3","infra","mode"]
+                            ["id","iso3","mode"]
                             ).agg(dict([(c,"sum") for c in all_sums])).reset_index()
     for k,v in sum_dict.items():
         nodes_flows_df[k] = nodes_flows_df[list(set(v))].sum(axis=1)
