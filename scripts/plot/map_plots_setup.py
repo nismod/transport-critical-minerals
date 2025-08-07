@@ -65,7 +65,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
@@ -75,30 +75,33 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "python",
-                "zambia_location_maps.py"
+                "country_location_maps.py"
                 ]
-        print ("* Plot Zambia location maps")
+        print ("* Plot Country location maps")
         print (args)
         subprocess.run(args)
 
-    num_blocks = 12
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
-                "parallel",
-                "-j", str(num_blocks),
-                "--colsep", ";",
-                "-a",
-                "map_plots_set.txt",
                 "python",
-                "flow_maps.py",
-                "{}"
+                "env_layers_with_mines.py"
                 ]
-        print ("* Start the processing of plotting flows")
+        print ("* Plot regional location maps with environmental filters")
+        print (args)
+        subprocess.run(args)
+
+    run_script = True
+    if run_script is True:
+        args = [
+                "python",
+                "country_env_maps.py"
+                ]
+        print ("* Plot Country location maps with environmental filters")
         print (args)
         subprocess.run(args)
 
@@ -137,7 +140,7 @@ def main(config):
 
     num_blocks = 8
     
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "parallel",
@@ -151,25 +154,26 @@ def main(config):
                 ]
         print ("* Start the processing of plotting flows")
         print (args)
-        subprocess.run(args)               
+        subprocess.run(args)
 
-    # run_script = False
-    # if run_script is True:
-    #     args = [
-    #             "parallel",
-    #             "-j", str(num_blocks),
-    #             "--colsep", ";",
-    #             "-a",
-    #             "aggregated_map_plots_set.txt",
-    #             "python",
-    #             "zambia_agg_flow_maps.py",
-    #             "{}"
-    #             ]
-    #     print ("* Start the processing of plotting flows")
-    #     print (args)
-    #     subprocess.run(args)
-
+    num_blocks = 12
     run_script = True
+    if run_script is True:
+        args = [
+                "parallel",
+                "-j", str(num_blocks),
+                "--colsep", ";",
+                "-a",
+                "map_plots_set.txt",
+                "python",
+                "flow_maps.py",
+                "{}"
+                ]
+        print ("* Start the processing of plotting flows")
+        print (args)
+        subprocess.run(args)
+
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",

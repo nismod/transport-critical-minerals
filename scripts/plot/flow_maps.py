@@ -58,6 +58,9 @@ def main(
     ccg_countries = pd.read_csv(os.path.join(processed_data_path,"admin_boundaries","ccg_country_codes.csv"))
     ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
     processing_types = ["Mine","Processing location"]
+    modes = ["road","rail"]
+    mode_types = ["Roads","Railways"]
+    mode_colors = ["#543005","#003c30"]
     processing_colors = mp["node_colors"][:-1]
     link_color = mp["edge_color"]
     
@@ -210,7 +213,7 @@ def main(
                 ax.set_xlim(xl)
                 xk = xl[0] + 0.10*dxl
                 xt = xk-0.04*dxl
-                keys = ['edge_tonnage','node_tonnage','location']
+                keys = ['edge_tonnage','node_tonnage','mode','location']
                 for ky in range(len(keys)):
                     key = keys[ky]
                     if key == 'node_tonnage':
@@ -248,6 +251,17 @@ def main(
                         ax.text(xt,yt,'Links annual output (tonnes)',weight='bold',fontsize=10,va='center')
                         for k in range(Nk):
                             ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
+                    elif key == "mode":
+                        Nk = len(mode_types)
+                        yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.4*ky*dyl
+                        yt = yk[-1]+np.diff(yk)[0]
+                        ax.text(xt,yt,'Mode type',weight='bold',fontsize=10,va='center')
+                        for k in range(Nk): 
+                            ax.text(xk,yk[k],'   '+mode_types[k].capitalize(),va='center')
+                            ax.plot(xk,yk[k],'s',
+                                    mfc=mode_colors[k],
+                                    mec=mode_colors[k],
+                                    ms=10)
                     else:
                         Nk = len(processing_types)
                         yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.4*ky*dyl
@@ -267,13 +281,14 @@ def main(
                             include_labels=True
                             )
                 ax.set_title(sc_n,fontsize=textfontsize,fontweight="bold")
-                # e_df["linewidth"] = line_width_max*(np.log10(e_df[flow_column])/np.log10(e_tmax))
                 e_df["linewidth"] = e_df.progress_apply(
                                         lambda x:set_geometry_buffer(
                                             x,flow_column,e_tonnage_weights),
                                         axis=1)
                 e_df["geometry"] = e_df.progress_apply(lambda x:x.geometry.buffer(x.linewidth),axis=1)
-                e_df.geometry.plot(ax=ax,facecolor=link_color,edgecolor='none',linewidth=0,alpha=0.7)
+                for ndx,(mt,mc) in enumerate(zip(modes,mode_colors)):
+                    p_df = e_df[e_df["mode"] == mt]
+                    p_df.geometry.plot(ax=ax,facecolor=mc,edgecolor='none',linewidth=0,alpha=0.7)
                 n_df["markersize"] = marker_size_max*(n_df[flow_column]/n_tmax)**0.5
                 n_df = n_df.sort_values(by=flow_column,ascending=False)
                 n_df.geometry.plot(

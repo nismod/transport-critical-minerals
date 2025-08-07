@@ -57,6 +57,9 @@ def main(
     ccg_isos = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
     
     link_color = "#525252"
+    modes = ["road","rail"]
+    mode_types = ["Roads","Railways"]
+    mode_colors = ["#543005","#003c30"]
     
     _,_,xl,yl = map_background_and_bounds(include_countries=ccg_isos)
     dxl = abs(np.diff(xl))[0]
@@ -179,30 +182,44 @@ def main(
                 # ax.set_xlim(xl)
                 xk = xl[0] + 0.65*dxl
                 xt = xk-0.04*dxl
-                Nk = len(e_tonnage_weights)
-                yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk)
-                yt = yk[-1]+np.diff(yk[-3:-1])
-                
-                widths = []
-                min_max_vals = []
-                for (i, ((nmin, nmax), w)) in enumerate(e_tonnage_weights.items()):
-                    widths.append(w)
-                    min_max_vals.append((nmin,nmax))
-                min_max_vals = min_max_vals[::-1]
-                key_1 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
-                key_1["id"] = key_1.index.values.tolist()
-                key_2 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(1.03*np.ones(Nk)*xk, yk))
-                key_2["id"] = key_2.index.values.tolist()
-                key = pd.concat([key_1,key_2],axis=0,ignore_index=False)
-                key = key.groupby(['id'])['geometry'].apply(lambda x: LineString(x.tolist())).reset_index()
-                key = gpd.GeoDataFrame(key, geometry='geometry')
-                key["buffersize"] = widths[::-1]
-                key["geometry"] = key.progress_apply(lambda x:x.geometry.buffer(x.buffersize),axis=1)
-                key = gpd.GeoDataFrame(key, geometry='geometry')
-                key.geometry.plot(ax=ax,linewidth=0,facecolor='k',edgecolor='none')
-                ax.text(xt,yt,'Links annual output (tonnes)',weight='bold',fontsize=10,va='center')
-                for k in range(Nk):
-                    ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
+                keys = ['edge_tonnage','mode']
+                for ky in range(len(keys)):
+                    if key == "edge_tonnage":
+                        Nk = len(e_tonnage_weights)
+                        yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk)
+                        yt = yk[-1]+np.diff(yk[-3:-1])
+                        
+                        widths = []
+                        min_max_vals = []
+                        for (i, ((nmin, nmax), w)) in enumerate(e_tonnage_weights.items()):
+                            widths.append(w)
+                            min_max_vals.append((nmin,nmax))
+                        min_max_vals = min_max_vals[::-1]
+                        key_1 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
+                        key_1["id"] = key_1.index.values.tolist()
+                        key_2 = gpd.GeoDataFrame(geometry=gpd.points_from_xy(1.03*np.ones(Nk)*xk, yk))
+                        key_2["id"] = key_2.index.values.tolist()
+                        key = pd.concat([key_1,key_2],axis=0,ignore_index=False)
+                        key = key.groupby(['id'])['geometry'].apply(lambda x: LineString(x.tolist())).reset_index()
+                        key = gpd.GeoDataFrame(key, geometry='geometry')
+                        key["buffersize"] = widths[::-1]
+                        key["geometry"] = key.progress_apply(lambda x:x.geometry.buffer(x.buffersize),axis=1)
+                        key = gpd.GeoDataFrame(key, geometry='geometry')
+                        key.geometry.plot(ax=ax,linewidth=0,facecolor='k',edgecolor='none')
+                        ax.text(xt,yt,'Links annual output (tonnes)',weight='bold',fontsize=10,va='center')
+                        for k in range(Nk):
+                            ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
+                    else:
+                        Nk = len(mode_types)
+                        yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.4*ky*dyl
+                        yt = yk[-1]+np.diff(yk)[0]
+                        ax.text(xt,yt,'Mode type',weight='bold',fontsize=10,va='center')
+                        for k in range(Nk): 
+                            ax.text(xk,yk[k],'   '+mode_types[k].capitalize(),va='center')
+                            ax.plot(xk,yk[k],'s',
+                                    mfc=mode_colors[k],
+                                    mec=mode_colors[k],
+                                    ms=10)
             else:
                 ax = plot_ccg_basemap(
                             ax,
@@ -217,7 +234,10 @@ def main(
                                             x,flow_column,e_tonnage_weights),
                                         axis=1)
                 e_df["geometry"] = e_df.progress_apply(lambda x:x.geometry.buffer(x.linewidth),axis=1)
-                e_df.geometry.plot(ax=ax,facecolor=link_color,edgecolor='none',linewidth=0,alpha=0.7)
+                # e_df.geometry.plot(ax=ax,facecolor=link_color,edgecolor='none',linewidth=0,alpha=0.7)
+                for ndx,(mt,mc) in enumerate(zip(modes,mode_colors)):
+                    p_df = e_df[e_df["mode"] == mt]
+                    p_df.geometry.plot(ax=ax,facecolor=mc,edgecolor='none',linewidth=0,alpha=0.7)
 
         plt.tight_layout()
         save_fig(os.path.join(figures,figure_result_file))

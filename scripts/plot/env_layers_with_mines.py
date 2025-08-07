@@ -39,10 +39,8 @@ def main():
     panel_span = 2
     marker_size_max = 600
     key_info = ["key",pd.DataFrame(),0,1]
-    reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
-    reference_mineral_colors = [
-                                "#f46d43","#fdae61","#fee08b","#c2a5cf","#66c2a5","#3288bd"
-                                ]
+    reference_minerals = ["cobalt", "copper", "graphite", "lithium", "manganese", "nickel"]
+    reference_mineral_colors = ["#3288bd", "#fee08b", "#66c2a5", "#c2a5cf", "#fdae61", "#f46d43"]
     plot_descriptions = [
                             {
                                 "type":"initial_stage_production_tons",

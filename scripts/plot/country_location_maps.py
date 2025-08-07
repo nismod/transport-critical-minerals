@@ -45,10 +45,8 @@ def main(country_codes,offsets,x_text,include_labels=True):
     panel_span = 2
     marker_size_max = 600
     key_info = ["key",pd.DataFrame(),0,1]
-    reference_minerals = ["copper","cobalt","manganese","lithium","graphite","nickel"]
-    reference_mineral_colors = [
-                                "#f46d43","#fdae61","#fee08b","#c2a5cf","#66c2a5","#3288bd"
-                                ]
+    reference_minerals = ["cobalt", "copper", "graphite", "lithium", "manganese", "nickel"]
+    reference_mineral_colors = ["#3288bd", "#fee08b", "#66c2a5", "#c2a5cf", "#fdae61", "#f46d43"]
     plot_descriptions = [
                             {
                                 "type":"initial_stage_production_tons",
@@ -254,8 +252,8 @@ def main(country_codes,offsets,x_text,include_labels=True):
 
 
 if __name__ == '__main__':
-    # ccg_countries = ["AGO","BDI","BWA","COD","KEN","MDG","MOZ","MWI","NAM","TZA","UGA","ZAF","ZMB","ZWE"]
-    ccg_countries = ["ZMB"]
+    ccg_countries = ["AGO","BDI","BWA","COD","KEN","MDG","MOZ","MWI","NAM","TZA","UGA","ZAF","ZMB","ZWE"]
+    # ccg_countries = ["ZMB"]
     default_offset = [-0.2,-0.2,1.0,1.0]
     zaf_offset = [0.0,10.0,0.0,0.0]
     right_text = 0.72
