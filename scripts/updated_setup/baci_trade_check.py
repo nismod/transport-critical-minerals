@@ -124,11 +124,13 @@ def main(config,agg_type):
                                         sheet_name=f"{loc}_{opt}",
                                         index_col=[0,1,2,3,4,5])
                     transport_df = transport_df.reset_index()
+                    transport_df["case_type"
+                        ] = f"{loc}_{opt}"
                     dfs.append(transport_df)
 
             dfs = pd.concat(dfs,axis=0,ignore_index=True)
             dfs = dfs.groupby(
-                        ["scenario","reference_mineral"]
+                        ["case_type","scenario","reference_mineral"]
                         ).agg(
                         dict([(t,"sum") for t in ["production_tonnes","export_tonnes","revenue_usd"]])
                         ).reset_index()
