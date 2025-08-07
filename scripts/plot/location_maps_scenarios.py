@@ -229,7 +229,7 @@ def main():
                         markersize=df["markersize"],
                         alpha=0.7)
                     ax.text(
-                        xl[0]+0.5*dxl,yl[0]+0.05*dyl,
+                        xl[0]+0.5*dxl,yl[0]+0.2*dyl,
                         'Total = {:.1f} million tonnes'.format(df["total_tons"].sum()/1e6),
                         fontsize=textfontsize,weight='bold',ha='center')  
             fig_nm = '_'.join(list(set(layers))).replace("_min_threshold_metal_tons","").replace("_max_threshold_metal_tons","")
