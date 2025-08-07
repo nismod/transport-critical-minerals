@@ -184,6 +184,7 @@ def main(
                 xt = xk-0.04*dxl
                 keys = ['edge_tonnage','mode']
                 for ky in range(len(keys)):
+                    key = keys[ky]
                     if key == "edge_tonnage":
                         Nk = len(e_tonnage_weights)
                         yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk)
