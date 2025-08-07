@@ -132,7 +132,7 @@ def main(config,agg_type):
             dfs = dfs.groupby(
                         ["case_type","scenario","reference_mineral"]
                         ).agg(
-                        dict([(t,"sum") for t in ["production_tonnes","export_tonnes","revenue_usd"]])
+                        dict([(t,"sum") for t in ["export_tonnes","revenue_usd"]])
                         ).reset_index()
             dfs["total_revenue_per_tonne"] = dfs["revenue_usd"]/dfs["export_tonnes"]
             dfs.to_csv(
