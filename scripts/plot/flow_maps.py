@@ -264,7 +264,7 @@ def main(
                                     ms=10)
                     else:
                         Nk = len(processing_types)
-                        yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.3*ky*dyl
+                        yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.35*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
                         ax.text(xt,yt,'Location type',weight='bold',fontsize=10,va='center')
                         for k in range(Nk):
