@@ -212,7 +212,7 @@ def main(
                             ax.text(xk,yk[k],'     {:,.0f} - {:,.0f}'.format(min_max_vals[k][0],min_max_vals[k][1]),va='center')
                     else:
                         Nk = len(mode_types)
-                        yk = yl[0] + np.linspace(0.05*dyl,0.12*dyl,Nk) + 0.4*ky*dyl
+                        yk = yl[0] + np.linspace(0.15*dyl,0.20*dyl,Nk) + 0.4*ky*dyl
                         yt = yk[-1]+np.diff(yk)[0]
                         ax.text(xt,yt,'Mode type',weight='bold',fontsize=10,va='center')
                         for k in range(Nk): 
