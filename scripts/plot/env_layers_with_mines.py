@@ -88,7 +88,7 @@ def main():
                                             "optimised_processing_locations",
                                             fname),
                                         layer=lyr)
-                mine_city_stages = modify_mineral_usage_factors(future_year=y)
+                mine_city_stages = modify_mineral_usage_factors(sc,future_year=y)
                 dfs = []
                 for kdx,(rf,rc) in enumerate(zip(reference_minerals,reference_mineral_colors)):
                     if ton_type == "initial_stage_production_tons":

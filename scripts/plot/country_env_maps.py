@@ -101,7 +101,7 @@ def main(country_codes,offsets,x_text,y_text,include_labels=True):
                                             fname),
                                         layer=lyr)
                 mine_sites_df = mine_sites_df[mine_sites_df["iso3"].isin(country_codes)]
-                mine_city_stages = modify_mineral_usage_factors(future_year=y)
+                mine_city_stages = modify_mineral_usage_factors(sc,future_year=y)
                 dfs = []
                 for kdx,(rf,rc) in enumerate(zip(reference_minerals,reference_mineral_colors)):
                     if ton_type == "initial_stage_production_tons":
