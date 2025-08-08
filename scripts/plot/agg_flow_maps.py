@@ -152,7 +152,7 @@ def main(
 
     if make_plot is True:
         # edges_range += [max_flow]
-        edges_range = [min_flow,max_flow]
+        edges_range = [min_flow,2e5,1e6,4e6,8e6,max_flow]
         e_tmax = max(edges_range)
         e_tonnage_weights = generate_weight_bins(edges_range, 
                                 width_step=width_step, 

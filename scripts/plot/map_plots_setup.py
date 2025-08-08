@@ -65,7 +65,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -75,7 +75,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -119,7 +119,7 @@ def main(config):
         print ("* Start the processing of plotting flows")
         print (args)
         subprocess.run(args)
-    
+
 
     run_script = True
     if run_script is True:
