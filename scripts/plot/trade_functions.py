@@ -61,18 +61,99 @@ def get_columns_names():
             conversion_factor_column, trade_balance_columns,
             final_trade_columns,reference_minerals)
 
-def get_common_input_dataframes(data_type,refining_year,trade_year):    
+# def get_common_input_dataframes(data_type,refining_year,trade_year):    
+#     # Read the data on the conversion factors to go from one stage to another
+#     # This will help in understanding material requirements for production of a stage output
+#     # from the inputs of another stage                        
+#     pr_conv_factors_df = pd.read_excel(os.path.join(processed_data_path,
+#                                         "mineral_usage_factors",
+#                                         "aggregated_stages.xlsx"),dtype=data_type)[[
+#                                             "reference_mineral",
+#                                             "initial_refined_stage",
+#                                             "final_refined_stage",
+#                                             "aggregate_ratio"
+#                                             ]]
+#     # Read the data on the usage of stage 1 (or metal content converted to higher stage)
+#     mineral_usage_factor_df = pd.read_excel(os.path.join(processed_data_path,
+#                                         "mineral_usage_factors",
+#                                         "mineral_usage_factors.xlsx"))[[
+#                                             "reference_mineral",
+#                                             "final_refined_stage",
+#                                             "usage_factor"
+#                                             ]]
+#     mineral_usage_factor_df = mineral_usage_factor_df.drop_duplicates(
+#                                     subset=["reference_mineral","final_refined_stage"],
+#                                     keep="first")
+#     # Read the data on how much metal content goes into ores and concentrates
+#     metal_content_factors_df = pd.read_csv(os.path.join(processed_data_path,
+#                                             "mineral_usage_factors",
+#                                             "metal_content.csv"))
+#     metal_content_factors_df.rename(
+#                         columns={
+#                             "Reference mineral":"reference_mineral",
+#                             "Input metal content":"metal_content_factor"},
+#                         inplace=True)
+    
+#     # Read the finalised version of the BACI trade data
+#     ccg_countries = pd.read_csv(
+#                         os.path.join(processed_data_path,
+#                                 "baci","ccg_country_codes.csv"))
+#     ccg_countries = ccg_countries[ccg_countries["ccg_country"] == 1]["iso_3digit_alpha"].values.tolist()
+
+#     # Read the data on the highest stages at the mines
+#     # This will help identify which stage goes to mine and which outside
+#     mine_city_stages = pd.read_csv(os.path.join(processed_data_path,"baci","mine_city_stages.csv"))
+#     mine_city_stages = mine_city_stages[
+#                             mine_city_stages["year"] == refining_year
+#                             ][["reference_mineral","mine_final_refined_stage"]]
+    
+#     trade_df = pd.read_csv(
+#                     os.path.join(processed_data_path,
+#                         "baci",f"baci_ccg_minerals_trade_{trade_year}_bgs_corrected.csv"))
+#     trade_df = trade_df[trade_df["trade_quantity_tons"]>0]
+
+#     return (pr_conv_factors_df, 
+#             metal_content_factors_df, ccg_countries, 
+#             mine_city_stages, trade_df, mineral_usage_factor_df)
+
+# def modify_mineral_usage_factors(future_year=2030,baseline_year=2022):
+#     (data_type, _, _,_, _, _,_,_) = get_columns_names()
+#     (_, _, _,mcs_df,_, muf_df) = get_common_input_dataframes(
+#                                         data_type,future_year,baseline_year)
+
+#     muf_df["mod_usage_factor"
+#         ] = muf_df.groupby(["reference_mineral"])["usage_factor"].cumprod()
+#     muf_df = pd.merge(muf_df,mcs_df,how="left",on=["reference_mineral"])
+#     muf_df["mod_usage_factor"
+#         ] = np.where(
+#                     muf_df["final_refined_stage"] > muf_df["mine_final_refined_stage"],
+#                     0,
+#                     muf_df["mod_usage_factor"])
+#     muf_df = muf_df.sort_values(by=["reference_mineral","final_refined_stage"],ascending=False)
+#     muf_df["final_usage_factor"
+#         ] = muf_df.groupby(["reference_mineral"])["mod_usage_factor"].diff()
+#     muf_df["final_usage_factor"] = muf_df["final_usage_factor"].fillna(muf_df["mod_usage_factor"])
+#     muf_df["usage_factor"] = muf_df["final_usage_factor"]
+#     muf_df["cum_usage_factor"
+#         ] = muf_df[muf_df["final_refined_stage"] > 1.0
+#             ].groupby(["reference_mineral"])["usage_factor"].transform("sum")
+#     muf_df["cum_usage_factor"] = muf_df["cum_usage_factor"].fillna(0)
+#     muf_df.drop(
+#                 [
+#                     "mod_usage_factor",
+#                     "final_usage_factor",
+#                     "mine_final_refined_stage"
+#                 ],
+#                 axis=1,inplace=True)
+#     return muf_df[(muf_df["usage_factor"] > 0) & (muf_df["cum_usage_factor"] > 0)]
+
+def get_common_input_dataframes(data_type,planned_scenario,refining_year,trade_year):    
     # Read the data on the conversion factors to go from one stage to another
     # This will help in understanding material requirements for production of a stage output
     # from the inputs of another stage                        
     pr_conv_factors_df = pd.read_excel(os.path.join(processed_data_path,
                                         "mineral_usage_factors",
-                                        "aggregated_stages.xlsx"),dtype=data_type)[[
-                                            "reference_mineral",
-                                            "initial_refined_stage",
-                                            "final_refined_stage",
-                                            "aggregate_ratio"
-                                            ]]
+                                        "aggregated_stages_modified.xlsx"))
     # Read the data on the usage of stage 1 (or metal content converted to higher stage)
     mineral_usage_factor_df = pd.read_excel(os.path.join(processed_data_path,
                                         "mineral_usage_factors",
@@ -102,9 +183,13 @@ def get_common_input_dataframes(data_type,refining_year,trade_year):
 
     # Read the data on the highest stages at the mines
     # This will help identify which stage goes to mine and which outside
-    mine_city_stages = pd.read_csv(os.path.join(processed_data_path,"baci","mine_city_stages.csv"))
+    mine_city_stages = pd.read_csv(os.path.join(processed_data_path,"baci","mine_city_stages_new.csv"))
     mine_city_stages = mine_city_stages[
-                            mine_city_stages["year"] == refining_year
+                            (
+                                mine_city_stages["year"] == refining_year
+                            ) & (
+                                mine_city_stages["planned_scenario"] == planned_scenario
+                            )
                             ][["reference_mineral","mine_final_refined_stage"]]
     
     trade_df = pd.read_csv(
@@ -116,35 +201,95 @@ def get_common_input_dataframes(data_type,refining_year,trade_year):
             metal_content_factors_df, ccg_countries, 
             mine_city_stages, trade_df, mineral_usage_factor_df)
 
-def modify_mineral_usage_factors(future_year=2030,baseline_year=2022):
-    (data_type, _, _,_, _, _,_,_) = get_columns_names()
-    (_, _, _,mcs_df,_, muf_df) = get_common_input_dataframes(
-                                        data_type,future_year,baseline_year)
 
-    muf_df["mod_usage_factor"
-        ] = muf_df.groupby(["reference_mineral"])["usage_factor"].cumprod()
-    muf_df = pd.merge(muf_df,mcs_df,how="left",on=["reference_mineral"])
-    muf_df["mod_usage_factor"
-        ] = np.where(
-                    muf_df["final_refined_stage"] > muf_df["mine_final_refined_stage"],
-                    0,
-                    muf_df["mod_usage_factor"])
-    muf_df = muf_df.sort_values(by=["reference_mineral","final_refined_stage"],ascending=False)
-    muf_df["final_usage_factor"
-        ] = muf_df.groupby(["reference_mineral"])["mod_usage_factor"].diff()
-    muf_df["final_usage_factor"] = muf_df["final_usage_factor"].fillna(muf_df["mod_usage_factor"])
-    muf_df["usage_factor"] = muf_df["final_usage_factor"]
-    muf_df["cum_usage_factor"
-        ] = muf_df[muf_df["final_refined_stage"] > 1.0
-            ].groupby(["reference_mineral"])["usage_factor"].transform("sum")
+def modify_mineral_usage_factors(scenario,future_year=2030,baseline_year=2022):
+    (data_type, _, _,_, _, _,_,_) = get_columns_names()
+    (_, _, ccg_cnts,mcs_df,_, muf_df) = get_common_input_dataframes(
+                                        data_type,scenario,future_year,baseline_year)
+    cnt_df = pd.DataFrame(ccg_cnts,columns=["export_country_code"])
+    mineral_df = pd.DataFrame(
+                        list(
+                                set(muf_df["reference_mineral"].values.tolist()
+                                    )
+                            ),columns=["reference_mineral"]
+                        )
+    cnt_df = pd.merge(cnt_df,mineral_df,how="cross")
+    del mineral_df
+
+    if scenario == "bau":
+        tr_df = pd.read_csv(
+                        os.path.join(
+                            output_data_path,
+                            "baci_trade_matrices",
+                            f"baci_ccg_country_trade_breakdown_{baseline_year}_baseline.csv")
+                        )
+        tr_df = tr_df[tr_df["initial_stage_production_tons"] > 0]
+        exp_df = tr_df[tr_df["export_country_code"].isin(ccg_cnts)]
+        exp_df = exp_df[exp_df["initial_processing_stage"] == 0.0]
+        muf_df = exp_df.groupby(
+                    [
+                        "export_country_code",
+                        "reference_mineral",
+                        "final_processing_stage"
+                    ]
+                    ).agg({"initial_stage_production_tons":"sum"}).reset_index()
+        muf_df["usage_factor"
+            ] = muf_df["initial_stage_production_tons"]/muf_df.groupby(
+                                                    [
+                                                        "export_country_code",
+                                                        "reference_mineral"]
+                                                    )["initial_stage_production_tons"
+                                                    ].transform("sum")
+        muf_df.rename(columns={"final_processing_stage":"final_refined_stage"},inplace=True)
+        muf_df.drop(
+                    [
+                        "initial_stage_production_tons"
+                    ],
+                    axis=1,inplace=True)
+        cnt_df["final_refined_stage"] = 1.0
+        muf_df = pd.merge(
+                        muf_df,
+                        cnt_df,
+                        how="outer",
+                        on=["export_country_code","reference_mineral","final_refined_stage"]
+                        )
+        muf_df["usage_factor"
+            ] = muf_df["usage_factor"].fillna(1.0)
+        muf_df["cum_usage_factor"
+                ] = muf_df.groupby(
+                        ["export_country_code",
+                        "reference_mineral"]
+                        )["usage_factor"].transform("sum")
+    else:
+        muf_df["mod_usage_factor"
+            ] = muf_df.groupby(["reference_mineral"])["usage_factor"].cumprod()
+        muf_df = pd.merge(muf_df,mcs_df,how="left",on=["reference_mineral"])
+        muf_df["mod_usage_factor"
+            ] = np.where(
+                        muf_df["final_refined_stage"] > muf_df["mine_final_refined_stage"],
+                        0,
+                        muf_df["mod_usage_factor"])
+        muf_df = muf_df.sort_values(by=["reference_mineral","final_refined_stage"],ascending=False)
+        muf_df["final_usage_factor"
+            ] = muf_df.groupby(["reference_mineral"])["mod_usage_factor"].diff()
+        muf_df["final_usage_factor"] = muf_df["final_usage_factor"].fillna(muf_df["mod_usage_factor"])
+        muf_df["usage_factor"] = muf_df["final_usage_factor"]
+        muf_df.drop(
+                    [
+                        "mod_usage_factor",
+                        "final_usage_factor",
+                        "mine_final_refined_stage"
+                    ],
+                    axis=1,inplace=True)
+        muf_df = pd.merge(cnt_df,muf_df,how="left",on=["reference_mineral"])
+
+        muf_df["cum_usage_factor"
+                ] = muf_df[muf_df["final_refined_stage"] > 1.0
+                    ].groupby(
+                        ["export_country_code",
+                        "reference_mineral"]
+                        )["usage_factor"].transform("sum")
     muf_df["cum_usage_factor"] = muf_df["cum_usage_factor"].fillna(0)
-    muf_df.drop(
-                [
-                    "mod_usage_factor",
-                    "final_usage_factor",
-                    "mine_final_refined_stage"
-                ],
-                axis=1,inplace=True)
     return muf_df[(muf_df["usage_factor"] > 0) & (muf_df["cum_usage_factor"] > 0)]
 
 

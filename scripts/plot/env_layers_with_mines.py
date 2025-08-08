@@ -129,6 +129,7 @@ def main():
                 sc_dfs.append((lyr_nm,dfs,panel_span*idx + 1,panel_span))
         
             tmax = max(tmax)
+            tmax = 2e6
             tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)
             sc_dfs.append(tuple(key_info))
             if len(scenarios) == 1:

@@ -96,6 +96,30 @@ def main(country_codes,offsets,x_text,include_labels=True):
                             {
                                 "type":"final_stage_production_tons",
                                 "stage_type":["Precursor related product"],
+                                "scenarios":["country_unconstrained","country_constrained"],
+                                "scenario_names":["country","country"],
+                                "years":[2040,2040],
+                                "layers":[
+                                            "precursor_2040_mid_min_threshold_metal_tons",
+                                            "precursor_2040_mid_min_threshold_metal_tons"],
+                                "layers_names":["Precursor - No Environmental constraints",
+                                                "Precursor - Environmental constraints"]
+                            },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Early refining"],
+                                "scenarios":["region_unconstrained","region_constrained"],
+                                "scenario_names":["region","region"],
+                                "years":[2040,2040],
+                                "layers":[
+                                            "early_refining_2040_mid_max_threshold_metal_tons",
+                                            "early_refining_2040_mid_max_threshold_metal_tons"],
+                                "layers_names":["Early Refining - No Environmental constraints",
+                                                "Early Refining - Environmental constraints"]
+                            },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Precursor related product"],
                                 "scenarios":["region_unconstrained","region_constrained"],
                                 "scenario_names":["region","region"],
                                 "years":[2040,2040],
@@ -137,15 +161,15 @@ def main(country_codes,offsets,x_text,include_labels=True):
                                             fname),
                                         layer=lyr)
                 mine_sites_df = mine_sites_df[mine_sites_df["iso3"].isin(country_codes)]
-                mine_city_stages = modify_mineral_usage_factors(future_year=y)
+                mine_city_stages = modify_mineral_usage_factors(sc,future_year=y)
                 dfs = []
                 for kdx,(rf,rc) in enumerate(zip(reference_minerals,reference_mineral_colors)):
                     if ton_type == "initial_stage_production_tons":
                         cols = [f"{rf}_{ton_type}_0.0_in_{sc_nm}"]
                     else:
-                        stages = mine_city_stages[
+                        stages = list(set(mine_city_stages[
                                     mine_city_stages["reference_mineral"] == rf
-                                    ]["final_refined_stage"].values.tolist()
+                                    ]["final_refined_stage"].values.tolist()))
                         cols = [f"{rf}_{ton_type}_{float(st)}_in_{sc_nm}" for st in stages]
                         cols = [c for c in cols if c in mine_sites_df.columns.values.tolist()]
 
@@ -168,12 +192,12 @@ def main(country_codes,offsets,x_text,include_labels=True):
                 figwidth = 12
                 figheight = figwidth/(2+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 5
-                textfontsize = 10
+                textfontsize = 8
             else:
                 figwidth = 16
                 figheight = figwidth/(2.5+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 8
-                textfontsize = 12
+                textfontsize = 10
             fig = plt.figure(figsize=(figwidth,figheight))
             plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
             for jdx, (sc_n,df,pos,span) in enumerate(sc_dfs):
@@ -198,7 +222,10 @@ def main(country_codes,offsets,x_text,include_labels=True):
                             size_key = marker_size_max*(tonnage_key/tmax)**0.5
                             key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                             key.geometry.plot(ax=ax,markersize=size_key,color='k')
-                            ax.text(xt,yt,'Mine annual output (tonnes)',weight='bold',va='center')
+                            if ton_type == "initial_stage_production_tons":
+                                hd = 'Mine annual output\n(tonnes)'
+                            else:
+                                hd = 'Processed annual output\n(tonnes)'
                             for k in range(Nk):
                                 ax.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),va='center')
                         else:

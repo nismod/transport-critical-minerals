@@ -90,6 +90,30 @@ def main():
                             {
                                 "type":"final_stage_production_tons",
                                 "stage_type":["Precursor related product"],
+                                "scenarios":["country_unconstrained","country_constrained"],
+                                "scenario_names":["country","country"],
+                                "years":[2040,2040],
+                                "layers":[
+                                            "precursor_2040_mid_min_threshold_metal_tons",
+                                            "precursor_2040_mid_min_threshold_metal_tons"],
+                                "layers_names":["Precursor - No Environmental constraints",
+                                                "Precursor - Environmental constraints"]
+                            },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Early refining"],
+                                "scenarios":["region_unconstrained","region_constrained"],
+                                "scenario_names":["region","region"],
+                                "years":[2040,2040],
+                                "layers":[
+                                            "early_refining_2040_mid_max_threshold_metal_tons",
+                                            "early_refining_2040_mid_max_threshold_metal_tons"],
+                                "layers_names":["Early Refining - No Environmental constraints",
+                                                "Early Refining - Environmental constraints"]
+                            },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Precursor related product"],
                                 "scenarios":["region_unconstrained","region_constrained"],
                                 "scenario_names":["region","region"],
                                 "years":[2040,2040],
@@ -133,7 +157,7 @@ def main():
                                             "optimised_processing_locations",
                                             fname),
                                         layer=lyr)
-                mine_city_stages = modify_mineral_usage_factors(future_year=y)
+                mine_city_stages = modify_mineral_usage_factors(sc,future_year=y)
                 dfs = []
                 for kdx,(rf,rc) in enumerate(zip(reference_minerals,reference_mineral_colors)):
                     if ton_type == "initial_stage_production_tons":
@@ -145,9 +169,9 @@ def main():
                         #                 ) & (
                         #                     stage_mapping_df["processing_type"].isin(st_type)
                         #                 )]["processing_stage"].values.tolist()
-                        stages = mine_city_stages[
+                        stages = list(set(mine_city_stages[
                                     mine_city_stages["reference_mineral"] == rf
-                                    ]["final_refined_stage"].values.tolist()
+                                    ]["final_refined_stage"].values.tolist()))
                         cols = [f"{rf}_{ton_type}_{float(st)}_in_{sc_nm}" for st in stages]
                         cols = [c for c in cols if c in mine_sites_df.columns.values.tolist()]
 
@@ -162,18 +186,19 @@ def main():
                 sc_dfs.append((lyr_nm,dfs,panel_span*idx + 1,panel_span))
         
             tmax = max(tmax)
+            tmax = 2e6
             tonnage_key = 10**np.arange(1,np.ceil(np.log10(tmax)),1)
             sc_dfs.append(tuple(key_info))
             if len(scenarios) == 1:
                 figwidth = 8
                 figheight = figwidth/(2+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 5
-                textfontsize = 12
+                textfontsize = 10
             else:
                 figwidth = 16
                 figheight = figwidth/(2.5+len(layers_names)*w)/dxl*dyl/(1-dt)
                 # figheight = 8
-                textfontsize = 16
+                textfontsize = 12
             fig = plt.figure(figsize=(figwidth,figheight))
             plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
             for jdx, (sc_n,df,pos,span) in enumerate(sc_dfs):
@@ -198,16 +223,23 @@ def main():
                             size_key = marker_size_max*(tonnage_key/tmax)**0.5
                             key = gpd.GeoDataFrame(geometry=gpd.points_from_xy(np.ones(Nk)*xk, yk))
                             key.geometry.plot(ax=ax,markersize=size_key,color='k')
-                            ax.text(xt,yt,'Mine annual output (tonnes)',weight='bold',va='center')
+                            if ton_type == "initial_stage_production_tons":
+                                hd = 'Mine annual output\n(tonnes)'
+                            else:
+                                hd = 'Processed annual output\n(tonnes)'
+                            ax.text(xt,yt,hd,weight='bold',fontsize=textfontsize,ha='left',va='center')
                             for k in range(Nk):
-                                ax.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),va='center')
+                                ax.text(
+                                        xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),
+                                        fontsize=textfontsize,va='center')
                         else:
                             Nk = len(reference_minerals)
                             yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk) + 0.4*ky*dyl
                             yt = yk[-1]+np.diff(yk[-3:-1])
-                            ax.text(xt,yt,'Mineral produced',weight='bold',va='center')
+                            ax.text(xt,yt,'Mineral produced',weight='bold',fontsize=textfontsize,ha='left',va='center')
                             for k in range(Nk):
-                                ax.text(xk,yk[k],'   '+reference_minerals[k].capitalize(),va='center')
+                                ax.text(xk,yk[k],'   '+reference_minerals[k].capitalize(),
+                                        fontsize=textfontsize,va='center')
                                 ax.plot(xk,yk[k],'s',
                                         mfc=reference_mineral_colors[k],
                                         mec=reference_mineral_colors[k],
