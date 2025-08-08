@@ -226,13 +226,14 @@ def main(country_codes,offsets,x_text,include_labels=True):
                                 hd = 'Mine annual output\n(tonnes)'
                             else:
                                 hd = 'Processed annual output\n(tonnes)'
+                            ax.text(xt,yt,hd,weight='bold',fontsize=textfontsize,ha='left',va='center')
                             for k in range(Nk):
-                                ax.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),va='center')
+                                ax.text(xk,yk[k],'     {:,.0f}'.format(tonnage_key[k]),fontsize=textfontsize,va='center')
                         else:
                             Nk = len(reference_minerals)
                             yk = yl[0] + np.linspace(0.15*dyl,0.4*dyl,Nk) + 0.4*ky*dyl
                             yt = yk[-1]+np.diff(yk[-3:-1])
-                            ax.text(xt,yt,'Mineral produced',weight='bold',va='center')
+                            ax.text(xt,yt,'Mineral produced',weight='bold',fontsize=textfontsize,va='center')
                             for k in range(Nk):
                                 ax.text(xk,yk[k],'   '+reference_minerals[k].capitalize(),va='center')
                                 ax.plot(xk,yk[k],'s',
