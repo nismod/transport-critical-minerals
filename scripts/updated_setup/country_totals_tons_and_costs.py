@@ -18,6 +18,23 @@ from trade_functions import *
 from tqdm import tqdm
 tqdm.pandas()
 
+def filter_out_future_mines(points_dataframe,
+                            mines_dataframe,year,
+                            criteria_columns,criteria_thresholds):
+    mines_dataframe = mines_dataframe[mines_dataframe[f"{year}_metal_content"] > 0]
+    new_mines = mines_dataframe[mines_dataframe[f"future_new_mine_{year}"] == 1]["id"].values.tolist()
+    points_dataframe = points_dataframe[points_dataframe["id"].isin(new_mines)]
+    criteria_columns = [f"distance_to_{l}_km" for l in criteria_columns]
+    for idx, (c,v) in enumerate(zip(criteria_columns,criteria_thresholds)):
+        points_dataframe = points_dataframe[points_dataframe[c] > v]
+
+    remaining_mines = points_dataframe["id"].values.tolist()
+    excluded_mines = list(set(new_mines) - set(remaining_mines))
+    if len(excluded_mines) > 0:
+        mines_dataframe = mines_dataframe[~mines_dataframe["id"].isin(excluded_mines)]
+
+    return mines_dataframe
+
 def add_mines_remaining_tonnages(df,mines_df,year):
     m_df = df[
                 (
@@ -166,6 +183,16 @@ def main(
     """Step 1: get all the relevant nodes and find their distances 
                 to grid and bio-diversity layers 
     """
+    node_location_path = os.path.join(
+                                    output_data_path,
+                                    "location_filters",
+                                    "nodes_with_location_identifiers_regional.geoparquet"
+                                    )
+    nodes = gpd.read_parquet(node_location_path)
+    nodes["mode"] = np.where(nodes["mode"] == "city","city_process",nodes["mode"])
+
+    non_grid_columns = ["keybiodiversityareas","lastofwild","protectedareas","waterstress"]
+    non_grid_thresholds = [environmental_buffer]*len(non_grid_columns)
     all_flows = []
     for reference_mineral in reference_minerals:
         # Find year locations
@@ -193,7 +220,12 @@ def main(
         mines_df["reference_mineral"] = reference_mineral
         mines_df["initial_processing_location"] = "mine"
         mines_df = pd.merge(mines_df,metal_factor,how="left",on=["iso3","reference_mineral"])
-        
+        if constraint == "constrained":
+            mines_df = filter_out_future_mines(nodes,
+                                        mines_df,year,
+                                        non_grid_columns,
+                                        non_grid_thresholds)
+
         export_df = pd.read_parquet(export_file_path)
         import_df = pd.read_parquet(import_file_path)
 
