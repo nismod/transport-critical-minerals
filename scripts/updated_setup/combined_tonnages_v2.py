@@ -216,7 +216,7 @@ def main(
                                             "export_tonnes",
                                             "import_tonnes",
                                             "production_tonnes_for_costs",
-                                            "unique_metal_content_used_tonnes"
+                                            # "unique_metal_content_used_tonnes"
                                         ],
                             "carbon":[
                                         "transport_total_tonkm",
