@@ -133,7 +133,7 @@ def get_unique_metal_content(tonnage_df,pr_conv_factors_df):
             )["unique_metal_content_used_tonnes_total"
         ].transform("sum")
 
-    tonnage_df["unique_metal_content_used_tonnes_tonnes"
+    tonnage_df["unique_metal_content_used_tonnes"
         ] = np.where(
                 tonnage_df["processing_stage"] == 1,
                 tonnage_df["unique_metal_content_used_tonnes"] + tonnage_df["unique_metal_content_used_tonnes_total"],
