@@ -281,16 +281,16 @@ def main(
     metal_content_factors_df = pr_conv_factors_df[["iso3","reference_mineral","metal_content_factor"]]
     metal_content_factors_df = metal_content_factors_df.drop_duplicates(subset=["iso3","reference_mineral"],keep="first")
 
-    water_intensity_df = modify_intensities(
-                                water_intensity_df,
-                                pr_conv_factors_df[["iso3","reference_mineral","processing_stage","aggregate_ratio"]],
-                                ["water_intensity_m3_per_kg"]
-                                )
-    fuel_intensity_df = modify_intensities(
-                                fuel_intensity_df,
-                                pr_conv_factors_df[["iso3","reference_mineral","processing_stage","aggregate_ratio"]],
-                                ["fuel_intensity_kwh_per_kg","fuel_intensity_kg_per_kg"]
-                                )
+    # water_intensity_df = modify_intensities(
+    #                             water_intensity_df,
+    #                             pr_conv_factors_df[["iso3","reference_mineral","processing_stage","aggregate_ratio"]],
+    #                             ["water_intensity_m3_per_kg"]
+    #                             )
+    # fuel_intensity_df = modify_intensities(
+    #                             fuel_intensity_df,
+    #                             pr_conv_factors_df[["iso3","reference_mineral","processing_stage","aggregate_ratio"]],
+    #                             ["fuel_intensity_kwh_per_kg","fuel_intensity_kg_per_kg"]
+    #                             )
 
     stage_names_df = pd.read_excel(
                         os.path.join(
@@ -560,18 +560,18 @@ def main(
         all_dfs[u] = np.where(all_dfs[d] > 0,all_dfs[c]/all_dfs[d],0)
 
     all_dfs = pd.merge(all_dfs,price_costs_df,how="left",on=index_cols).fillna(0)
-    all_dfs = get_unique_metal_content(all_dfs,pr_conv_factors_df)
+    # all_dfs = get_unique_metal_content(all_dfs,pr_conv_factors_df)
     all_dfs = pd.merge(all_dfs,water_intensity_df,
                         how="left",
                         on=["iso3","reference_mineral","processing_stage"]
                     ).fillna(0)
-    all_dfs["water_usage_m3"] = 1.0e3*all_dfs["unique_metal_content_used_tonnes"]*all_dfs["water_intensity_m3_per_kg"]
+    all_dfs["water_usage_m3"] = 1.0e3*all_dfs["production_tonnes"]*all_dfs["water_intensity_m3_per_kg"]
     all_dfs = pd.merge(all_dfs,fuel_intensity_df,
                         how="left",
                         on=["iso3","reference_mineral","processing_stage"]
                     ).fillna(0)
-    all_dfs["fuel_usage_kwh"] = 1.0e3*all_dfs["unique_metal_content_used_tonnes"]*all_dfs["fuel_intensity_kwh_per_kg"]
-    all_dfs["fuel_usage_kg"] = 1.0e3*all_dfs["unique_metal_content_used_tonnes"]*all_dfs["fuel_intensity_kg_per_kg"]
+    all_dfs["fuel_usage_kwh"] = 1.0e3*all_dfs["production_tonnes"]*all_dfs["fuel_intensity_kwh_per_kg"]
+    all_dfs["fuel_usage_kg"] = 1.0e3*all_dfs["production_tonnes"]*all_dfs["fuel_intensity_kg_per_kg"]
     all_dfs["revenue_usd"] = all_dfs["export_tonnes"]*all_dfs["price_usd_per_tonne"]
     all_dfs["expenditure_usd"] = all_dfs["import_tonnes"]*all_dfs["price_usd_per_tonne"]
     all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])
