@@ -200,7 +200,7 @@ def main(
     cost_sum_dict = [(final_tons_column,"sum"),(cost_column,"sum")]
     index_cols = ["year","reference_mineral","processing_stage"]
     # anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type","processing_stage"]
-    anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type"]
+    anchor_columns = ["year","scenario","reference_mineral","iso3"]
     column_dictionary = {
                             "anchor": [
                                         "year",
