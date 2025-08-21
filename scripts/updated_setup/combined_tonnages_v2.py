@@ -224,8 +224,8 @@ def main(
                                         "transport_import_tonsCO2eq"
                                     ],
                             "water":["water_usage_m3"],
-                            "fuel":["fuel_intensity_kwh",
-                                    "fuel_intensity_kg"],
+                            "fuel":["fuel_usage_kwh",
+                                    "fuel_usage_kg"],
                             "production_costs":[
                                             "production_cost_usd"
                                             ],
