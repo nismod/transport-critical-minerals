@@ -199,8 +199,8 @@ def main(
     carbon_divisor_columns = ["transport_total_tonkm","export_tonnes","import_tonnes"]
     cost_sum_dict = [(final_tons_column,"sum"),(cost_column,"sum")]
     index_cols = ["year","reference_mineral","processing_stage"]
-    # anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type","processing_stage"]
-    anchor_columns = ["year","scenario","reference_mineral","iso3"]
+    anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type","processing_stage"]
+    # anchor_columns = ["year","scenario","reference_mineral","iso3"]
     column_dictionary = {
                             "anchor": [
                                         "year",
@@ -587,6 +587,7 @@ def main(
     all_dfs = pd.merge(all_dfs,stage_names_df,how="left",on=["reference_mineral","processing_stage"])
     all_dfs = all_dfs[[x for xs in [v for k,v in column_dictionary.items()] for x in xs]]
     all_dfs = all_dfs.set_index(anchor_columns)
+    all_dfs = all_dfs.sort_index()
     all_dfs.to_excel(writer,sheet_name=f"{country_case}_{constraint}")
     writer.close()
 
