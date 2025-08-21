@@ -23,7 +23,7 @@ incoming_data_path = config['paths']['incoming_data']
 processed_data_path = config['paths']['data']
 output_data_path = config['paths']['results']
 
-def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
+def get_prices_costs_gdp_waterandfuelintensity(years=[2022,2030,2040]):
     price_df = pd.read_excel(
                         os.path.join(
                             processed_data_path,
@@ -69,7 +69,77 @@ def get_prices_costs_gdp_waterintensity(years=[2022,2030,2040]):
                                             "water intensity (m3/kg)":"water_intensity_m3_per_kg"
                                         },
                                 inplace=True)
-    return (price_costs_df,regional_gdp_df,water_intensity_df)
+
+    fuel_intensity_df = pd.read_excel(
+                            os.path.join(
+                                processed_data_path,
+                                "mineral_usage_factors",
+                                "mineral_extraction_country_intensities (final units w Co edits).xlsx"
+                                ), sheet_name = "Country fuel ratios"
+                            )[[
+                                "iso3","reference_mineral","processing_stage",
+                                "natural gas intensity (kWh/kg)",
+                                "diesel intensity (kWh/kg)",
+                                "heat intensity (kWh/kg)",
+                                "petroleum intensity (kg/kg)",
+                                "coke intensity (kg/kg)"]]
+    fuel_intensity_df["fuel_intensity_kwh_per_kg"
+        ] = fuel_intensity_df[["natural gas intensity (kWh/kg)",
+                                "diesel intensity (kWh/kg)",
+                                "heat intensity (kWh/kg)"]].sum(axis=1)
+    fuel_intensity_df["fuel_intensity_kg_per_kg"
+        ] = fuel_intensity_df[["petroleum intensity (kg/kg)",
+                                "coke intensity (kg/kg)"]].sum(axis=1)
+    fuel_intensity_df = fuel_intensity_df[[
+                                    "iso3","reference_mineral",
+                                    "processing_stage",
+                                    "fuel_intensity_kwh_per_kg",
+                                    "fuel_intensity_kg_per_kg"]]
+
+    return (price_costs_df,regional_gdp_df,water_intensity_df,fuel_intensity_df)
+
+def modify_intensities(intensity_df,material_df,intensity_columns):
+
+    intensity_df = pd.merge(intensity_df,material_df,how="left",on=["iso3","reference_mineral","processing_stage"])
+    intensity_df[intensity_columns] = intensity_df[intensity_columns].multiply(intensity_df["aggregate_ratio"], axis="index")
+    intensity_df = intensity_df.sort_values(by=["processing_stage"],ascending=True)
+    for c in intensity_columns:
+        intensity_df[c] = intensity_df.groupby(
+                        ["iso3","reference_mineral"]
+                        )[c].transform(lambda x: x.cumsum())
+    intensity_df.drop("aggregate_ratio",axis=1,inplace=True)
+
+    return intensity_df
+
+def get_unique_metal_content(tonnage_df,pr_conv_factors_df):
+    tonnage_df = pd.merge(
+                    tonnage_df,
+                    pr_conv_factors_df[["iso3","reference_mineral","processing_stage","aggregate_ratio"]],
+                    how="left",on=["iso3","reference_mineral","processing_stage"]).fillna(0)
+    tonnage_df["unique_metal_content_used_tonnes"
+        ] = tonnage_df["export_tonnes"]/tonnage_df["aggregate_ratio"]
+    tonnage_df = tonnage_df.sort_values(by=["processing_stage"],ascending=False)
+    tonnage_df["unique_metal_content_used_tonnes_total"
+        ] = tonnage_df.gropuby(["year","scenario","iso3","reference_mineral"]
+            )["unique_metal_content_used_tonnes"
+        ].transform("sum")
+    tonnage_df["unique_metal_content_used_tonnes_total"
+        ] = np.where(
+                tonnage_df["processing_stage"] == 0,
+                tonnage_df["production_tonnes"] - tonnage_df["unique_metal_content_used_tonnes_total"],
+                0)
+    tonnage_df["unique_metal_content_used_tonnes_total"
+        ] = tonnage_df.gropuby(["year","scenario","iso3","reference_mineral"]
+            )["unique_metal_content_used_tonnes_total"
+        ].transform("sum")
+
+    tonnage_df["unique_metal_content_used_tonnes_total"
+        ] = np.where(
+                tonnage_df["processing_stage"] == 1,
+                tonnage_df["unique_metal_content_used_tonnes"] + tonnage_df["unique_metal_content_used_tonnes_total"],
+                tonnage_df["unique_metal_content_used_tonnes"])
+    tonnage_df.drop(["unique_metal_content_used_tonnes_total","aggregate_ratio"],axis=1,inplace=True)
+    return tonnage_df
 
 def get_full_file_name(
                 fname,
@@ -145,6 +215,7 @@ def main(
                                             "export_tonnes",
                                             "import_tonnes",
                                             "production_tonnes_for_costs",
+                                            "unique_metal_content_used_tonnes"
                                         ],
                             "carbon":[
                                         "transport_total_tonkm",
@@ -153,6 +224,8 @@ def main(
                                         "transport_import_tonsCO2eq"
                                     ],
                             "water":["water_usage_m3"],
+                            "fuel":["fuel_intensity_kwh",
+                                    "fuel_intensity_kg"],
                             "production_costs":[
                                             "production_cost_usd"
                                             ],
@@ -180,11 +253,12 @@ def main(
                                                 "transport_export_tonsCO2eq_pertonne",
                                                 "transport_import_tonsCO2eq_pertonne"
                                         ],
-                            "unit_water":["water_intensity_m3_per_kg"]
+                            "unit_water":["water_intensity_m3_per_kg"],
+                            "unit_fuel": ["fuel_intensity_kwh_per_kg","fuel_intensity_kg_per_kg"]
                         }
 
-    all_sums = column_dictionary["tonnages"
-                    ] + column_dictionary["production_costs"
+    all_sums = [c for c in column_dictionary["tonnages"
+                    ] if c != "unique_metal_content_used_tonnes"] + column_dictionary["production_costs"
                     ] + column_dictionary["transport_costs"
                     ] + column_dictionary["carbon"
                     ] + column_dictionary["unit_production_costs"
@@ -194,8 +268,28 @@ def main(
     (
         price_costs_df,
         regional_gdp_df,
-        water_intensity_df
-    ) = get_prices_costs_gdp_waterintensity(years=years)
+        water_intensity_df,
+        fuel_intensity_df
+    ) = get_prices_costs_gdp_waterandfuelintensity(years=years)
+
+    (
+        pr_conv_factors_df, 
+        _, _, _, _,_
+    ) = get_common_input_dataframes("none","bau",baseline_year,baseline_year)
+    pr_conv_factors_df.rename(columns={"final_refined_stage":"processing_stage"},inplace=True)
+    metal_content_factors_df = pr_conv_factors_df[["iso3","reference_mineral","metal_content_factor"]]
+    metal_content_factors_df = metal_content_factors_df.drop_duplicates(subset=["iso3","reference_mineral"],keep="first")
+
+    water_intensity_df = modify_intensities(
+                                water_intensity_df,
+                                pr_conv_factors_df[["iso3","reference_mineral","processing_stage","aggregate_ratio"]],
+                                ["water_intensity_m3_per_kg"]
+                                )
+    fuel_intensity_df = modify_intensities(
+                                fuel_intensity_df,
+                                pr_conv_factors_df[["iso3","reference_mineral","processing_stage","aggregate_ratio"]],
+                                ["fuel_intensity_kwh_per_kg","fuel_intensity_kg_per_kg"]
+                                )
 
     stage_names_df = pd.read_excel(
                         os.path.join(
@@ -235,12 +329,12 @@ def main(
     all_layers = []
     all_years = []
     for idx, (year,scenario,percentile) in enumerate(combos):
-        (
-            pr_conv_factors_df, 
-            _, _, _, _,_
-        ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
-        metal_content_factors_df = pr_conv_factors_df[["iso3","reference_mineral","metal_content_factor"]]
-        metal_content_factors_df = metal_content_factors_df.drop_duplicates(subset=["iso3","reference_mineral"],keep="first")
+        # (
+        #     pr_conv_factors_df, 
+        #     _, _, _, _,_
+        # ) = get_common_input_dataframes("none",scenario,baseline_year,baseline_year)
+        # metal_content_factors_df = pr_conv_factors_df[["iso3","reference_mineral","metal_content_factor"]]
+        # metal_content_factors_df = metal_content_factors_df.drop_duplicates(subset=["iso3","reference_mineral"],keep="first")
         scenario_rename = scenario.replace(" ","_")
         if year == baseline_year:
             tons_file_name = get_full_file_name(
@@ -465,11 +559,18 @@ def main(
         all_dfs[u] = np.where(all_dfs[d] > 0,all_dfs[c]/all_dfs[d],0)
 
     all_dfs = pd.merge(all_dfs,price_costs_df,how="left",on=index_cols).fillna(0)
+    all_dfs = get_unique_metal_content(all_dfs,pr_conv_factors_df)
     all_dfs = pd.merge(all_dfs,water_intensity_df,
                         how="left",
                         on=["iso3","reference_mineral","processing_stage"]
                     ).fillna(0)
-    all_dfs["water_usage_m3"] = 1.0e3*all_dfs["production_tonnes"]*all_dfs["water_intensity_m3_per_kg"]
+    all_dfs["water_usage_m3"] = 1.0e3*all_dfs["unique_metal_content_used_tonnes"]*all_dfs["water_intensity_m3_per_kg"]
+    all_dfs = pd.merge(all_dfs,fuel_intensity_df,
+                        how="left",
+                        on=["iso3","reference_mineral","processing_stage"]
+                    ).fillna(0)
+    all_dfs["fuel_usage_kwh"] = 1.0e3*all_dfs["unique_metal_content_used_tonnes"]*all_dfs["fuel_intensity_kwh_per_kg"]
+    all_dfs["fuel_usage_kg"] = 1.0e3*all_dfs["unique_metal_content_used_tonnes"]*all_dfs["fuel_intensity_kg_per_kg"]
     all_dfs["revenue_usd"] = all_dfs["export_tonnes"]*all_dfs["price_usd_per_tonne"]
     all_dfs["expenditure_usd"] = all_dfs["import_tonnes"]*all_dfs["price_usd_per_tonne"]
     all_dfs = pd.merge(all_dfs,regional_gdp_df,how="left",on=["iso3","year"])

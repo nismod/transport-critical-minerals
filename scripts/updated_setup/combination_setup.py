@@ -294,7 +294,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         args = [
@@ -311,7 +311,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         args = [
@@ -425,6 +425,16 @@ def main(config):
                     print (args)
                     subprocess.run(args)
     
+    run_script = False
+    if run_script is True:
+        args = [
+                "python",
+                "combine_energy_results.py"
+                ]
+        print ("* Combine the energy results with the transport results")
+        print (args)
+        subprocess.run(args)
+
     run_script = False
     if run_script is True:
         num_blocks = 8

@@ -22,7 +22,7 @@ def main(config):
     output_data_path = config['paths']['results']
 
     results_folder = os.path.join(output_data_path,"result_summaries")
-    energy_results_folder = os.path.join(output_data_path,"20250717_Run","Final_Output_per_scenario")
+    energy_results_folder = os.path.join(output_data_path,"energy Aug25","Summaries")
 
     year_percentile_combinations = [
                                     (2022,"baseline","baseline"),
@@ -55,7 +55,7 @@ def main(config):
                                 (
                                     y,f"{y}_{s}",
                                     "country_unconstrained",
-                                    f"{y}_{s}_country_unconstrained.csv_mineral_summary.xlsx"
+                                    f"{y}_{s}_country_unconstrained_mineral_summary.xlsx"
                                 )
                             )
         else:
@@ -64,7 +64,7 @@ def main(config):
                     scenarios.append(
                                         (
                                             y,f"{scn}_{y}_{s}_{thr}",f"{loc}_{opt}",
-                                            f"{scn}_{y}_{s}_{thr}_{loc}_{opt}.csv_mineral_summary.xlsx"
+                                            f"{scn}_{y}_{s}_{thr}_{loc}_{opt}_mineral_summary.xlsx"
                                         )
                                     )
 
@@ -138,12 +138,7 @@ def main(config):
                                         )
             transport_df.to_excel(writer,sheet_name=f"{loc}_{opt}")
     
-    writer.close()
-
-
-
-    
-    
+    writer.close()   
 
 
 if __name__ == '__main__':
