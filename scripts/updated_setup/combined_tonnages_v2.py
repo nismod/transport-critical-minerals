@@ -199,7 +199,8 @@ def main(
     carbon_divisor_columns = ["transport_total_tonkm","export_tonnes","import_tonnes"]
     cost_sum_dict = [(final_tons_column,"sum"),(cost_column,"sum")]
     index_cols = ["year","reference_mineral","processing_stage"]
-    anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type","processing_stage"]
+    # anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type","processing_stage"]
+    anchor_columns = ["year","scenario","reference_mineral","iso3","processing_type"]
     column_dictionary = {
                             "anchor": [
                                         "year",
