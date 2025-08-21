@@ -120,7 +120,7 @@ def get_unique_metal_content(tonnage_df,pr_conv_factors_df):
         ] = tonnage_df["export_tonnes"]/tonnage_df["aggregate_ratio"]
     tonnage_df = tonnage_df.sort_values(by=["processing_stage"],ascending=False)
     tonnage_df["unique_metal_content_used_tonnes_total"
-        ] = tonnage_df.gropuby(["year","scenario","iso3","reference_mineral"]
+        ] = tonnage_df.groupby(["year","scenario","iso3","reference_mineral"]
             )["unique_metal_content_used_tonnes"
         ].transform("sum")
     tonnage_df["unique_metal_content_used_tonnes_total"
@@ -129,7 +129,7 @@ def get_unique_metal_content(tonnage_df,pr_conv_factors_df):
                 tonnage_df["production_tonnes"] - tonnage_df["unique_metal_content_used_tonnes_total"],
                 0)
     tonnage_df["unique_metal_content_used_tonnes_total"
-        ] = tonnage_df.gropuby(["year","scenario","iso3","reference_mineral"]
+        ] = tonnage_df.groupby(["year","scenario","iso3","reference_mineral"]
             )["unique_metal_content_used_tonnes_total"
         ].transform("sum")
 
