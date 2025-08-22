@@ -61,10 +61,11 @@ def main(config):
         else:
             for jdx, (thr,loc) in enumerate(zip(tonnage_thresholds,location_cases)):
                 for opt in optimisation_type:
+                    scn_rn = scn.replace(" ","_")
                     scenarios.append(
                                         (
-                                            y,f"{scn}_{y}_{s}_{thr}",f"{loc}_{opt}",
-                                            f"{scn}_{y}_{s}_{thr}_{loc}_{opt}_mineral_summary.xlsx"
+                                            y,f"{scn_rn}_{y}_{s}_{thr}",f"{loc}_{opt}",
+                                            f"{scn_rn}_{y}_{s}_{thr}_{loc}_{opt}_mineral_summary.xlsx"
                                         )
                                     )
 
