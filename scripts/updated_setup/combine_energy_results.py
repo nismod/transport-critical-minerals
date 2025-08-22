@@ -85,6 +85,7 @@ def main(config):
                             "annual_opex":"energy_opex"
                         },inplace=True
                     )
+            df["processing_stage"] = df["processing_stage"].astype(float)
             df["year"] = y
             df["scenario"] = sc
             df["location_constraint"] = lc
@@ -109,6 +110,7 @@ def main(config):
                                         "combined_transport_totals_by_stage.xlsx"),
                                     sheet_name=f"{loc}_{opt}",index_col=[0,1,2,3,4,5])
             transport_df = transport_df.reset_index()
+            transport_df["processing_stage"] = transport_df["processing_stage"].astype(float)
             df = dfs[dfs["location_constraint"] == f"{loc}_{opt}"]
             df.drop("location_constraint",axis=1,inplace=True)
             
