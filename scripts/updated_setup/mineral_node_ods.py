@@ -166,22 +166,52 @@ def main(config,
         # mines_df["reference_mineral"] = reference_mineral
         mines_df.rename(columns={"ISO_A3":"iso3","mine_id":mine_id_col},inplace=True)
         mines_df["weight"] = mines_df[f"{year}_metal_content"]
-        if year == 2022:
+        if year == 2022 or scenario == "bau":
             mines_df["processing"] = np.where(mines_df["weight"] >= process_threshold,1,0)
         else:
             mines_df["processing"] = 1.0
-        
-        for prdt in ["unprocessed","processed"]:
+        for prdt in ["processed","unprocessed"]:
             if prdt == "processed":
-                m_df = mines_df[mines_df["processing"] == 1]
+                m_df = []
+                for country in ccg_countries:
+                    mc_df = mines_df[(mines_df["processing"] == 1) & (mines_df["iso3"] == country)]
+                    t_df = trade_df[
+                                (
+                                    trade_df["reference_mineral"] == reference_mineral
+                                ) & (
+                                    trade_df["final_processing_stage"] > 1 
+                                ) & (
+                                    trade_df["export_country_code"] == country
+                                ) & (
+                                    trade_df["initial_processing_location"] == "mine"
+                                )]
+                    if len(t_df.index) > 0 and len(mc_df.index) == 0:
+                        m_df.append(mines_df[mines_df["iso3"] == country])
+                    elif year == 2022 or scenario == "bau":
+                        total_processed_tons = t_df["initial_stage_production_tons"].sum()
+                        mc_df = mc_df.sort_values(by=["weight"],ascending=False)
+                        mc_df["cum_weight_frac"] = mc_df["weight"].cumsum()/total_processed_tons
+                        min_exceeds = mc_df[mc_df["cum_weight_frac"] >= 1]["cum_weight_frac"].min()
+                        mc_df["processing"] = np.where(mc_df["cum_weight_frac"] <= min_exceeds,1,0)
+                        mf_df = mc_df[mc_df["processing"] == 1]
+                        mf_df["weight"] = np.where(mf_df["cum_weight_frac"] <= 1, mf_df["weight"],(min_exceeds-1.0)*mf_df["weight"])
+                        mf_df.drop("cum_weight_frac",axis=1,inplace=True)
+                        m_df.append(mf_df)
+                        gf_df = mf_df.copy()
+                        gf_df.rename(columns={"weight":"processed_weight"},inplace=True)
+                        mines_df = pd.merge(mines_df,gf_df[[mine_id_col,"processed_weight"]],how="left",on=[mine_id_col]).fillna(0)
+                        mines_df["weight"] = mines_df["weight"] - mines_df["processed_weight"]
+                        mines_df.drop("processed_weight",axis=1,inplace=True)
+                        
+                    else:
+                        m_df.append(mc_df)
+                m_df = pd.concat(m_df,axis=0,ignore_index=True)
                 t_df = trade_df[
-                            (
-                                trade_df["reference_mineral"] == reference_mineral
-                            ) & (
-                                trade_df["final_processing_stage"] > 1 
-                            )]
-                if len(t_df.index) > 0 and len(m_df.index) == 0:
-                    m_df = mines_df.copy()
+                                (
+                                    trade_df["reference_mineral"] == reference_mineral
+                                ) & (
+                                    trade_df["final_processing_stage"] > 1 
+                                )]
             else:
                 t_df = trade_df[
                             (
@@ -193,8 +223,8 @@ def main(config,
 
             m_df = m_df[m_df["weight"] > 0]
             m_df["weight"
-                ] = m_df["weight"
-                ]/m_df.groupby(["iso3"])["weight"].transform("sum")
+                    ] = m_df["weight"
+                    ]/m_df.groupby(["iso3"])["weight"].transform("sum")
             m_df["initial_processing_location"
                     ] = m_df["final_processing_location"] = "mine"
             # mines_df = mines_df[mines_df["weight"] > 0]

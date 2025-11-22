@@ -280,8 +280,8 @@ def main(country_codes,offsets,x_text,include_labels=True):
 
 
 if __name__ == '__main__':
-    ccg_countries = ["AGO","BDI","BWA","COD","KEN","MDG","MOZ","MWI","NAM","TZA","UGA","ZAF","ZMB","ZWE"]
-    # ccg_countries = ["ZMB"]
+    # ccg_countries = ["AGO","BDI","BWA","COD","KEN","MDG","MOZ","MWI","NAM","TZA","UGA","ZAF","ZMB","ZWE"]
+    ccg_countries = ["ZMB"]
     default_offset = [-0.2,-0.2,1.0,1.0]
     zaf_offset = [0.0,10.0,0.0,0.0]
     right_text = 0.72

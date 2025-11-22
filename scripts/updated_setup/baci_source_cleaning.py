@@ -89,6 +89,7 @@ def main(config):
                                         inplace=True)
     baci_trade.drop(["code"],
                     axis=1,inplace=True)
+
     product_stages = pd.read_csv(os.path.join(processed_data_path,
                         "baci","productcodes_minerals_refs_updated.csv"))
     baci_trade = pd.merge(baci_trade,

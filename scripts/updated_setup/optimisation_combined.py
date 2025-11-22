@@ -112,7 +112,7 @@ def filter_out_processing_locations(points_dataframe,
 
     return points_dataframe
 
-def existing_processing(od_dataframe,baseline_dataframe):
+def existing_processing(od_dataframe,baseline_dataframe,production_size):
     opt_df = []
     res_df = []
     b_df = baseline_dataframe[
@@ -137,102 +137,115 @@ def existing_processing(od_dataframe,baseline_dataframe):
                             b_df,
                             how="left",
                             on=["origin_id"]).fillna(0)
-    o_df = od_dataframe[od_dataframe["baseline_metal_tons"] <= 0]
+    o_df = od_dataframe[od_dataframe["baseline_metal_tons"] < production_size]
     o_df.drop(["baseline_metal_tons"],axis=1,inplace=True)
     opt_df.append(o_df)
 
-    m_df = od_dataframe[od_dataframe["baseline_metal_tons"] > 0]
-    m_df["scenario_metal_tons"] = m_df.groupby("origin_id")["initial_stage_production_tons"].transform("sum")
-    m_df["extra_tons"] = m_df["scenario_metal_tons"] - m_df["baseline_metal_tons"]
+    m_df = od_dataframe[od_dataframe["baseline_metal_tons"] >= production_size]
+    if len(m_df.index) > 0:
+        m_df["scenario_metal_tons"] = m_df.groupby("origin_id")["initial_stage_production_tons"].transform("sum")
+        ms_df = m_df[m_df["scenario_metal_tons"] < production_size]
+        if len(ms_df.index) > 0:
+            ms_df.drop(
+                        [
+                            "baseline_metal_tons",
+                            "scenario_metal_tons"
+                        ],axis=1,inplace=True
+                    )
+            ms_df["baseline_stage"] = 1.0
+            opt_df.append(ms_df)
+        
+        m_df = m_df[m_df["scenario_metal_tons"] >= production_size]
+        if len(m_df.index) > 0:
+            m_df["extra_tons"] = m_df["scenario_metal_tons"] - m_df["baseline_metal_tons"]
+            ms_df = m_df[
+                            (
+                                m_df["extra_tons"] <= 0
+                            ) & (
+                            m_df["final_processing_stage"] <= m_df["baseline_stage"]
+                        )]
+            res_df.append(ms_df)
+            ms_df = m_df[
+                            (
+                                m_df["extra_tons"] > 0
+                            ) & (
+                            m_df["final_processing_stage"] <= m_df["baseline_stage"]
+                        )]
+            ext_df = ms_df.copy()
+            ext_df["initial_stage_production_tons"
+                ] = ext_df["initial_stage_production_tons"
+                ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
+            ext_df["final_stage_production_tons"
+                ] = ext_df["final_stage_production_tons"
+                ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
+            ext_df.drop(
+                        [
+                            "baseline_metal_tons",
+                            "scenario_metal_tons",
+                            "extra_tons"
+                        ],axis=1,inplace=True
+                    )
+            ext_df["baseline_stage"] = 1.0
+            opt_df.append(ext_df)
+            ms_df["initial_stage_production_tons"
+                ] = ms_df["initial_stage_production_tons"
+                ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
+            ms_df["final_stage_production_tons"
+                ] = ms_df["final_stage_production_tons"
+                ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
+            res_df.append(ms_df)
 
-    ms_df = m_df[
-                    (
-                        m_df["extra_tons"] <= 0
-                    ) & (
-                    m_df["final_processing_stage"] <= m_df["baseline_stage"]
-                )]
-    res_df.append(ms_df)
-    ms_df = m_df[
-                    (
-                        m_df["extra_tons"] > 0
-                    ) & (
-                    m_df["final_processing_stage"] <= m_df["baseline_stage"]
-                )]
-    ext_df = ms_df.copy()
-    ext_df["initial_stage_production_tons"
-        ] = ext_df["initial_stage_production_tons"
-        ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
-    ext_df["final_stage_production_tons"
-        ] = ext_df["final_stage_production_tons"
-        ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
-    ext_df.drop(
-                [
-                    "baseline_metal_tons",
-                    "scenario_metal_tons",
-                    "extra_tons"
-                ],axis=1,inplace=True
-            )
-    ext_df["baseline_stage"] = 1.0
-    opt_df.append(ext_df)
-    ms_df["initial_stage_production_tons"
-        ] = ms_df["initial_stage_production_tons"
-        ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
-    ms_df["final_stage_production_tons"
-        ] = ms_df["final_stage_production_tons"
-        ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
-    res_df.append(ms_df)
+            ms_df = m_df[
+                            (
+                                m_df["extra_tons"] <= 0
+                            ) & (
+                            m_df["final_processing_stage"] > m_df["baseline_stage"]
+                        )]
+            ms_df.drop(
+                        [
+                            "baseline_metal_tons",
+                            "scenario_metal_tons",
+                            "extra_tons"
+                        ],axis=1,inplace=True
+                    )
+            opt_df.append(ms_df)
 
-    ms_df = m_df[
-                    (
-                        m_df["extra_tons"] <= 0
-                    ) & (
-                    m_df["final_processing_stage"] > m_df["baseline_stage"]
-                )]
-    ms_df.drop(
-                [
-                    "baseline_metal_tons",
-                    "scenario_metal_tons",
-                    "extra_tons"
-                ],axis=1,inplace=True
-            )
-    opt_df.append(ms_df)
-
-    ms_df = m_df[
-                    (
-                        m_df["extra_tons"] > 0
-                    ) & (
-                    m_df["final_processing_stage"] > m_df["baseline_stage"]
-                )]
-    ext_df = ms_df.copy()
-    ext_df["initial_stage_production_tons"
-        ] = ext_df["initial_stage_production_tons"
-        ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
-    ext_df["final_stage_production_tons"
-        ] = ext_df["final_stage_production_tons"
-        ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
-    ext_df.drop(
-                [
-                    "baseline_metal_tons",
-                    "scenario_metal_tons",
-                    "extra_tons"
-                ],axis=1,inplace=True
-            )
-    ext_df["baseline_stage"] = 1.0
-    opt_df.append(ext_df)
-    ms_df["initial_stage_production_tons"
-        ] = ms_df["initial_stage_production_tons"
-        ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
-    ms_df["final_stage_production_tons"
-        ] = ms_df["final_stage_production_tons"
-        ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
-    ms_df.drop(
-                [
-                    "baseline_metal_tons",
-                    "scenario_metal_tons",
-                    "extra_tons"
-                ],axis=1,inplace=True
-            )
-    opt_df.append(ms_df)
+            ms_df = m_df[
+                            (
+                                m_df["extra_tons"] > 0
+                            ) & (
+                            m_df["final_processing_stage"] > m_df["baseline_stage"]
+                        )]
+            ext_df = ms_df.copy()
+            ext_df["initial_stage_production_tons"
+                ] = ext_df["initial_stage_production_tons"
+                ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
+            ext_df["final_stage_production_tons"
+                ] = ext_df["final_stage_production_tons"
+                ]*ext_df["extra_tons"]/ext_df["scenario_metal_tons"]
+            ext_df.drop(
+                        [
+                            "baseline_metal_tons",
+                            "scenario_metal_tons",
+                            "extra_tons"
+                        ],axis=1,inplace=True
+                    )
+            ext_df["baseline_stage"] = 1.0
+            opt_df.append(ext_df)
+            ms_df["initial_stage_production_tons"
+                ] = ms_df["initial_stage_production_tons"
+                ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
+            ms_df["final_stage_production_tons"
+                ] = ms_df["final_stage_production_tons"
+                ]*ms_df["baseline_metal_tons"]/ms_df["scenario_metal_tons"]
+            ms_df.drop(
+                        [
+                            "baseline_metal_tons",
+                            "scenario_metal_tons",
+                            "extra_tons"
+                        ],axis=1,inplace=True
+                    )
+            opt_df.append(ms_df)
     opt_df = pd.concat(opt_df,axis=0,ignore_index=True)
 
     res_df = pd.concat(res_df,axis=0,ignore_index=True)
@@ -761,7 +774,7 @@ def main(
                                 f"{reference_mineral}_flow_paths_{baseline_year}_baseline.parquet"
                                 )
                             )
-                        l_df, mod_df = existing_processing(l_df,baseline_df)
+                        l_df, mod_df = existing_processing(l_df,baseline_df,production_size)
                         df.append(mod_df)
                         l_dfs.append(l_df)
                         country_df_flows = []

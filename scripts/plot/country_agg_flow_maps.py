@@ -323,7 +323,8 @@ if __name__ == '__main__':
         print("Got arguments", sys.argv)
         exit()
 
-    ccg_countries = ["AGO","BDI","BWA","COD","KEN","MDG","MOZ","MWI","NAM","TZA","UGA","ZAF","ZMB","ZWE"]
+    # ccg_countries = ["AGO","BDI","BWA","COD","KEN","MDG","MOZ","MWI","NAM","TZA","UGA","ZAF","ZMB","ZWE"]
+    ccg_countries = ["ZMB"]
     default_offset = [-0.2,-0.2,1.0,1.0]
     zaf_offset = [0.0,10.0,0.0,0.0]
     for ccg in ccg_countries:
