@@ -246,17 +246,19 @@ def existing_processing(od_dataframe,baseline_dataframe,production_size):
                         ],axis=1,inplace=True
                     )
             opt_df.append(ms_df)
-    opt_df = pd.concat(opt_df,axis=0,ignore_index=True)
+    if len(opt_df) > 0:
+        opt_df = pd.concat(opt_df,axis=0,ignore_index=True)
 
-    res_df = pd.concat(res_df,axis=0,ignore_index=True)
-    res_df.drop(
-                [
-                    "baseline_stage",
-                    "baseline_metal_tons",
-                    "scenario_metal_tons",
-                    "extra_tons"
-                ],axis=1,inplace=True
-            )
+    if len(res_df) > 0:
+        res_df = pd.concat(res_df,axis=0,ignore_index=True)
+        res_df.drop(
+                    [
+                        "baseline_stage",
+                        "baseline_metal_tons",
+                        "scenario_metal_tons",
+                        "extra_tons"
+                    ],axis=1,inplace=True
+                )
 
     return opt_df, res_df
 
@@ -753,7 +755,6 @@ def main(
                                         "mine_final_refined_stage"),axis=1)
             od_df[["stage_factor","metal_factor"]] = od_df["stage_metal_factors"].apply(pd.Series)
             od_df.drop("stage_metal_factors",axis=1,inplace=True)
-            print (od_df)
             if constraint == "constrained":
                 od_df, mines_df = filter_out_future_mines(od_df,nodes,
                                                 mines_df,year,
@@ -850,7 +851,7 @@ def main(
         l_df = update_od_dataframe(l_df,optimal_df,pr_conv_factors_df,modify_columns)
         df.append(l_df)
 
-    df = pd.concat(df,axis=0,ignore_index=True).fillna(0)
+    df = pd.concat([d_f for d_f in df if len(d_f) > 0],axis=0,ignore_index=True).fillna(0)
     mines_dfs = pd.concat(mines_dfs,axis=0,ignore_index=True)
 
     # if len(all_optimal_locations) > 0:
