@@ -740,6 +740,7 @@ def main(
                                 f"{file_name}.parquet"
                                 )
                             )
+            print (od_df)
             od_df = od_df[od_df["trade_type"] != "Import"]
             od_df["year"] = year
             od_df["path_index"] = od_df.apply(lambda x:f"{x.reference_mineral}_{x.year}_{x.name}",axis=1)
@@ -747,6 +748,7 @@ def main(
                                 how="left",
                                 on=["export_country_code","reference_mineral"]
                                 )
+            print (od_df)
             od_df["stage_metal_factors"] = od_df.progress_apply(
                                     lambda x:get_mine_conversion_factors(
                                         x,
