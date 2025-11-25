@@ -201,7 +201,8 @@ def main(config):
         for rf in ref_mins:    
             all_scenarios.append([rf] + baseline_scenario)
         ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
-        scenarios = ["bau","early refining","precursor"]
+        # scenarios = ["bau","early refining","precursor"]
+        scenarios = ["precursor"]
         p = "min_threshold_metal_tons"
         c = "country"
         yrs = [2040]
