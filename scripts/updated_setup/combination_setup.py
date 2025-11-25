@@ -120,7 +120,7 @@ def main(config):
                     print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
                     print (args)
                     subprocess.run(args)
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -131,7 +131,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -147,7 +147,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -158,7 +158,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -207,7 +207,8 @@ def main(config):
         yrs = [2040]
         for rf in ref_mins:
             for sc in scenarios:
-                for s in ["low","mid","high"]:
+                # for s in ["low","mid","high"]:
+                for s in ["mid"]:
                     for o in ["unconstrained","constrained"]:
                         if o == "constrained":
                             for idx,(op,ef) in enumerate(distance_filters):
@@ -219,7 +220,8 @@ def main(config):
         yrs = [2040]
         for rf in ref_mins:
             for sc in scenarios:
-                for s in ["low","mid","high"]:
+                # for s in ["low","mid","high"]:
+                for s in ["mid"]:
                     for o in ["unconstrained","constrained"]:
                         if o == "constrained":
                             for idx,(op,ef) in enumerate(distance_filters):
@@ -252,7 +254,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
@@ -279,7 +281,7 @@ def main(config):
 
         f.close()
 
-    run_script = True
+    run_script = False
     if run_script is True:
         with open("combined_optimisation_set.txt","r") as r:
             for p in r:
@@ -296,7 +298,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)  
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         args = [
@@ -313,7 +315,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         args = [
@@ -330,7 +332,7 @@ def main(config):
         print (args)
         subprocess.run(args)
         
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
@@ -375,7 +377,7 @@ def main(config):
         print (args)
         subprocess.run(args)                 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         """Next we call the flow analysis script and loop through the scenarios
         """
@@ -394,7 +396,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
@@ -429,7 +431,7 @@ def main(config):
                     print (args)
                     subprocess.run(args)
     
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -439,7 +441,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 8
         args = [
@@ -456,7 +458,7 @@ def main(config):
         print (args)
         subprocess.run(args) 
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
