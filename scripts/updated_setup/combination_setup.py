@@ -120,7 +120,7 @@ def main(config):
                     print (f"* Start the creation of the {year} {percentile} percentile high-level OD matrices under {th} limits")
                     print (args)
                     subprocess.run(args)
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -131,7 +131,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         for th in tonnage_thresholds:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -147,7 +147,7 @@ def main(config):
                 print (args)
                 subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "python",
@@ -158,7 +158,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         num_blocks = 0
         with open("parameter_set.txt","w+") as f:
@@ -197,11 +197,12 @@ def main(config):
         # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
         distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
         ref_mins = [["cobalt"],["copper"],["nickel"],["graphite"],["manganese"],["lithium"]]
-        baseline_scenario = ["baseline",[2022],"baseline","none","country","unconstrained"]
-        for rf in ref_mins:    
-            all_scenarios.append([rf] + baseline_scenario)
+        # baseline_scenario = ["baseline",[2022],"baseline","none","country","unconstrained"]
+        # for rf in ref_mins:    
+        #     all_scenarios.append([rf] + baseline_scenario)
         ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
-        scenarios = ["bau","early refining","precursor"]
+        # scenarios = ["bau","early refining","precursor"]
+        scenarios = ["precursor"]
         p = "min_threshold_metal_tons"
         c = "country"
         yrs = [2040]
