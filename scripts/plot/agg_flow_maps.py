@@ -83,16 +83,16 @@ def main(
     for fsc in fig_scenario:
         fig_st += "_" + '_'.join(list(set(map(str,fsc))))
 
-    figure_result_file = f"{fig_st}"
+    figure_result_file = f"{fig_st}_{constraints[0]}"
     ds = str(distance_from_origin).replace('.','p')
     eb = str(environmental_buffer).replace('.','p')
     if combination is None:
-        figure_result_file = f"noncombined_{figure_result_file}_scenarios.png"
+        figure_result_file = f"noncombined_{figure_result_file}_scenarios.pdf"
     else:
         if distance_from_origin > 0.0 or environmental_buffer > 0.0:
-            figure_result_file = f"{combination}_{figure_result_file}_op_{ds}km_eb_{eb}km_scenarios.png"
+            figure_result_file = f"{combination}_{figure_result_file}_op_{ds}km_eb_{eb}km_scenarios.pdf"
         else:
-            figure_result_file = f"{combination}_{figure_result_file}_scenarios.png"
+            figure_result_file = f"{combination}_{figure_result_file}_scenarios.pdf"
 
     combinations = list(zip(scenarios,years,percentiles,efficient_scales,country_cases,constraints))
     sc_dfs = []

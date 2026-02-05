@@ -16,10 +16,28 @@ def main(config):
     future_scenarios.append(baseline_scenario)
     p = "min_threshold_metal_tons"
     c = "country"
+    # for scn in scenarios:
+    #     for y in [2040]:
+    #         fsc = []
+    #         for o in ["unconstrained","constrained"]:
+    #             for s in ["mid"]:
+    #                 fsc.append((scn,y,s,p,c,o))
+
+    #     future_scenarios.append(list(map(list,zip(*fsc))))
+
     for scn in scenarios:
         for y in [2040]:
             fsc = []
-            for o in ["unconstrained","constrained"]:
+            for o in ["unconstrained"]:
+                for s in ["mid"]:
+                    fsc.append((scn,y,s,p,c,o))
+
+        future_scenarios.append(list(map(list,zip(*fsc))))
+
+    for scn in scenarios:
+        for y in [2040]:
+            fsc = []
+            for o in ["constrained"]:
                 for s in ["mid"]:
                     fsc.append((scn,y,s,p,c,o))
 
@@ -27,10 +45,28 @@ def main(config):
 
     p = "max_threshold_metal_tons"
     c = "region"
+    # for scn in scenarios:
+    #     for y in [2040]:
+    #         fsc = []
+    #         for o in ["unconstrained","constrained"]:
+    #             for s in ["mid"]:
+    #                 fsc.append((scn,y,s,p,c,o))
+
+    #     future_scenarios.append(list(map(list,zip(*fsc))))
+
     for scn in scenarios:
         for y in [2040]:
             fsc = []
-            for o in ["unconstrained","constrained"]:
+            for o in ["unconstrained"]:
+                for s in ["mid"]:
+                    fsc.append((scn,y,s,p,c,o))
+
+        future_scenarios.append(list(map(list,zip(*fsc))))
+
+    for scn in scenarios:
+        for y in [2040]:
+            fsc = []
+            for o in ["constrained"]:
                 for s in ["mid"]:
                     fsc.append((scn,y,s,p,c,o))
 
@@ -102,9 +138,9 @@ def main(config):
                         f.write(st)                
     f.close()
 
-    num_blocks = 8
+    num_blocks = 2
     
-    run_script = False
+    run_script = True
     if run_script is True:
         args = [
                 "parallel",
@@ -174,7 +210,7 @@ def main(config):
         print (args)
         subprocess.run(args)
 
-    run_script = True
+    run_script = False
     if run_script is True:
         args = [
                 "parallel",

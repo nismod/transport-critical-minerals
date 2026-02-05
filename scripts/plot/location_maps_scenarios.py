@@ -51,77 +51,197 @@ def main():
                                 "layers":["2022_baseline"],
                                 "layers_names":["2022 - Baseline"]
                             },
+                            # {
+                            #     "type":"initial_stage_production_tons",
+                            #     "stage_type":["Metal content"],
+                            #     "scenarios":["country_unconstrained","country_constrained"],
+                            #     "scenario_names":["country","country"],
+                            #     "years":[2040,2040],
+                            #     "layers":[
+                            #                 "bau_2040_mid_min_threshold_metal_tons",
+                            #                 "bau_2040_mid_min_threshold_metal_tons"],
+                            #     "layers_names":["2040 - No Environmental constraints",
+                            #                     "2040 - Environmental constraints"]
+                            # },
                             {
                                 "type":"initial_stage_production_tons",
                                 "stage_type":["Metal content"],
-                                "scenarios":["country_unconstrained","country_constrained"],
-                                "scenario_names":["country","country"],
-                                "years":[2040,2040],
+                                "scenarios":["country_unconstrained"],
+                                "scenario_names":["country"],
+                                "years":[2040],
                                 "layers":[
-                                            "bau_2040_mid_min_threshold_metal_tons",
                                             "bau_2040_mid_min_threshold_metal_tons"],
-                                "layers_names":["2040 - No Environmental constraints",
-                                                "2040 - Environmental constraints"]
+                                "layers_names":["2040 - No Environmental constraints"]
+                            },
+                            {
+                                "type":"initial_stage_production_tons",
+                                "stage_type":["Metal content"],
+                                "scenarios":["country_constrained"],
+                                "scenario_names":["country"],
+                                "years":[2040],
+                                "layers":[
+                                            "bau_2040_mid_min_threshold_metal_tons"],
+                                "layers_names":["2040 - Environmental constraints"]
+                            },
+                            # {
+                            #     "type":"final_stage_production_tons",
+                            #     "stage_type":["BAU"],
+                            #     "scenarios":["country_unconstrained","country_constrained"],
+                            #     "scenario_names":["country","country"],
+                            #     "years":[2040,2040],
+                            #     "layers":[
+                            #                 "bau_2040_mid_min_threshold_metal_tons",
+                            #                 "bau_2040_mid_min_threshold_metal_tons"],
+                            #     "layers_names":["BAU - No Environmental constraints",
+                            #                     "BAU - Environmental constraints"]
+                            # },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["BAU"],
+                                "scenarios":["country_unconstrained"],
+                                "scenario_names":["country"],
+                                "years":[2040],
+                                "layers":[
+                                            "bau_2040_mid_min_threshold_metal_tons"],
+                                "layers_names":["BAU - No Environmental constraints"]
                             },
                             {
                                 "type":"final_stage_production_tons",
                                 "stage_type":["BAU"],
-                                "scenarios":["country_unconstrained","country_constrained"],
-                                "scenario_names":["country","country"],
-                                "years":[2040,2040],
+                                "scenarios":["country_constrained"],
+                                "scenario_names":["country"],
+                                "years":[2040],
                                 "layers":[
-                                            "bau_2040_mid_min_threshold_metal_tons",
                                             "bau_2040_mid_min_threshold_metal_tons"],
-                                "layers_names":["BAU - No Environmental constraints",
-                                                "BAU - Environmental constraints"]
+                                "layers_names":["BAU - Environmental constraints"]
                             },
+                            # {
+                            #     "type":"final_stage_production_tons",
+                            #     "stage_type":["Early refining"],
+                            #     "scenarios":["country_unconstrained","country_constrained"],
+                            #     "scenario_names":["country","country"],
+                            #     "years":[2040,2040],
+                            #     "layers":[
+                            #                 "early_refining_2040_mid_min_threshold_metal_tons",
+                            #                 "early_refining_2040_mid_min_threshold_metal_tons"],
+                            #     "layers_names":["Early Refining - No Environmental constraints",
+                            #                     "Early Refining - Environmental constraints"]
+                            # },
                             {
                                 "type":"final_stage_production_tons",
                                 "stage_type":["Early refining"],
-                                "scenarios":["country_unconstrained","country_constrained"],
-                                "scenario_names":["country","country"],
+                                "scenarios":["country_unconstrained"],
+                                "scenario_names":["country"],
                                 "years":[2040,2040],
                                 "layers":[
-                                            "early_refining_2040_mid_min_threshold_metal_tons",
                                             "early_refining_2040_mid_min_threshold_metal_tons"],
-                                "layers_names":["Early Refining - No Environmental constraints",
-                                                "Early Refining - Environmental constraints"]
-                            },
-                            {
-                                "type":"final_stage_production_tons",
-                                "stage_type":["Precursor related product"],
-                                "scenarios":["country_unconstrained","country_constrained"],
-                                "scenario_names":["country","country"],
-                                "years":[2040,2040],
-                                "layers":[
-                                            "precursor_2040_mid_min_threshold_metal_tons",
-                                            "precursor_2040_mid_min_threshold_metal_tons"],
-                                "layers_names":["Precursor - No Environmental constraints",
-                                                "Precursor - Environmental constraints"]
+                                "layers_names":["Early Refining - No Environmental constraints"]
                             },
                             {
                                 "type":"final_stage_production_tons",
                                 "stage_type":["Early refining"],
-                                "scenarios":["region_unconstrained","region_constrained"],
-                                "scenario_names":["region","region"],
-                                "years":[2040,2040],
+                                "scenarios":["country_constrained"],
+                                "scenario_names":["country"],
+                                "years":[2040],
                                 "layers":[
-                                            "early_refining_2040_mid_max_threshold_metal_tons",
-                                            "early_refining_2040_mid_max_threshold_metal_tons"],
-                                "layers_names":["Early Refining - No Environmental constraints",
-                                                "Early Refining - Environmental constraints"]
+                                            "early_refining_2040_mid_min_threshold_metal_tons"],
+                                "layers_names":["Early Refining - Environmental constraints"]
+                            },
+                            # {
+                            #     "type":"final_stage_production_tons",
+                            #     "stage_type":["Precursor related product"],
+                            #     "scenarios":["country_unconstrained","country_constrained"],
+                            #     "scenario_names":["country","country"],
+                            #     "years":[2040,2040],
+                            #     "layers":[
+                            #                 "precursor_2040_mid_min_threshold_metal_tons",
+                            #                 "precursor_2040_mid_min_threshold_metal_tons"],
+                            #     "layers_names":["Precursor - No Environmental constraints",
+                            #                     "Precursor - Environmental constraints"]
+                            # },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Precursor related product"],
+                                "scenarios":["country_unconstrained"],
+                                "scenario_names":["country"],
+                                "years":[2040],
+                                "layers":[
+                                            "precursor_2040_mid_min_threshold_metal_tons"],
+                                "layers_names":["Precursor - No Environmental constraints"]
                             },
                             {
                                 "type":"final_stage_production_tons",
                                 "stage_type":["Precursor related product"],
-                                "scenarios":["region_unconstrained","region_constrained"],
-                                "scenario_names":["region","region"],
-                                "years":[2040,2040],
+                                "scenarios":["country_constrained"],
+                                "scenario_names":["country"],
+                                "years":[2040],
                                 "layers":[
-                                            "precursor_2040_mid_max_threshold_metal_tons",
+                                            "precursor_2040_mid_min_threshold_metal_tons"],
+                                "layers_names":["Precursor - Environmental constraints"]
+                            },
+                            # {
+                            #     "type":"final_stage_production_tons",
+                            #     "stage_type":["Early refining"],
+                            #     "scenarios":["region_unconstrained","region_constrained"],
+                            #     "scenario_names":["region","region"],
+                            #     "years":[2040,2040],
+                            #     "layers":[
+                            #                 "early_refining_2040_mid_max_threshold_metal_tons",
+                            #                 "early_refining_2040_mid_max_threshold_metal_tons"],
+                            #     "layers_names":["Early Refining - No Environmental constraints",
+                            #                     "Early Refining - Environmental constraints"]
+                            # },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Early refining"],
+                                "scenarios":["region_unconstrained"],
+                                "scenario_names":["region"],
+                                "years":[2040],
+                                "layers":[
+                                            "early_refining_2040_mid_max_threshold_metal_tons"],
+                                "layers_names":["Early Refining - No Environmental constraints"]
+                            },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Early refining"],
+                                "scenarios":["region_constrained"],
+                                "scenario_names":["region"],
+                                "years":[2040],
+                                "layers":[
+                                            "early_refining_2040_mid_max_threshold_metal_tons"],
+                                "layers_names":["Early Refining - Environmental constraints"]
+                            },
+                            # {
+                            #     "type":"final_stage_production_tons",
+                            #     "stage_type":["Precursor related product"],
+                            #     "scenarios":["region_unconstrained","region_constrained"],
+                            #     "scenario_names":["region","region"],
+                            #     "years":[2040,2040],
+                            #     "layers":[
+                            #                 "precursor_2040_mid_max_threshold_metal_tons",
+                            #                 "precursor_2040_mid_max_threshold_metal_tons"],
+                            #     "layers_names":["Precursor - No Environmental constraints",
+                            #                     "Precursor - Environmental constraints"]
+                            # },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Precursor related product"],
+                                "scenarios":["region_unconstrained"],
+                                "scenario_names":["region"],
+                                "years":[2040],
+                                "layers":[
                                             "precursor_2040_mid_max_threshold_metal_tons"],
-                                "layers_names":["Precursor - No Environmental constraints",
-                                                "Precursor - Environmental constraints"]
+                                "layers_names":["Precursor - No Environmental constraints"]
+                            },
+                            {
+                                "type":"final_stage_production_tons",
+                                "stage_type":["Precursor related product"],
+                                "scenarios":["region_constrained"],
+                                "scenario_names":["region"],
+                                "years":[2040],
+                                "layers":[
+                                            "precursor_2040_mid_max_threshold_metal_tons"],
+                                "layers_names":["Precursor - Environmental constraints"]
                             },
                         ]
     # result_type = ["noncombined","combined"]
@@ -266,9 +386,10 @@ def main():
                         fontsize=textfontsize,weight='bold',ha='center')  
             fig_nm = '_'.join(list(set(layers))).replace("_min_threshold_metal_tons","").replace("_max_threshold_metal_tons","")
             if ton_type == "initial_stage_production_tons":
+                fig_nm = fig_nm + '_' + '_'.join(list(set(scenarios)))
                 fig_file = f"mine_metal_content_maps_{fig_nm}.png"
             else:
-                fig_nm = fig_nm + '_' + '_'.join(list(set(scenario_names)))
+                fig_nm = fig_nm + '_' + '_'.join(list(set(scenarios)))
                 fig_file = f"{rt}_processing_locations_maps_{fig_nm}.png"
             plt.tight_layout()
             save_fig(os.path.join(figures,fig_file))

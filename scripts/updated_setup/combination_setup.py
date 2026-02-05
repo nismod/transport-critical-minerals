@@ -194,15 +194,15 @@ def main(config):
     if run_script is True:
         num_blocks = 4
         all_scenarios = []
-        # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
-        distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        # distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
         ref_mins = [["cobalt"],["copper"],["nickel"],["graphite"],["manganese"],["lithium"]]
-        # baseline_scenario = ["baseline",[2022],"baseline","none","country","unconstrained"]
-        # for rf in ref_mins:    
-        #     all_scenarios.append([rf] + baseline_scenario)
-        ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
-        # scenarios = ["bau","early refining","precursor"]
-        scenarios = ["precursor"]
+        baseline_scenario = ["baseline",[2022],"baseline","none","country","unconstrained"]
+        for rf in ref_mins:    
+            all_scenarios.append([rf] + baseline_scenario)
+        # ref_mins = [["cobalt","copper","nickel"],["graphite"],["manganese"],["lithium"]]
+        scenarios = ["bau","early refining","precursor"]
+        # scenarios = ["precursor"]
         p = "min_threshold_metal_tons"
         c = "country"
         yrs = [2040]
@@ -255,8 +255,8 @@ def main(config):
 
     run_script = True
     if run_script is True:
-        # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
-        distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        # distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
         c = "combined"
         with open("combined_optimisation_set.txt","w+") as f:
             for idx, (year,scenario,percentile) in enumerate(year_percentile_combinations):
@@ -334,8 +334,8 @@ def main(config):
     run_script = True
     if run_script is True:
         num_blocks = 8
-        # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
-        distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        # distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
         c = "combined"
         with open("combined_flow_set.txt","w+") as f:
             for rf in reference_minerals:
@@ -397,8 +397,8 @@ def main(config):
 
     run_script = True
     if run_script is True:
-        # distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
-        distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
+        distance_filters = [(x,y) for x in [0,500,1000] for y in [0,10,20]]  # for a list
+        # distance_filters = [(x,y) for x in [0] for y in [0]]  # for a list
         cx = "combined"
         for lcx in location_cases:
             for optx in optimisation_type:

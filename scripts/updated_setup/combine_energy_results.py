@@ -22,7 +22,7 @@ def main(config):
     output_data_path = config['paths']['results']
 
     results_folder = os.path.join(output_data_path,"result_summaries")
-    energy_results_folder = os.path.join(output_data_path,"energy Aug25","Summaries")
+    energy_results_folder = os.path.join(output_data_path,"energy_results","Summaries")
 
     year_percentile_combinations = [
                                     (2022,"baseline","baseline"),
