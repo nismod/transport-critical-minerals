@@ -16,7 +16,7 @@ def create_edges_from_nearest_node_joins(from_df,to_df,
                     from_id_column,to_id_column,
                     from_iso_column,to_iso_column,
                     from_mode,to_mode,
-                    distance_threshold=2000):
+                    distance_threshold=4000):
     from_df.rename(columns={from_id_column:"from_id",from_iso_column:"from_iso_a3"},inplace=True)
     to_df.rename(columns={to_id_column:"to_id",to_iso_column:"to_iso_a3"},inplace=True)
     from_df["from_infra"] = from_mode

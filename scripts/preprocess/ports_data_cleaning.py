@@ -355,16 +355,16 @@ def main(config):
 
 
 
-    port_edges = gpd.read_file(os.path.join(processed_data_path,
-                            "infrastructure",
-                            "africa_maritime_network.gpkg"),
-                        layer="edges")
-    port_edges["from_infra"] = port_edges.progress_apply(
-                                lambda x:re.sub('[^a-zA-Z]+', '',x["from_id"]),
-                                axis=1)
-    port_edges["to_infra"] = port_edges.progress_apply(
-                                lambda x:re.sub('[^a-zA-Z]+', '',x["to_id"]),
-                                axis=1)
+    # port_edges = gpd.read_file(os.path.join(processed_data_path,
+    #                         "infrastructure",
+    #                         "africa_maritime_network.gpkg"),
+    #                     layer="edges")
+    # port_edges["from_infra"] = port_edges.progress_apply(
+    #                             lambda x:re.sub('[^a-zA-Z]+', '',x["from_id"]),
+    #                             axis=1)
+    # port_edges["to_infra"] = port_edges.progress_apply(
+    #                             lambda x:re.sub('[^a-zA-Z]+', '',x["to_id"]),
+    #                             axis=1)
     # port_edges['duplicates'] = pd.DataFrame(
     #                                 np.sort(port_edges[['from_id','to_id']])
     #                                 ).duplicated(keep=False).astype(int)
@@ -379,10 +379,67 @@ def main(config):
     # # port_edges["distance"] = 0.001*port_edges.geometry.length
     # # port_edges = port_edges.to_crs(epsg=4326)
     # # print (port_edges)
-    port_edges.to_file(os.path.join(processed_data_path,
+    # port_edges.to_file(os.path.join(processed_data_path,
+    #                         "infrastructure",
+    #                         "africa_maritime_network.gpkg"),
+    #                     layer="edges",driver="GPKG")
+    # for cg in ["general_cargo","tanker","dry_bulk","roro","container"]:
+    #     port_df = pd.read_parquet(os.path.join(processed_data_path,
+    #                                     "shipping_network",
+    #                                     "archive",
+    #                                     f"maritime_base_network_{cg}.parquet"))
+    #     print (port_df)
+    #     port_df["from_id"] = port_df.progress_apply(lambda x:x["from_id"].replace("port","port_").replace("maritime","maritime_"),axis=1)
+    #     port_df["to_id"] = port_df.progress_apply(lambda x:x["to_id"].replace("port","port_").replace("maritime","maritime_"),axis=1)
+    #     print (port_df)
+    #     port_df.to_parquet(os.path.join(processed_data_path,
+    #                                     "shipping_network",
+    #                                     f"maritime_base_network_{cg}.parquet"))
+
+    port_df = gpd.read_file(os.path.join(
+                            processed_data_path,
                             "infrastructure",
-                            "africa_maritime_network.gpkg"),
-                        layer="edges",driver="GPKG")
+                            "global_maritime_network.gpkg"),
+                        layer="nodes")
+    port_df = port_df[port_df["Continent_Code"] == "AF"]
+    print (port_df)
+    port_isos = list(port_df["iso3"].unique())
+    for cg in ["general_cargo","tanker","dry_bulk","roro","container"]:
+        ship_df = pd.read_parquet(os.path.join(processed_data_path,
+                                        "shipping_network",
+                                        "archive",
+                                        f"maritime_base_network_{cg}.parquet"))
+        ship_df["from_id"] = ship_df.progress_apply(lambda x:x["from_id"].replace("port","port_").replace("maritime","maritime_"),axis=1)
+        ship_df["to_id"] = ship_df.progress_apply(lambda x:x["to_id"].replace("port","port_").replace("maritime","maritime_"),axis=1)
+        print (ship_df)
+        ship_df["thresold"] = 0.03
+        ship_df["cost_USD_t_km"] = np.where(
+                                            (
+                                                ship_df["from_iso3"].isin(port_isos)
+                                            ) & (
+                                                ship_df["to_iso3"].isin(port_isos)
+                                            ),
+                                            15*ship_df["cost_USD_t_km"],
+                                            ship_df["cost_USD_t_km"]
+                                        )
+        ship_df["cost_USD_t_km"] = np.where(
+                                            (
+                                                ship_df["from_iso3"].isin(port_isos)
+                                            ) & (
+                                                ship_df["to_iso3"].isin(port_isos)
+                                            ),
+                                            ship_df[["cost_USD_t_km","thresold"]].min(axis=1),
+                                            ship_df["cost_USD_t_km"]
+                                        )
+        ship_df.drop("thresold",axis=1,inplace=True)
+        print (ship_df)
+        
+        ship_df.to_parquet(os.path.join(processed_data_path,
+                                        "shipping_network",
+                                        f"maritime_base_network_{cg}.parquet"))
+        ship_df.to_csv(os.path.join(processed_data_path,
+                                        "shipping_network",
+                                        f"maritime_base_network_{cg}.csv"),index=False)
 
 
 
