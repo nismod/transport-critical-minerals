@@ -75,18 +75,24 @@ def main(config):
     destination_id = "destination_id"
     final_ton_column = "final_stage_production_tons"
     initial_ton_column = "initial_stage_production_tons"
+    attribute_dictionary = {
+                            "distance_km_path":["distance_km",list],
+                            "time_hr_path":["time_hr",list],
+                            "gcost_usd_tons_path":["gcost_usd_tons",list],
+                            }
     edges_flows_df = []
     nodes_flows_df = []
     flow_column_types = []
     network_graph = pd.read_parquet(os.path.join(processed_data_path,"shipping_network","network_graph.parquet"))
-    network_graph["capacity"] = np.where(network_graph["mode"]=="rail",1e6,network_graph["capacity"])
+    # network_graph["capacity"] = np.where(network_graph["mode"]=="rail",1e6,network_graph["capacity"])
     network_graph[final_ton_column] = 0
     mine_routes, unassinged_routes, network_graph = od_flow_allocation_capacity_constrained(
                                         c_t_df,network_graph,
                                         final_ton_column,"gcost_usd_tons",
-                                        "distance_km","time_hr","land_border_cost_usd_tons",
                                         "id",origin_id,
-                                        destination_id)
+                                        destination_id,
+                                        attribute_dict=attribute_dictionary,
+                                        get_node_path=True)
     network_graph = network_graph[network_graph[final_ton_column] > 0]
     network_graph.to_csv(os.path.join(results_folder,
                 f"total_flows_2022_baseline_rail_capacity.csv"),
@@ -146,7 +152,6 @@ def main(config):
                                 "gcost_usd_tons_path",
                                 "distance_km_path",
                                 "time_hr_path",
-                                "land_border_cost_usd_tons_path",
                                 "gcost_usd_tons"]].to_parquet(
                 os.path.join(results_folder,file_name),
                 index=False)

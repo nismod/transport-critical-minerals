@@ -65,40 +65,60 @@ def main():
     trade_df.drop("ADM0_A3",axis=1,inplace=True)
     trade_df = trade_df.drop_duplicates(subset=["import_country_code"],keep="first")
     max_trade = trade_df["final_stage_production_tons"].max()
-    trade_df["percentage"] = 100.0*trade_df["final_stage_production_tons"]/trade_df["final_stage_production_tons"].sum()
+    trade_df["percentage"] = trade_df["final_stage_production_tons"]/trade_df["final_stage_production_tons"].sum()
     print (trade_df.sort_values(by=["percentage"],ascending=False))
      
-    # # """Test Map"""
+    # """Test Map"""
 
-    # figwidth = 12
-    # figheight = figwidth/(1+1*w)/dxl*dyl/(1-dt)
-    # fig = plt.figure(figsize=(figwidth,figheight))
-    # # plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
-    # ax = plt.subplot(1,1,1)
-    # ax.spines[['top','right','bottom','left']].set_visible(True)
-    # ax.set_aspect('equal')
-    # ax.set_xticks([])
-    # ax.set_yticks([])
+    figwidth = 12
+    figheight = figwidth/(1+1*w)/dxl*dyl/(1-dt)
+    fig = plt.figure(figsize=(figwidth,figheight))
+    # plt.subplots_adjust(left=0, bottom=0, right=1, top=1-dt,wspace=w)
+    ax = plt.subplot(1,1,1)
+    ax.spines[['top','right','bottom','left']].set_visible(True)
+    ax.set_aspect('equal')
+    ax.set_xticks([])
+    ax.set_yticks([])
     
-    # ax = plot_global_basemap(
-    #             ax,
-    #             include_continents=continents,
-    #             include_countries=countries,
-    #             facecolor=None
-    #             )
+    ax = plot_global_basemap(
+                ax,
+                include_continents=continents,
+                include_countries=countries,
+                facecolor=None
+                )
 
-    # for row in trade_df.itertuples():
-    #     # ax.plot([row.from_lon, row.to_lon], [row.from_lat, row.to_lat],
-    #     #      color='coral', linewidth=2, marker='o',transform=ccrs.Geodetic())
-    #     ax.plot([row.from_lon, row.to_lon], [row.from_lat, row.to_lat],
-    #          color='coral', linewidth=4.0*row.final_stage_production_tons/max_trade)
+    for row in trade_df.itertuples():
+        # ax.plot([row.from_lon, row.to_lon], [row.from_lat, row.to_lat],
+        #      color='coral', linewidth=2, marker='o',transform=ccrs.Geodetic())
+        # ax.plot([row.from_lon, row.to_lon], [row.from_lat, row.to_lat],
+        #      color='coral', linewidth=4.0*row.final_stage_production_tons/max_trade)
+        ax.plot([row.from_lon, row.to_lon], [row.from_lat, row.to_lat],
+             color='coral', linewidth=8.0*row.percentage)
 
-    #     if row.final_stage_production_tons/max_trade > 0.1:
-    #         ax.text(row.to_lon,row.to_lat,row.import_country_code,fontsize=8)
-    # plt.tight_layout()
-    # # save_fig(os.path.join(figures,"DRC_copper_baseline"))
+        if row.percentage > 0.05:
+            ax.text(row.to_lon,row.to_lat,f"{row.import_country_code}({'{0:.1f}'.format(100*row.percentage)})%",fontsize=8)
+    ax.text(
+            0.01,
+            0.05,
+            f"(a) - Baseline scenario (2022)",
+            horizontalalignment='left',
+            transform=ax.transAxes,
+            size=18,
+            weight='bold'
+            )
+    ax.text(
+            0.60,
+            0.05,
+            f"Total tonnes = {1.0e-6*trade_df['final_stage_production_tons'].sum():,.2f} million",
+            horizontalalignment='left',
+            transform=ax.transAxes,
+            size=16,
+            weight='bold'
+            )
+    plt.tight_layout()
+    save_fig(os.path.join(figures,"DRC_copper_baseline"))
     # save_fig(os.path.join(figures,"DRC_copper_future"))
-    # plt.close()        
+    plt.close()        
 
 
 if __name__ == '__main__':

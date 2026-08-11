@@ -63,13 +63,18 @@ def main(config):
     """Step 1: Get the OD matrix
     """
     origins = ["s_and_p_30884"]
+    # origins = ["railn_555030888"]
     destinations = [
                     "port_656","port_702","port_784",
                     "port_137","port_1381","port_668",
                     "port_278","port_1133","port_311",
                     "port_948","port_315","port_2063"]
+    destinations = [
+                    "port_278"]
+    # destinations = ["railn_662221591"]
+    # destinations = ["railn_662221567"]
     destinations = [f"{d}_land" for d in destinations]
-    destinations += ["city_1499"]
+    # destinations += ["city_1499"]
 
     c_t_df = pd.DataFrame(list(zip(origins*len(destinations),destinations)),columns=["origin_id","destination_id"])
     c_t_df[final_ton_column] = 1
@@ -94,6 +99,7 @@ def main(config):
     # network_graph["capacity"] = np.where(network_graph["mode"]=="rail",1e6,network_graph["capacity"])
     # network_graph = network_graph[~network_graph["mode"].isin(["rail","sea"])]
     # network_graph = network_graph[~network_graph["mode"].isin(["rail"])]
+    network_graph = network_graph[~network_graph["mode"].isin(["road","sea"])]
 
     network_graph[final_ton_column] = 0
     # mine_routes, unassinged_routes, network_graph = od_flow_allocation_capacity_constrained(

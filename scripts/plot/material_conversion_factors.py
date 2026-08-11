@@ -50,64 +50,23 @@ def main(config):
     output_data_path = config['paths']['results']
     figures_data_path = config['paths']['figures']
 
-    data_type = {"initial_refined_stage":"str","final_refined_stage":"str"}
-    pr_conv_factors_df = pd.read_excel(os.path.join(processed_data_path,
+    vals = pd.read_csv(os.path.join(processed_data_path,
                                         "mineral_usage_factors",
-                                        "aggregated_stages.xlsx"),dtype=data_type)[[
-                                            "reference_mineral",
-                                            "initial_refined_stage",
-                                            "final_refined_stage", 
-                                            "aggregate_ratio"
-                                            ]]
-    # Read the data on how much metal concent goes into ores and concentrates
-    metal_content_factors_df = pd.read_csv(os.path.join(processed_data_path,
-                                            "mineral_usage_factors",
-                                            "metal_content.csv"))
-    metal_content_factors_df.rename(
-                        columns={
-                            "Reference mineral":"reference_mineral",
-                            "Input metal content":"metal_content_factor"},
-                        inplace=True)
-    
-    mp = mineral_properties()
-    reference_minerals = ["cobalt","copper","graphite","lithium","manganese","nickel"]
-    factor = 1.0
-    figure_x_size = 10
-    axis_width = 0.8
-    vals = []
+                                        "material_stages_for_plotting.csv"))
+    y_coords = vals["Y"].values.tolist()
+    x_coords = vals["X"].values.tolist()
+    wts = vals["kgs"].values.tolist()
     arrows = []
-    y = 4
-    for reference_mineral in reference_minerals[::-1]:
-        color = mp[reference_mineral]["mineral_color"]
-        sym = mp[reference_mineral]["mineral_symbol"]
-        f_stages = mp[reference_mineral]["stages"]
-        i_stages = [0] + f_stages[:-1]
-        t = 1.0
-        st = 4.0
-        if reference_mineral == "lithium":
-            typ = "Carbonate"
-        else:
-            typ = "Metal"
-        vals.append((y,st,typ,sym,0.0,factor*t,color))
-        x0 = st + get_radius(factor*t)
-        for idx,(in_st,m_st) in enumerate(zip(i_stages,f_stages)):
-            cf = get_mine_conversion_factors(metal_content_factors_df,
-                                            pr_conv_factors_df,
-                                            reference_mineral,
-                                            in_st,m_st)
-            t = t/cf
-            st += 4.0
-            x1 = st - get_radius(factor*t)
-            vals.append((y,st,f"Stage {str(m_st).replace('.0','')}",sym,m_st,factor*t,color))
+    for i in range(0,len(y_coords)-1):
+        if y_coords[i] == y_coords[i+1]:
+            y = y_coords[i]
+            x0 = x_coords[i] + get_radius(wts[i])
+            x1 = x_coords[i+1] - get_radius(wts[i+1])
             arrows.append((y,x0,x1))
-            x0 = st + get_radius(factor*t)
-        y += 4
 
-    vals = pd.DataFrame(vals,columns=["Y","X","stage_type","reference_mineral","stage","kgs","color"])
-    vals.to_csv("test.csv",index=False)
+    ar = pd.DataFrame(arrows,columns=["Y","X0","X1"])
     
     vals["rad"] = (1.0/3.14)*(vals["kgs"]**0.5)
-    ar = pd.DataFrame(arrows,columns=["Y","X0","X1"])
     ar["dx"] = ar["X1"] - ar["X0"]
     ar["dy"] = 0
     print (vals)

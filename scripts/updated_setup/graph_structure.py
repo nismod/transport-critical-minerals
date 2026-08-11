@@ -66,7 +66,7 @@ def main(config):
                             intermodal_ports=export_ports_africa["id"].values.tolist(),
                             cargo_type=f"{cargo_type.lower().replace(' ','_')}",
                             port_to_land_capacity=export_port_ids,
-                            distance_threshold=1500,join_largest_component=True
+                            distance_threshold=2000,join_largest_component=True
                             )
     print (network_graph)
     network_graph.to_parquet(os.path.join(processed_data_path,"shipping_network","network_graph.parquet"))

@@ -297,7 +297,10 @@ def multimodal_network_assembly(modes=["IWW","rail","road","sea","intermodal"],
                                 ), layer="edges"
                     )
             edges = edges[edges["status"].isin(rail_status)]
-            edges['capacity'] = default_capacity
+            if "freight_design_capacity" in edges.columns.values.tolist():
+                edges["capacity"] = edges["freight_design_capacity"]*edges["freight_utilisation"]
+            else:
+                edges['capacity'] = default_capacity
         elif mode == "road":
             edges = gpd.read_parquet(os.path.join(
                             processed_data_path,
