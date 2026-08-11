@@ -1,7 +1,9 @@
 # Data 
 *.osm.pbf
 *.gpkg
-*.txt
+scripts/flow_modelling/*.txt
+scripts/updated_setup/*.txt
+scripts/plot/*.txt
 data/*
 incoming_data/*
 figures/*

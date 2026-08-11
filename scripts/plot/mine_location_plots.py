@@ -65,10 +65,8 @@ def main(config):
         
         tmax = max(tmax)
 
-        for df in sc_dfs:
-            
-
-
+        # for df in sc_dfs:
+        
         dfs = []
         weights = []
         minerals_classes = []
