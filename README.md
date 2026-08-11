@@ -7,7 +7,7 @@ This method is explained in detail in:
 Pant, R., Cervantes Barron, K., Andrieu, B., Foster, V., Hall, J.W. 2026. Battery Mineral Value Chains in Africa: Transport optimization model for critical minerals resource allocation. Forthcoming
 
 The method has been used in:
-Cervantes Barron, K., Pant, R., Andrieu, B., Heydari, M., Korkovelos, A., Osei-Owusu, S., Barzin, S., Ciftci, M.M., Stringer, M., Gomez, C.R., Hawkes, A., Hall, J., Foster, V., 2026. Nationalist versus regional approaches for increased battery mineral value addition in Southern Africa. https://doi.org/10.21203/rs.3.rs-9179870/v1 (Under review in Nature Communications)
+Cervantes Barron, K., Pant, R., Andrieu, B., Heydari, M., Korkovelos, A., Osei-Owusu, S., Barzin, S., Ciftci, M.M., Stringer, M., Gomez, C.R., Hawkes, A., Hall, J.W., Foster, V., 2026. Nationalist versus regional approaches for increased battery mineral value addition in Southern Africa. https://doi.org/10.21203/rs.3.rs-9179870/v1 (Under review in Nature Communications)
 
 # Setup and installation
 Clone or download this repository from
